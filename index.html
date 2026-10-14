@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fohlenhof Mathe</title>
+<meta name="theme-color" content="#4f8a4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fohlenhof">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<svg id="hof" class="hof" aria-hidden="true"></svg>
+<div id="fly" hidden><button onclick="flyOff()">Landen</button><span>Wische zum Umschauen, tippe auf ein Pferd.</span></div>
+<main id="app"></main>
+<script src="aufgaben.js"></script>
+<script src="hof.js"></script>
+<script src="app.js"></script>
+<script>
+// Offline-Nutzung: nur wenn die App über http(s) geladen wird (nicht per Doppelklick auf die Datei)
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

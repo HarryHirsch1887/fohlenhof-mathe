@@ -1,0 +1,16 @@
+{
+  "name": "Fohlenhof Mathe",
+  "short_name": "Fohlenhof",
+  "description": "Mathe üben mit einem Pferd, das mitwächst.",
+  "lang": "de",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#e3eedb",
+  "theme_color": "#4f8a4a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

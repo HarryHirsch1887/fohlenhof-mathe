@@ -1,0 +1,16 @@
+# Positivliste: Nur diese Dateien werden zu GitHub hochgeladen.
+# Alles andere (Obsidian-Notizen, Sicherungen, neue Dateien) bleibt lokal.
+# Neue App-Dateien hier mit ! ergaenzen und in sw.js die Liste FILES und VERSION anpassen.
+*
+!.gitignore
+!index.html
+!style.css
+!aufgaben.js
+!hof.js
+!app.js
+!manifest.webmanifest
+!sw.js
+!icon-192.png
+!icon-512.png
+!apple-touch-icon.png
+!README.md
