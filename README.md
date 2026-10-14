@@ -14,7 +14,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 - **Persönlicher Hof:** Nach der Anmeldung zeigt der Hintergrund das Pferd des Kindes. Mit Äpfeln lassen sich Gegenstände bauen (Apfelbaum, Eiche, Blumenwiese, Heuballen, Wassertrog, Stall, Teich, Windrad, Regenbogen). Jede gekaufte Rasse bringt einen Pferdefreund mit.
 - **Rundflug:** Eine ruhige Fahrt über den ganzen Hof. Wischen zum Umschauen, Tippen auf ein Pferd zeigt den Namen.
 - Die Animation lässt sich in der Eltern-Ansicht ruhigstellen und stoppt bei "Bewegung reduzieren". Bei langsamen Geräten schaltet sie selbst auf die halbe Bildrate.
-- **Eltern-Ansicht** mit PIN, Statistik und Sicherung (Export und Import).
+- **Eltern-Ansicht** mit Statistik, Einstellungen und Sicherung (Export und Import). Beim ersten Start wählbar: mit PIN geschützt oder ohne PIN als offene „Einstellungen“, zum Beispiel auf dem eigenen Handy eines Kindes. Lässt sich später im Kasten „PIN-Schutz“ umstellen.
 - Funktioniert ohne Konto und ohne Internetverbindung, sobald die App geladen und als App installiert ist.
 
 ## Themen
