@@ -60,6 +60,7 @@ Dann `http://localhost:3000` öffnen. Auf `localhost` lässt sich die App auch a
 | `manifest.webmanifest` | Angaben für die Installation als App |
 | `sw.js` | Service Worker für die Offline-Nutzung |
 | `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | App-Symbole |
+| `icon-maskable-192.png`, `icon-maskable-512.png` | App-Symbole für Android (werden rund oder abgerundet zugeschnitten, Motiv liegt in der Sicherheitszone) |
 
 Es gibt keine Abhängigkeiten und keinen Build-Schritt. Alles ist reines HTML, CSS und JavaScript.
 
