@@ -1,4 +1,4 @@
-// Fohlenhof Mathe: animierte Weide als Hintergrund, persönlicher Hof und Rundflug.
+// Pferdehof Mathe: animierte Weide als Hintergrund, persönlicher Hof und Rundflug.
 // Greift auf Funktionen und Daten aus app.js erst zur Laufzeit zu (horse, kid, hh, neigh, S, v ...),
 // deshalb darf diese Datei vor app.js geladen werden.
 
