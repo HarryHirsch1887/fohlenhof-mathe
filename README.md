@@ -1,6 +1,8 @@
-# Fohlenhof Mathe
+# Pferdehof Mathe
 
-Eine kleine Lern-App, in der Kinder Mathe üben und dabei ein Pferd großziehen. Je mehr Aufgaben richtig gelöst werden, desto mehr wächst das Fohlen zum ausgewachsenen Pferd. Für richtig gelöste Aufgaben gibt es Äpfel, mit denen sich Fellfarben, Abzeichen, Rassen und Fähigkeiten freischalten lassen.
+(Früher „Fohlenhof Mathe“. Adresse, Repository `fohlenhof-mathe` und Speicherschlüssel behalten den alten Namen, damit installierte Apps und Spielstände erhalten bleiben.)
+
+Eine kleine Lern-App, in der Kinder Mathe üben und dabei ein Pferd großziehen. Je mehr Aufgaben richtig gelöst werden, desto mehr wächst das Fohlen zum ausgewachsenen Pferd. Für richtig gelöste Aufgaben gibt es Äpfel, mit denen sich Fellfarben, Abzeichen, Rassen und Fähigkeiten freischalten lassen. Fellfarben: Fuchs, Brauner, Rappe, Schimmel, Palomino, Schecke, Falbe (mit dunklen Beinen und Aalstrich) und Windfarben (dunkles Fell, helle Mähne).
 
 Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnasium).
 
