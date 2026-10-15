@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Variante A: gezeichnet (2D)</title>
+<meta name="theme-color" content="#4f8a4a">
+<link rel="icon" type="image/png" href="../icon-192.png">
+<link rel="stylesheet" href="studie.css">
+</head>
+<body>
+<div id="szene">
+ <svg id="bild" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ein Pferd auf der Koppel"></svg>
+ <div class="oben"><a class="knopf" href="./">Zurück</a><span class="titel">Variante A: gezeichnet</span><span id="fps" class="fps">–</span></div>
+</div>
+<div class="leiste">
+ <div class="reihe" id="bew">
+  <button data-m="auto" class="an">Von selbst</button><button data-m="graze">Grasen</button><button data-m="walk">Schritt</button><button data-m="gallop">Galopp</button><button data-m="jump">Springen</button>
+ </div>
+ <div class="reihe" id="fell">
+  <button data-f="falbe" class="an">Falbe</button><button data-f="rappe">Rappe</button><button data-f="schimmel">Schimmel</button><button data-f="wind">Windfarben</button><button data-f="fuchs">Fuchs</button>
+ </div>
+</div>
+<script src="2d.js"></script>
+</body>
+</html>
