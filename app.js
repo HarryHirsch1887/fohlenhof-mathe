@@ -91,7 +91,7 @@ function ui(){let h='';PZ=0;
  <p class="small">Ein Thema wechselt hoch nach 3 richtigen Antworten in Folge und runter nach 2 falschen.</p><div class="row"><button class="alt" onclick="rst(${k.id})">Fortschritt zurücksetzen</button><button class="alt" onclick="del(${k.id})">Kind löschen</button></div></div>`).join('')||'<p>Noch keine Kinder angelegt.</p>';
  h+=`<div class="card"><b>Anzeige</b><p class="small">Der animierte Hintergrund kann ruhig gestellt werden, zum Beispiel bei älteren Geräten oder um den Akku zu schonen. Dann stehen die Pferde still.</p><button class="alt" onclick="S.calm=S.calm?0:1;save();ui()">Ruhiger Hintergrund: ${S.calm?'an':'aus'}</button></div><div class="card"><b>Sicherung</b><p class="small">Der Stand liegt nur in diesem Browser. Exportiere ihn regelmäßig als Datei, besonders vor dem Löschen von Browserdaten oder bei einem Gerätewechsel.</p><div class="row"><button onclick="exp()">Exportieren</button><input type="file" accept=".json" onchange="imp(this)" aria-label="Sicherung importieren"></div><p class="no">${warn}</p></div>
  <div class="card"><b>PIN-Schutz</b>${S.pin?`<p class="small">Diese Ansicht ist mit einer PIN geschützt. Ohne PIN heißt sie „Einstellungen“ und ist für alle offen, zum Beispiel auf dem eigenen Handy eines Kindes.</p><button class="alt" onclick="npin()">PIN entfernen</button>`:`<p class="small">Ohne PIN kann jeder hier die Klasse ändern, Fortschritt zurücksetzen und Kinder löschen. Mit einer PIN (mindestens 4 Zeichen) wird daraus die geschützte Eltern-Ansicht.</p><input id="pin1" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp('pin1')"> <button onclick="sp('pin1')">PIN festlegen</button>`}<p class="no">${pw}</p></div>`+(S.pin?`<button class="alt" onclick="lock()">Sperren</button>`:'')}}
- $('#app').innerHTML='<div class="in">'+h+'</div>';hofSync();d3Sync();setTimeout(()=>{let a=$('#ans')||$('#pin')||$('#hn')||$('#pin0');a&&(v!='home'||a.id=='pin0')&&a.focus()})}
+ $('#app').innerHTML='<div class="in">'+h+'</div>';hofSync();d3Sync();setTimeout(()=>{let a=$('#ans')||$('#pin')||$('#hn')||$('#pin0');a&&(v!='home'||a.id=='pin0')&&a.focus({preventScroll:a.id=='hn'})})}
 // 3D-Fenster für ausgewachsene Pferde: Platzhalter im Seitenaufbau, das Modul (3d/vorschau.js) wird erst beim ersten Anzeigen geladen
 const d3Fenster=cls=>`<div class="d3 ${cls}" id="d3" role="img" aria-label="Dein Pferd in 3D"><span class="d3text">3D-Pferd wird geladen …</span><span class="d3fehler">3D geht nur, wenn die App über die Internet-Adresse geöffnet wurde.</span></div>`;
 let D3=null;
@@ -106,7 +106,7 @@ function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();S.kids.
 function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=p;delete S.np;if(id)open=true;save();ui()}
 function nopin(){S.np=1;save();ui()}
 function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellungen öffnen.'))return;S.pin='';S.np=1;open=false;save();ui()}
-function sel(id){cur=id;v=kid().h?'kid':'choose';ui()}
+function sel(id){cur=id;v=kid().h?'kid':'choose';ui();scrollTo(0,0)}
 function mk(){let k=kid();k.h={coat:CH,coats:[CH],name:($('#hn').value.trim()||'Fohlen'),own:{},bl:0,so:0};save();v='kid';ui()}
 function wish(t,c){let k=kid(),H=hh(k),no=()=>{note='Dafür fehlen noch Äpfel.';ui()};note='';
  if(t=='br'){if(!H.brs.includes(c)){if((k.ap||0)<40)return no();k.ap-=40;H.brs.push(c)}H.br=c}
