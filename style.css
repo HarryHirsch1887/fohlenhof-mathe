@@ -39,4 +39,12 @@ input,select{background:var(--card);border:1px solid var(--line);border-radius:1
 .an-jump,.an-hop{animation:jump .9s ease-out .5s}.an-gal{animation:gal 1.2s ease-in-out .5s}.an-wig{animation:wig .8s ease-in-out .5s;transform-origin:160px 160px}.an-aus{animation:aus 1.1s ease-out .5s}.now{animation-delay:0s!important}
 @keyframes hrt{0%{opacity:0;transform:translateY(0)}15%{opacity:1}100%{opacity:0;transform:translateY(-36px)}}.hrt{animation:hrt 1.3s ease-out both}
 @media(prefers-reduced-motion:reduce){[class^=an-],.hrt{animation:none}}
+/* 3D-Fenster (nur ausgewachsene Pferde); im Wunschbaum bleibt es beim Scrollen oben stehen */
+.d3{position:relative;height:220px;border-radius:14px;overflow:hidden;margin:10px 0;background:linear-gradient(#cfe5ef 0%,#e6f2ea 70%,#d8ebcc 100%);border:1px solid var(--line)}
+.d3.kleb{position:sticky;top:6px;z-index:3;box-shadow:0 4px 14px #0003}
+.d3 canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+.d3text,.d3fehler{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;font-size:14px;color:#26331f;opacity:.8}
+.d3fehler,.d3.bereit .d3text,.d3.fehler .d3text{display:none}.d3.fehler .d3fehler{display:flex}
+@media(prefers-color-scheme:dark){.d3{background:linear-gradient(#2a4558 0%,#2c4a3a 70%,#2f5a3a 100%)}.d3text,.d3fehler{color:#e8f0e2}}
+.gummi{display:inline-block;width:12px;height:12px;border-radius:50%;border:1px solid #0004;vertical-align:-1px}
 table{width:100%;border-collapse:collapse;font-size:15px}td,th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:left}

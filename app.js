@@ -8,6 +8,11 @@ const COATS={fuchs:['Fuchs','#b5612b','#6e3414'],braun:['Brauner','#7b4a2a','#1c
 const GS=[{n:'Fohlen',x:0,s:.72,rx:33,ry:17,h:1.05,l:66,w:5.5,nk:.45},{n:'Jährling',x:250,s:.8,rx:42,ry:21,h:1.0,l:58,w:7.5,nk:.7},{n:'Jungpferd',x:700,s:.9,rx:50,ry:24,h:.97,l:51,w:9,nk:.88},{n:'Pferd',x:1500,s:1,rx:58,ry:28,h:.95,l:46,w:10,nk:1}];
 const BR={std:{n:'Warmblut',rx:1,ry:1,l:1,nk:1,mw:1,tl:1,h:1,fe:0},hafl:{n:'Haflinger',mc:'#f0deb0',rx:1.04,ry:1.08,l:.9,nk:1.12,mw:1.5,tl:1.15,h:1,fe:0},isl:{n:'Isländer',rx:1,ry:1.08,l:.8,nk:1.15,mw:1.9,tl:1.35,h:1,fe:0},voll:{n:'Vollblut',rx:1.06,ry:.9,l:1.1,nk:.85,mw:.6,tl:.9,h:.93,fe:0},fries:{n:'Friese',rx:1.05,ry:1.05,l:1,nk:1.2,mw:1.9,tl:1.4,h:1,fe:1}};
 const SK=[['jump','Springen'],['gal','Galopp'],['aus','Ausdauer'],['ges','Geschick']];
+// Mähne und Zöpfe: Mähnenlänge ab Jährling kostenlos. Zöpfe (mit rosa Gummi) und weitere Gummifarben kosten Äpfel.
+// Gespeichert am Pferd: ma = Mähnenlänge, zk = Zöpfe gekauft, zo = Zöpfe an, gu = Gummifarbe, gus = gekaufte Gummifarben
+const MA={kurz:'Kurz',mittel:'Mittel',lang:'Lang'};
+const GUMMI={rosa:['Rosa','#e8508f'],lila:['Lila','#9b59b6'],blau:['Hellblau','#4aa3df'],gelb:['Gelb','#f4c430'],weiss:['Weiß','#f2f2f2']};
+const PREIS={zopf:10,gummi:3};
 const AP='<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="9.5" r="6" fill="#c0392b"/><path d="M8 4Q9 1 12.5 1Q11.5 4.5 8 4Z" fill="#4f8a4a"/></svg>';
 // Speicher: nur localStorage dieses Browsers, keine Cookies, keine Netzwerkzugriffe
 // Speicherschlüssel: neuer Name, alte Stände unter 'mathegipfel1' werden beim ersten Start übernommen (und dort nicht gelöscht)
@@ -30,7 +35,9 @@ function clean(d){
    if(own.bl||c.h.bl)c.h.own.bl=1;if(own.so||c.h.so)c.h.own.so=1;
    if(Array.isArray(h.brs))for(const x of h.brs)if(BR[x]&&!c.h.brs.includes(x))c.h.brs.push(x);
    if(!c.h.brs.includes(c.h.br))c.h.brs.push(c.h.br);
-   const sk=h.sk&&typeof h.sk==='object'?h.sk:{};for(const [id] of SK)c.h.sk[id]=nn(sk[id],0,5)}
+   const sk=h.sk&&typeof h.sk==='object'?h.sk:{};for(const [id] of SK)c.h.sk[id]=nn(sk[id],0,5);
+   c.h.ma=MA[h.ma]?h.ma:'mittel';if(h.zk){c.h.zk=1;c.h.zo=h.zo?1:0}
+   c.h.gus=['rosa',...new Set((Array.isArray(h.gus)?h.gus:[]).filter(x=>GUMMI[x]&&x!=='rosa'))];c.h.gu=c.h.gus.includes(h.gu)?h.gu:'rosa'}
   o.kids.push(c)}
  return o}
 // S.pin: PIN der Eltern-Ansicht. S.np = 1: beim Start bewusst ohne PIN gewählt (Bereich heißt dann "Einstellungen" und ist offen)
@@ -40,7 +47,7 @@ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));warn=''}catch(e)
 const $=s=>document.querySelector(s),kid=()=>S.kids.find(k=>k.id==cur);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ts=(k,key)=>k.t[key]||(k.t[key]={d:1,n:0,r:0,run:0});
-const hh=k=>{let H=k.h;H.brs=H.brs||['std'];H.br=H.br||'std';H.sk=H.sk||{};H.it=H.it||{};return H};
+const hh=k=>{let H=k.h;H.brs=H.brs||['std'];H.br=H.br||'std';H.sk=H.sk||{};H.it=H.it||{};H.ma=H.ma||'mittel';H.gus=H.gus||['rosa'];H.gu=H.gu||'rosa';return H};
 const gst=x=>GS.reduce((a,g,i)=>x>=g.x?i:a,0);
 const dots=d=>`<span class="dots" title="Stufe ${d} von 5">${[1,2,3,4,5].map(i=>`<i class="${i<=d?'on':''}"></i>`).join('')}</span>`;
 // Pferd als SVG, nach rechts blickend. c = Fellfarbe, st = Wachstumsstufe, m = {bl: Blesse, so: Socken}
@@ -48,7 +55,7 @@ function horse(c,st,m,idle){let g=GS[st],br=BR[m.br]||BR.std,cf=COATS[c][1],pc=C
  hn=cx-rx*.58,fn=cx+rx*.6,T2=[hx+1,hy+12],B2=[cx+rx*.9,cy+ry*.45],nk=g.nk*br.nk,u=1-nk,B1f=[cx+rx*.4,cy-ry*.92],T1f=[hx-19,hy-11],B1=[B1f[0]+(B2[0]-B1f[0])*u*.5,B1f[1]+(B2[1]-B1f[1])*u*.5],T1=[T1f[0]+(T2[0]-T1f[0])*u*.55,T1f[1]+(T2[1]-T1f[1])*u*.55],tx=cx-rx*.95,ty=cy-ry*.6,tl=(.55+.45*g.nk)*br.tl,
  vx=T1[0]-B1[0],vy=T1[1]-B1[1],ln=Math.hypot(vx,vy),nx=vy/ln,ny=-vx/ln,C1=[(B1[0]+T1[0])/2+nx*7*nk,(B1[1]+T1[1])/2+ny*7*nk],
  wx=B2[0]-T2[0],wy=B2[1]-T2[1],wl=Math.hypot(wx,wy),C2=[(T2[0]+B2[0])/2+wy/wl*6*nk,(T2[1]+B2[1])/2-wx/wl*6*nk],
- bz=t=>[0,1].map(i=>(1-t)**2*B1[i]+2*(1-t)*t*C1[i]+t*t*T1[i]),mw=(5+5*k)*br.mw,
+ bz=t=>[0,1].map(i=>(1-t)**2*B1[i]+2*(1-t)*t*C1[i]+t*t*T1[i]),mw=(5+5*k)*br.mw*({kurz:.55,lang:1.7}[m.ma]||1),
  sp=g.nk<.9,mane=(sp?[0,.12,.25,.37,.5,.62,.75,.87,1]:[0,.2,.4,.6,.8,1]).map((t,i)=>{let p=bz(t),o=mw*(1.15-.5*t)*(sp?(i%2?1.7:.8):1);return[p[0]+nx*o+(t*6),p[1]+ny*o]}),
  lp=(x,y,a,b)=>{let f=t=>(t-y)/(130-y);return`${x+w*.3*f(a)},${a} ${x+w*(1.3-.3*f(a))},${a} ${x+w*(1.3-.3*f(b))},${b} ${x+w*.3*f(b)},${b}`},
  lg=(x,y,far,i)=>`<g data-l="${i}" data-px="${x+w*.65}" data-py="${y}"><polygon points="${lp(x,y,y,130)}" fill="${cf}"/><ellipse cx="${x+w*.65}" cy="${y+(130-y)*.45}" rx="${w*.56}" ry="${w*.5}" fill="${cf}" stroke="none"/>`+(pc?`<polygon points="${lp(x,y,y+(130-y)*.52,130)}" fill="${pc}" stroke="none"/>`:'')+(m.so?`<polygon points="${lp(x,y,112,130)}" fill="#fff"/>`:'')+(br.fe?`<polygon points="${x+w*.2},117 ${x+w*1.1},117 ${x+w*1.9},137 ${x-w*.6},137" fill="${mf}" stroke="none"/>`:'')+`<rect x="${x+w*.1}" y="130" width="${w*1.0}" height="8" rx="1.5" fill="#2a2420"/>`+(far?`<polygon points="${lp(x,y,y,130)}" fill="#000" opacity=".2"/>`:'')+'</g>',
@@ -70,10 +77,16 @@ function ui(){let h='';
  if(v=='kid'){let k=kid(),st=gst(k.xp),g=GS[st],nx=GS[st+1],pr=nx?(k.xp-g.x)/(nx.x-g.x)*100:100;
  h=`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button><button class="alt" onclick="snd()" aria-pressed="${S.snd!==0}">Ton: ${S.snd===0?'aus':'an'}</button></div><p class="small" style="margin:8px 0 0">Tippe oben auf dein Pferd, um es zu streicheln.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button></div><div class="row sp"><h1>${esc(k.h.name)} <span class="small">${g.n} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}</span></div>
  <div class="bar" style="margin:6px 0"><b style="width:${pr}%"></b></div><p class="small">${nx?`Noch ${nx.x-k.xp} Erfahrung bis „${nx.n}“`:'Dein Pferd ist ausgewachsen!'} · Serie ${k.s} · Rekord ${k.best}${mcount(k)?` · Fehlerheft: ${mcount(k)} zum Wiederholen`:''}</p>
+ ${nx?'':`${d3Fenster('')}<p class="small" style="margin-top:0">Wische über das Bild, um ${esc(k.h.name)} von allen Seiten zu sehen.</p>`}
  <h2>Thema wählen</h2>`+T[k.g].map(t=>{let s=ts(k,t[0]);return`<button class="big" onclick="start('${t[0]}')"><span>${t[1]}</span>${dots(s.d)}</button>`}).join('')+
- `<h2>Wunschbaum</h2><button class="big" onclick="v='wish';note='';ui()"><span>Farbe und Abzeichen für ${esc(k.h.name)}</span><span class="ap">${AP}</span></button><h2>Abzeichen</h2>`+BD.map(b=>`<span class="badge ${k.b.includes(b[0])?'':'off'}">${b[1]}</span>`).join('')}
- if(v=='wish'){let k=kid(),H=hh(k);
+ `<h2>Wunschbaum</h2><button class="big" onclick="v='wish';note='';ui()"><span>Farbe, Mähne und Abzeichen für ${esc(k.h.name)}</span><span class="ap">${AP}</span></button><h2>Abzeichen</h2>`+BD.map(b=>`<span class="badge ${k.b.includes(b[0])?'':'off'}">${b[1]}</span>`).join('')}
+ if(v=='wish'){let k=kid(),H=hh(k),st=gst(k.xp);
  h=`<button class="alt" onclick="v='kid';ui()">Zurück</button><div class="row sp"><h1>Wunschbaum</h1><span class="ap">${k.ap||0} ${AP}</span></div><p class="no">${note}</p>
+ ${st==3?d3Fenster('kleb'):`<div class="card small">Wenn ${esc(H.name)} ausgewachsen ist, kannst du ${esc(H.name)} hier in 3D von allen Seiten ansehen. Noch ${GS[3].x-k.xp} Erfahrung bis „${GS[3].n}“.</div>`}
+ <h2>Mähne</h2>${st<1?`<p class="small">Ab „${GS[1].n}“ kannst du die Mähne kürzer oder länger machen und Zöpfe flechten.</p>`:
+ `<div class="row">${Object.entries(MA).map(([id,n])=>`<button class="${H.ma==id?'go':'alt'}" onclick="wish('ma','${id}')" aria-pressed="${H.ma==id}">${n}</button>`).join('')}<button class="${H.zk&&H.zo?'go':'alt'}" onclick="wish('zk')" aria-pressed="${!!(H.zk&&H.zo)}">Zöpfe ${H.zk?(H.zo?'an':'aus'):'· '+PREIS.zopf+' '+AP}</button></div>
+ ${H.zk?`<p class="small" style="margin-bottom:4px">Farbe der Haargummis:</p><div class="row">${Object.entries(GUMMI).map(([id,[n,c]])=>`<button class="${H.gu==id?'go':'alt'}" onclick="wish('gu','${id}')" aria-pressed="${H.gu==id}"><span class="gummi" style="background:${c}"></span> ${n}${H.gus.includes(id)?'':' · '+PREIS.gummi+' '+AP}</button>`).join('')}</div>`:''}
+ <p class="small">Die Mähnenlänge kostet nichts. Zöpfe gibt es nur bei langer Mähne: Wenn du Zöpfe einschaltest, wird die Mähne lang.</p>`}
  <h2>Fellfarbe</h2><div class="grid">${Object.keys(COATS).map(c=>`<button class="pick ${H.coat==c?'on':''}" onclick="wish('coat','${c}')"><svg viewBox="20 14 170 130">${horse(c,0,{})}</svg>${COATS[c][0]}<br>${H.coat==c?'gewählt':H.coats.includes(c)?'freigeschaltet':'25 '+AP}</button>`).join('')}</div>
  <h2>Abzeichen im Fell</h2><div class="row"><button class="${H.bl?'go':'alt'}" onclick="wish('bl')">Blesse ${H.own.bl?(H.bl?'an':'aus'):'· 15 '+AP}</button><button class="${H.so?'go':'alt'}" onclick="wish('so')">Weiße Socken ${H.own.so?(H.so?'an':'aus'):'· 15 '+AP}</button></div><h2>Rasse</h2><div class="grid">${Object.keys(BR).map(b=>`<button class="pick ${H.br==b?'on':''}" onclick="wish('br','${b}')"><svg viewBox="15 8 180 135">${horse(H.coat,2,{br:b,bl:H.bl,so:H.so})}</svg>${BR[b].n}<br>${H.br==b?'gewählt':H.brs.includes(b)?'freigeschaltet':'40 '+AP}</button>`).join('')}</div><h2>Hof ausbauen</h2><div class="grid">${ITEMS.map(([id,n,p])=>`<button class="pick ${H.it[id]?'on':''}" onclick="wish('it','${id}')">${n}<br>${H.it[id]?'gebaut':p+' '+AP}</button>`).join('')}</div><p class="small">Gebaute Gegenstände siehst du oben auf deinem Hof und im Rundflug. Für jede gekaufte Rasse kommt außerdem ein Pferdefreund dazu.</p><h2>Fähigkeiten</h2>${SK.map(([id,n])=>{let l=H.sk[id]||0;return`<div class="card row sp"><span>${n} ${dots(l)}</span>${l<5?`<button class="alt" onclick="wish('sk','${id}')">Training · ${10*(l+1)} ${AP}</button>`:'<span class="small">Meister</span>'}</div>`}).join('')}<p class="small">Fähigkeiten zeigen sich als Bewegung, wenn dein Pferd sich über eine richtige Antwort freut.</p><p class="small">Äpfel gibt es für richtige Antworten, bei schwereren Aufgaben mehr. Ausgeben kostet keine Erfahrung.</p>`}
  if(v=='quiz'){let k=kid(),s=ts(k,Q.key),t=T[k.g].find(x=>x[0]==Q.key),q=Q.q;
@@ -90,7 +103,16 @@ function ui(){let h='';
  <p class="small">Ein Thema wechselt hoch nach 3 richtigen Antworten in Folge und runter nach 2 falschen.</p><div class="row"><button class="alt" onclick="rst(${k.id})">Fortschritt zurücksetzen</button><button class="alt" onclick="del(${k.id})">Kind löschen</button></div></div>`).join('')||'<p>Noch keine Kinder angelegt.</p>';
  h+=`<div class="card"><b>Anzeige</b><p class="small">Der animierte Hintergrund kann ruhig gestellt werden, zum Beispiel bei älteren Geräten oder um den Akku zu schonen. Dann stehen die Pferde still.</p><button class="alt" onclick="S.calm=S.calm?0:1;save();ui()">Ruhiger Hintergrund: ${S.calm?'an':'aus'}</button></div><div class="card"><b>Sicherung</b><p class="small">Der Stand liegt nur in diesem Browser. Exportiere ihn regelmäßig als Datei, besonders vor dem Löschen von Browserdaten oder bei einem Gerätewechsel.</p><div class="row"><button onclick="exp()">Exportieren</button><input type="file" accept=".json" onchange="imp(this)" aria-label="Sicherung importieren"></div><p class="no">${warn}</p></div>
  <div class="card"><b>PIN-Schutz</b>${S.pin?`<p class="small">Diese Ansicht ist mit einer PIN geschützt. Ohne PIN heißt sie „Einstellungen“ und ist für alle offen, zum Beispiel auf dem eigenen Handy eines Kindes.</p><button class="alt" onclick="npin()">PIN entfernen</button>`:`<p class="small">Ohne PIN kann jeder hier die Klasse ändern, Fortschritt zurücksetzen und Kinder löschen. Mit einer PIN (mindestens 4 Zeichen) wird daraus die geschützte Eltern-Ansicht.</p><input id="pin1" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp('pin1')"> <button onclick="sp('pin1')">PIN festlegen</button>`}<p class="no">${pw}</p></div>`+(S.pin?`<button class="alt" onclick="lock()">Sperren</button>`:'')}}
- $('#app').innerHTML='<div class="in">'+h+'</div>';hofSync();setTimeout(()=>{let a=$('#ans')||$('#pin')||$('#hn')||$('#pin0');a&&(v!='home'||a.id=='pin0')&&a.focus()})}
+ $('#app').innerHTML='<div class="in">'+h+'</div>';hofSync();d3Sync();setTimeout(()=>{let a=$('#ans')||$('#pin')||$('#hn')||$('#pin0');a&&(v!='home'||a.id=='pin0')&&a.focus()})}
+// 3D-Fenster für ausgewachsene Pferde: Platzhalter im Seitenaufbau, das Modul (3d/vorschau.js) wird erst beim ersten Anzeigen geladen
+const d3Fenster=cls=>`<div class="d3 ${cls}" id="d3" role="img" aria-label="Dein Pferd in 3D"><span class="d3text">3D-Pferd wird geladen …</span><span class="d3fehler">3D geht nur, wenn die App über die Internet-Adresse geöffnet wurde.</span></div>`;
+let D3=null;
+function d3Sync(){const el=$('#d3');
+ if(!el){if(D3)D3.then(m=>m.verstecke()).catch(()=>{});return}
+ if(!/^https?:$/.test(location.protocol)){el.classList.add('fehler');return}
+ const H=hh(kid()),spec={coat:H.coat,ma:H.ma,zo:H.zk&&H.zo?1:0,gu:GUMMI[H.gu][1],bl:H.bl,so:H.so,br:H.br};
+ D3=D3||import('./3d/vorschau.js');
+ D3.then(m=>{if($('#d3')===el)m.zeige(el,spec)}).catch(e=>{D3=null;el.classList.add('fehler');console.warn('3D nicht verfügbar',e)})}
 function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,xp:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{}});save();ui()}
 // PIN festlegen: ohne id beim ersten Start (Feld pin0), mit id='pin1' nachträglich in den Einstellungen
 function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=p;delete S.np;if(id)open=true;save();ui()}
@@ -102,6 +124,10 @@ function wish(t,c){let k=kid(),H=hh(k),no=()=>{note='Dafür fehlen noch Äpfel.'
  if(t=='br'){if(!H.brs.includes(c)){if((k.ap||0)<40)return no();k.ap-=40;H.brs.push(c)}H.br=c}
  else if(t=='sk'){let l=H.sk[c]||0,p=10*(l+1);if(l>=5)return;if((k.ap||0)<p)return no();k.ap-=p;H.sk[c]=l+1}
  else if(t=='coat'){if(!H.coats.includes(c)){if((k.ap||0)<25)return no();k.ap-=25;H.coats.push(c)}H.coat=c}
+ else if(t=='ma'||t=='zk'||t=='gu'){if(gst(k.xp)<1)return;
+  if(t=='ma'){H.ma=c;if(c!='lang')H.zo=0}
+  else if(t=='zk'){if(!H.zk){if((k.ap||0)<PREIS.zopf)return no();k.ap-=PREIS.zopf;H.zk=1;H.zo=1}else H.zo=H.zo?0:1;if(H.zo)H.ma='lang'}
+  else{if(!H.gus.includes(c)){if((k.ap||0)<PREIS.gummi)return no();k.ap-=PREIS.gummi;H.gus.push(c)}H.gu=c}}
  else if(t=='it'){if(H.it[c])return;const p=ITEMS.find(x=>x[0]==c)[2];if((k.ap||0)<p)return no();k.ap-=p;H.it[c]=1}
  else if(!H.own[t]){if((k.ap||0)<15)return no();k.ap-=15;H.own[t]=1;H[t]=1}else H[t]=H[t]?0:1;
  save();ui()}

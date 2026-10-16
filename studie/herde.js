@@ -341,7 +341,7 @@ function setzeUmriss(n) {
   $('umriss').textContent = 'Umriss ' + UMRISS[n]; $('umriss').classList.toggle('an', n < 2);
 }
 $('umriss').addEventListener('click', () => setzeUmriss((umriss + 1) % 3));
-setzeUmriss(0);
+setzeUmriss(1); // Standard: Umriss leicht (Entscheidung 2026-10-16)
 requestAnimationFrame(bild);
 window.studie = { geladen: true, pferde, setzeUmriss, get mess() { return mess; } };
 })();
