@@ -2,6 +2,8 @@
 // Greift auf Funktionen und Daten aus app.js erst zur Laufzeit zu (horse, kid, hh, neigh, S, v ...),
 // deshalb darf diese Datei vor app.js geladen werden.
 
+// PFS: Größe des gezeichneten Pferds (pferd.js) auf der Weide; Pferd steht mit den Hufen auf y = 0 seines Bildes
+const PFS=.5;
 const WH=200,GY=124,sr=n=>{let x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x)};
 // Gegenstände für den Hof: [id, Name, Preis in Äpfeln, Lage auf der Weide (Anteil der Weltbreite)]
 const ITEMS=[['baum1','Apfelbaum',12,.33],['baum2','Eiche',15,.80],['blumen','Blumenwiese',10,.46],['heu','Heuballen',10,.58],['troge','Wassertrog',12,.40],['stall','Stall',30,.64],['teich','Teich',25,.24],['windrad','Windrad',20,.68],['regenbogen','Regenbogen',35,.50]];
@@ -29,7 +31,7 @@ const HF={mode:'bg',horses:[],ord:[],key:'',t:0,last:0,raf:0,run:false,cam:0,cv:
 
 function fillers(){if(!HF.fill){const ks=Object.keys(COATS),bs=Object.keys(BR);HF.fill=[...Array(5)].map((_,i)=>{const c=ks[(i*2+R(0,5))%ks.length],b=bs[R(0,bs.length-1)];return{id:'f'+i,c,st:i==3?1:3,m:{br:b,bl:R(0,1),so:R(0,1)},name:BR[b].n+' · '+COATS[c][0],own:0}})}return HF.fill}
 function hofSpecs(kind){
- const A=[],km=k=>{const H=hh(k);return{id:'k'+k.id,c:H.coat,st:gst(k.xp),m:{br:H.br,bl:H.bl,so:H.so,ma:H.ma},name:H.name,own:k.id}};
+ const A=[],km=k=>{const H=hh(k);return{id:'k'+k.id,c:H.coat,st:gst(k.xp),m:pfSpec(H,gst(k.xp)),name:H.name,own:k.id}};
  if(kind=='kid'){const k=kid(),H=hh(k);A.push(km(k));H.brs.filter(b=>b!='std').slice(0,4).forEach((b,i)=>{const c=H.coats[(i+1)%H.coats.length];A.push({id:'c'+k.id+b,c,st:3,m:{br:b,bl:0,so:i%2},name:BR[b].n+' · '+COATS[c][0],own:0})})}
  else{S.kids.filter(k=>k.h).slice(0,5).forEach(k=>A.push(km(k)));const f=fillers();for(let i=0;A.length<5;i++)A.push(f[i])}
  return A}
@@ -54,12 +56,12 @@ function hofBuild(kind){
   `<path d="M0 ${GY-6}H${WW}M0 ${GY}H${WW}" stroke="#c9ad7c" stroke-width="2"/>`+[...Array(Math.ceil(WW/28)+1)].map((_,i)=>`<rect x="${i*28}" y="${GY-12}" width="3" height="18" fill="#b8996a"/>`).join('')+
   [[.12,.06],[.52,.13],[.9,.05]].map(([a,b])=>`<ellipse cx="${a*WW}" cy="${GY+2}" rx="${10+b*60}" ry="${5+b*30}" fill="#4f8a4a" opacity=".85"/>`).join('')+
   ITEMS.filter(i=>items.includes(i[0])&&DR[i[0]]).map(i=>DR[i[0]](Math.round(i[3]*WW))).join('')+
-  HF.horses.map((h,i)=>`<g class="hs" id="hs${i}" data-i="${i}"><ellipse cx="100" cy="137" rx="${GS[h.st].rx*1.2}" ry="5" fill="#000" opacity=".16"/>${horse(h.c,h.st,h.m,false)}</g>`).join('')+`<g id="hfx"></g></g>`;
+  HF.horses.map((h,i)=>`<g class="hs" id="hs${i}" data-i="${i}">${PF.bild('h'+i+'_',{...h.m,coat:h.c,st:h.st})}</g>`).join('')+`<g id="hfx"></g></g>`;
  s+=`<rect width="${W}" height="${WH}" fill="${P.tint}" opacity="${P.ta}" pointer-events="none"/><g id="htg" opacity="0" pointer-events="none"><rect id="htr" height="12" rx="6" fill="#fff" opacity=".92"/><text id="htt" y="8.6" font-size="7.5" text-anchor="middle" fill="#26331f"></text></g>`;
  svg.innerHTML=s;
  HF.hw=svg.querySelector('#hw');HF.hl0=svg.querySelector('#hl0');HF.hl1=svg.querySelector('#hl1');HF.hfx=svg.querySelector('#hfx');HF.htg=svg.querySelector('#htg');
  HF.clouds=[...svg.querySelectorAll('.cl')].map(e=>({el:e,x:+e.dataset.x,y:+e.dataset.y,v:+e.dataset.v}));
- HF.horses.forEach((h,i)=>{const g=svg.querySelector('#hs'+i),part=e=>[e,+e.dataset.px,+e.dataset.py];h.g_=g;h.legs=[...g.querySelectorAll('[data-l]')].sort((a,b)=>a.dataset.l-b.dataset.l).map(part);h.tail=part(g.querySelector('[data-t]'));h.head=part(g.querySelector('[data-h]'))});
+ HF.horses.forEach((h,i)=>{h.g_=svg.querySelector('#hs'+i);h.rig=new PF.Rig('h'+i+'_');h.hint=null});
  HF.ord=[];
  svg.style.background=HF.mode=='fly'?`linear-gradient(${P.t} 50%,${P.g2} 50%)`:'';
 }
@@ -86,26 +88,27 @@ function hofDraw(dt){
    if(sp){h.g=h.state;h.am+=(1-h.am)*Math.min(1,dt*6);h.ph=(h.ph+dt*G[h.g][1])%1}else h.am+=(0-h.am)*Math.min(1,dt*6);
    h.ha+=((h.state=='graze'&&h.joy<=0?48:0)-h.ha)*Math.min(1,dt*3);
   }
-  const gk=G[h.g]||G.walk,A=gk[0]*h.am,of=OFF[h.g]||OFF.walk,sc=(.30+.20*h.d)*GS[h.st].s,gy=138+h.d*54;
-  h.legs.forEach((l,i)=>l[0].setAttribute('transform',`rotate(${(A*Math.sin(6.2832*(h.ph+of[i]))).toFixed(1)} ${l[1]} ${l[2]})`));
-  h.head[0].setAttribute('transform',`rotate(${(h.ha+h.am*(h.g=='gallop'?5:2.5)*Math.sin(12.566*h.ph)).toFixed(1)} ${h.head[1]} ${h.head[2]})`);
-  h.tail[0].setAttribute('transform',`rotate(${(Math.sin(HF.t*2.2+h.sw)*(3+h.am*9)).toFixed(1)} ${h.tail[1]} ${h.tail[2]})`);
-  let bob=-h.am*(h.g=='gallop'?3.5:1.2)*Math.abs(Math.sin(6.2832*h.ph));
-  if(h.joy>0)bob-=20*Math.sin(Math.PI*Math.min(1,1-h.joy/1.2));
+  const sc=(.30+.20*h.d)*GS[h.st].s,gy=138+h.d*54,hop=h.joy>0?40*Math.sin(Math.PI*Math.min(1,1-h.joy/1.2)):0;
+  // Beine, Hals, Kopf, Schweif und Mähne bewegt das gezeichnete Pferd selbst (pferd.js)
+  h.rig.pose(dt,{g:h.g,am:h.am,ph:h.ph,gr:h.ha/48,hop});
+  // Hintere (kleinere) Pferde ohne Umriss
+  if((h.d<.5)!==h.hint){h.hint=h.d<.5;h.g_.classList.toggle('hinten',h.hint)}
   h.sc=sc;h.gy=gy;
-  h.g_.setAttribute('transform',`translate(${h.x.toFixed(1)} ${gy.toFixed(1)}) scale(${(h.dir*sc).toFixed(3)} ${sc.toFixed(3)}) translate(-100 ${(-138+bob).toFixed(1)})`)});
+  h.g_.setAttribute('transform',`translate(${h.x.toFixed(1)} ${gy.toFixed(1)}) scale(${(h.dir*sc*PFS).toFixed(3)} ${(sc*PFS).toFixed(3)})`)});
  const ord=[...HF.horses].sort((a,b)=>a.d-b.d);
  if(ord.some((h,i)=>HF.ord[i]!==h)){ord.forEach(h=>HF.hw.insertBefore(h.g_,HF.hfx));HF.ord=ord}
  if(HF.tag){const h=HF.tag.h,t=HF.tag.t-=dt;
   if(t<=0&&dt>0){HF.tag=null;HF.htg.setAttribute('opacity','0')}
-  else{const txt=h.name||'Pferd',w=txt.length*4.3+14,x=Math.min(W-w/2-2,Math.max(w/2+2,h.x-cam)),y=Math.max(2,h.gy-64*h.sc-8);
+  else{const txt=h.name||'Pferd',w=txt.length*4.3+14,x=Math.min(W-w/2-2,Math.max(w/2+2,h.x-cam)),y=Math.max(2,h.gy-250*PFS*h.sc-6);
    HF.htg.querySelector('#htt').textContent=txt;const r=HF.htg.querySelector('#htr');r.setAttribute('width',w);r.setAttribute('x',-w/2);HF.htg.setAttribute('transform',`translate(${x.toFixed(1)} ${y.toFixed(1)})`);HF.htg.setAttribute('opacity','1')}}
 }
 function hofFrame(ts){
  HF.raf=requestAnimationFrame(hofFrame);
  const dt=(ts-HF.last)/1000;if(dt<(HF.iv||.033))return;HF.last=ts;const d=Math.min(dt,.1);HF.t+=d;
- // Automatik für langsame Geräte: kommen die Bilder dauerhaft zu spät, nur noch die halbe Bildrate zeichnen
- HF.sl=dt>(HF.iv||.033)*1.6?(HF.sl||0)+1:Math.max(0,(HF.sl||0)-1);if(HF.sl>25&&!HF.iv)HF.iv=.066;
+ // Sparmodus für langsame Geräte: kommen die Bilder dauerhaft zu spät (unter etwa 24 pro Sekunde),
+ // zuerst den Umriss der Pferde weglassen, danach nur noch die halbe Bildrate zeichnen
+ HF.sl=dt>(HF.iv||.033)*1.25?(HF.sl||0)+1:Math.max(0,(HF.sl||0)-1);
+ if(HF.sl>40){HF.sl=0;if(!HF.spar){HF.spar=1;document.getElementById('hof').classList.add('ohneUmriss')}else if(!HF.iv)HF.iv=.066}
  const span=HF.WW-HF.W;
  if(HF.mode=='fly'){if(HF.drag){}else if(HF.idle>0)HF.idle-=d;else{HF.cam+=HF.cv*d;if(HF.cam<=0){HF.cam=0;HF.cv=Math.abs(HF.cv)}if(HF.cam>=span){HF.cam=span;HF.cv=-Math.abs(HF.cv)}}}
  else HF.cam=span/2+Math.sin(HF.t/45)*Math.min(110,span/2);
@@ -128,7 +131,7 @@ function hofSync(force){
 function hofTap(h){
  h.joy=1.2;h.state='stand';h.t=1.5;if(S.snd!==0)neigh(h.st);
  HF.tag={h,t:2.6};
- const x=h.x,y=h.gy-60*h.sc;
+ const x=h.x+h.dir*60*PFS*h.sc,y=h.gy-215*PFS*h.sc;
  HF.hfx.innerHTML=[0,1,2].map(i=>`<g class="hrt" style="animation-delay:${i*.15}s"><path d="M0-3C-4-9-10-1 0 6C10-1 4-9 0-3Z" transform="translate(${(x+(i-1)*9).toFixed(1)} ${(y-i*5).toFixed(1)})" fill="#d1503f" stroke="none"/></g>`).join('');
  clearTimeout(HF.fxT);HF.fxT=setTimeout(()=>{if(HF.hfx)HF.hfx.innerHTML=''},1800);
  if(!HF.run)hofDraw(0)}

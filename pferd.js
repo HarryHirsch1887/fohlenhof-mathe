@@ -1,0 +1,234 @@
+// Pferdehof Mathe: das gezeichnete 2D-Pferd im Bilderbuch-Look (SVG).
+// PF.bild(P, spec, opt) liefert ein Pferd als SVG-Text. P ist ein Präfix für alle Kennungen, damit mehrere Pferde nebeneinander gehen.
+// spec: coat (Fellfarbe), st (Wachstumsstufe 0-3), br (Rasse), bl (Blesse), so (Socken), ma (Mähne kurz/mittel/lang), zo (Zöpfe), gu (Gummifarbe)
+// new PF.Rig(P) bewegt ein Pferd, das schon im Dokument steht (Gangarten, Grasen, Hüpfer, Schweif, Mähne, Blinzeln).
+// Umriss: Die Teile werden zweimal gezeichnet, zuerst mit Rand, darüber ohne. "Umriss leicht": Haare und Details bekommen keinen Rand.
+// Greift zur Laufzeit auf BR (Rassen) aus app.js zu.
+const PF = (() => {
+'use strict';
+const r1 = n => Math.round(n * 10) / 10;
+const rnd = a => { const x = Math.sin(a * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+// Fellfarben: k1 hell, k2 Grundfarbe, k3 dunkel, u Unterbeine, maul, h1/h2 Mähne und Schweif, huf; aal = Aalstrich, beh = Behang, sch = Schecke
+const FELL = {
+  fuchs: { k1: '#d68a48', k2: '#b5612b', k3: '#86431c', u: '#8a461e', maul: '#6a3c25', h1: '#7a3a16', h2: '#a8592c', huf: '#4a4038' },
+  braun: { k1: '#9c643c', k2: '#7b4a2a', k3: '#55321c', u: '#1e1612', maul: '#2a1c14', h1: '#1c1410', h2: '#3c2c22', huf: '#2a2622' },
+  rappe: { k1: '#55555e', k2: '#2e2e34', k3: '#1b1b1f', u: '#202024', maul: '#18181b', h1: '#141417', h2: '#34343c', huf: '#2a2622' },
+  schimmel: { k1: '#ffffff', k2: '#e9ebed', k3: '#c3c8cd', u: '#d2d6da', maul: '#9a9ca2', h1: '#d3d7db', h2: '#f7f7f3', huf: '#7a7468' },
+  palomino: { k1: '#f2d08a', k2: '#dfb25f', k3: '#b68a3e', u: '#c49650', maul: '#7a6448', h1: '#f3ead6', h2: '#fffaf0', huf: '#5a5044' },
+  schecke: { k1: '#d68a48', k2: '#b5612b', k3: '#86431c', u: '#8a461e', maul: '#6a3c25', h1: '#e6d3a6', h2: '#f4ead2', huf: '#5a5044', sch: 1 },
+  falbe: { k1: '#e8cc9c', k2: '#cfae7c', k3: '#a7824f', u: '#3b2f28', maul: '#4a3a30', h1: '#3e3029', h2: '#a09078', huf: '#3a332c', aal: 1, beh: 1 },
+  wind: { k1: '#4d4649', k2: '#2e292b', k3: '#1c191a', u: '#201c1e', maul: '#1a1718', h1: '#efe5cb', h2: '#fbf7ea', huf: '#2a2622' }
+};
+const mische = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+
+// Wachstum: ls Beinlänge, bx Körperlänge, by Körpertiefe, ns Hals, hs Kopf, tl Schweif, ml Mähne
+const STUFE = [
+  { ls: 1.2, lw: .85, bx: .76, by: .8, ns: .8, hs: 1.14, tl: .5, ml: .45 },
+  { ls: 1.09, lw: .92, bx: .87, by: .88, ns: .9, hs: 1.05, tl: .78, ml: .8 },
+  { ls: 1.03, lw: .97, bx: .95, by: .95, ns: .96, hs: 1.01, tl: .92, ml: .95 },
+  { ls: 1, lw: 1, bx: 1, by: 1, ns: 1, hs: 1, tl: 1, ml: 1 }
+];
+const MAEHNE = { kurz: .5, mittel: 1, lang: 1.75 };
+const teil = (v, f) => 1 + ((v || 1) - 1) * f;
+function masse(sp) {
+  const s = STUFE[sp.st | 0] || STUFE[3], b = (typeof BR !== 'undefined' && BR[sp.br]) || {};
+  return { ls: s.ls * teil(b.l, .7), lw: s.lw, bx: s.bx * teil(b.rx, .8), by: s.by * teil(b.ry, .8), ns: s.ns * teil(b.nk, .6), hs: s.hs * (b.h || 1),
+    tl: s.tl * teil(b.tl, .8), ml: s.ml * teil(b.mw, .5), fe: b.fe ? 1 : 0, mc: b.mc, fohlen: (sp.st | 0) === 0 };
+}
+
+// ---------- Haare ----------
+function straehne(bx, by, dx, dy, len, w, bend, cls) {
+  const nx = -dy, ny = dx, tx = bx + dx * len + nx * bend, ty = by + dy * len + ny * bend;
+  const c1x = bx + dx * len * .55 + nx * (w * .55 + bend * .6), c1y = by + dy * len * .55 + ny * (w * .55 + bend * .6);
+  const c2x = bx + dx * len * .5 - nx * (w * .4 - bend * .6), c2y = by + dy * len * .5 - ny * (w * .4 - bend * .6);
+  return `<path class="${cls}" d="M${r1(bx + nx * w / 2)} ${r1(by + ny * w / 2)}Q${r1(c1x)} ${r1(c1y)} ${r1(tx)} ${r1(ty)}Q${r1(c2x)} ${r1(c2y)} ${r1(bx - nx * w / 2)} ${r1(by - ny * w / 2)}Z"/>`;
+}
+const qb = (a, c, b, t) => [0, 1].map(i => (1 - t) * (1 - t) * a[i] + 2 * (1 - t) * t * c[i] + t * t * b[i]);
+const qbT = (a, c, b, t) => { const v = [0, 1].map(i => 2 * (1 - t) * (c[i] - a[i]) + 2 * t * (b[i] - c[i])), l = Math.hypot(v[0], v[1]); return [v[0] / l, v[1] / l]; };
+// Mähne entlang des Mähnenkamms a-c-b. art: 'fohlen' (kurze Stehmähne), 'offen' (Strähnen) oder 'zoepfe'
+function maehne(a, c, b, n, laenge, seed, teilNr, art) {
+  const Nn = t => { const T = qbT(a, c, b, t); return [-T[1], T[0]]; }, [na, nc, nb] = [0, .5, 1].map(Nn), w = art === 'fohlen' ? 4 : 5;
+  const P = (p, n, f) => `${r1(p[0] + n[0] * f)} ${r1(p[1] + n[1] * f)}`;
+  let s = `<path class="ha1" stroke-linejoin="round" d="M${P(a, na, -w)}Q${P(c, nc, -w)} ${P(b, nb, -w)}L${P(b, nb, 2)}Q${P(c, nc, 2)} ${P(a, na, 2)}Z"/>`, hell = '';
+  const zahl = art === 'zoepfe' ? Math.max(2, Math.round(n * .45)) : art === 'fohlen' ? n + 3 : n;
+  for (let i = 0; i < zahl; i++) {
+    const t = (i + .5) / zahl, p = qb(a, c, b, t), T = qbT(a, c, b, t), N = [-T[1], T[0]];
+    if (art === 'fohlen') { s += straehne(p[0] - N[0] * 2, p[1] - N[1] * 2, -N[0] * .85 - T[0] * .3, -N[1] * .85 - T[1] * .3, 8 + rnd(seed + i) * 4, 7, (rnd(seed + i * 3) - .5) * 3, i % 3 === 1 ? 'ha2' : 'ha1'); continue; }
+    let dx = N[0] * .4 - T[0] * .12, dy = N[1] * .4 - T[1] * .12 + .8; const l = Math.hypot(dx, dy); dx /= l; dy /= l;
+    const bx = r1(p[0] - N[0] * 1.5), by = r1(p[1] - N[1] * 1.5), len = laenge(t) * (.82 + rnd(seed + i) * .36), bend = 3 + (rnd(seed + i * 3) - .3) * 8;
+    if (art === 'zoepfe') {
+      // Zopf: Glieder im Fischgrät-Muster, unten Haargummi und kleine Quaste
+      const ang = Math.atan2(dy, dx) * 180 / Math.PI - 90, glieder = Math.max(3, Math.round(len / 7));
+      let z = '';
+      for (let j = 0; j < glieder; j++) { const cx = r1(bx + dx * (j * 6.8 + 4)), cy = r1(by + dy * (j * 6.8 + 4)), sk = 1 - j / glieder * .25; z += `<ellipse class="ha1" cx="${cx}" cy="${cy}" rx="${r1(3.8 * sk)}" ry="${r1(5.4 * sk)}" transform="rotate(${r1(ang + (j % 2 ? 30 : -30))} ${cx} ${cy})"/>`; }
+      const ex = bx + dx * (glieder * 6.8 + 2), ey = by + dy * (glieder * 6.8 + 2);
+      z += `<rect class="gummi2d" x="${r1(ex - 3.6)}" y="${r1(ey - 2)}" width="7.2" height="4" rx="1.8" transform="rotate(${r1(ang)} ${r1(ex)} ${r1(ey)})"/>` + straehne(ex + dx * 1.5, ey + dy * 1.5, dx, dy, 9, 6, 1.5, 'ha1');
+      s += `<g class="mh" data-t="${teilNr}" data-x="${bx}" data-y="${by}">${z}</g>`;
+      continue;
+    }
+    s += `<g class="mh" data-t="${teilNr}" data-x="${bx}" data-y="${by}">${straehne(bx, by, dx, dy, len, len > 40 ? 13 : 11, bend, 'ha1')}</g>`;
+    if (i % 3 === 1) hell += `<g class="mh" data-t="${teilNr}" data-x="${bx}" data-y="${by}">${straehne(bx + T[0] * 3, by + T[1] * 3, dx, dy, len * .85, 5, bend + 2, 'ha2')}</g>`;
+  }
+  return s + hell;
+}
+function schweif(tl, fohlen) {
+  let s = '', hell = '';
+  const n = fohlen ? 8 : 12;
+  for (let i = 0; i < n; i++) {
+    let dx = -.3 - i * .016 + (rnd(i * 2.2) - .5) * .12, dy = .95; const l = Math.hypot(dx, dy);
+    s += straehne(-85 + i * .5, -151 + i * 1.1, dx / l, dy / l, (84 + rnd(i * 4.1) * 18) * tl, fohlen ? 15 : 13, (7 + (rnd(i * 5.3) - .4) * 14) * Math.min(1, tl + .2), 'ha1');
+    if (i % 4 === 1) hell += straehne(-84 + i * .5, -150 + i * 1.1, dx / l, dy / l, (76 + rnd(i * 4.1) * 14) * tl, 4.5, 9 + (rnd(i * 5.3) - .4) * 10, 'ha2');
+  }
+  return s + hell + '<ellipse class="kK" cx="-85" cy="-149" rx="7.5" ry="6" transform="rotate(-38 -85 -149)"/>';
+}
+const stirnschopf = f => [0, 1, 2].map(i => straehne(96 + i * 2.2, -214 + i * .8, .52 + i * .06, .85, (13 + i * 2.5) * f, 7, 2 - i * 2, i === 1 ? 'ha2' : 'ha1')).join('');
+
+// ---------- Beine (Drehpunkt oben bei 0,0; Boden bei 100 bzw. 104) ----------
+function vorderbein(id, fern) {
+  const o = fern ? 'bOf' : 'bO', u = fern ? 'bUf' : 'bU', h = fern ? 'hf' : 'hu';
+  return `<g id="${id}1"><path class="${o}" d="M-11 -16C-12 8 -8 28 -5.6 40L5.6 40C8 26 13 6 13 -16Z"/><circle class="${o}" cx="0" cy="42" r="6"/>` +
+    `<g id="${id}2"><path class="${u}" d="M-5.4 42L-4.6 76L4.4 76L5.4 42Z"/><circle class="${u}" cx="-.2" cy="76" r="5.5"/>` +
+    `<g id="${id}3"><path class="beh" d="M-4 75C-7.5 82 -7 90 -2.5 96L.5 90C-1 86 -1.5 81 0 76Z"/>` +
+    `<path class="${u}" d="M-4.4 76L-.5 88.5L8 88.5L4.6 75Z"/><path class="${h}" d="M-1 88L9.5 88L12.5 100L-3 100Z"/></g></g></g>`;
+}
+function hinterbein(id, fern) {
+  const o = fern ? 'bOf' : 'bO', u = fern ? 'bUf' : 'bU', h = fern ? 'hf' : 'hu';
+  return `<g id="${id}1"><path class="${o}" d="M-18 -18C-25 8 -19 32 -16 46L-4 49C-2 30 6 10 17 -14Z"/><circle class="${o}" cx="-10" cy="48" r="6.4"/><circle class="${o}" cx="-15.5" cy="45.5" r="4"/>` +
+    `<g id="${id}2"><path class="${u}" d="M-15.2 48L-12.8 80L-3.6 80L-4.8 48Z"/><circle class="${u}" cx="-8.2" cy="80" r="5.5"/>` +
+    `<g id="${id}3"><path class="beh" d="M-12 79C-15.5 86 -15 94 -10.5 100L-7.5 94C-9 90 -9.5 85 -8 80Z"/>` +
+    `<path class="${u}" d="M-12.4 80L-8.5 92.5L0 92.5L-3.4 79Z"/><path class="${h}" d="M-9 92L1.5 92L4.5 104L-11 104Z"/></g></g></g>`;
+}
+// Lage der Beine (Drehpunkt) je nach Maßen
+const beinLage = m => ({ vn: [50 * m.bx, -100 * m.ls], vf: [42 * m.bx, -100 * m.ls - 2], hn: [-58 * m.bx, -104 * m.ls], hf: [-66 * m.bx, -104 * m.ls - 2] });
+
+const KOERPER = 'M40 -160C28 -156 16 -153 4 -153C-12 -153 -22 -157 -36 -158C-50 -160 -62 -161 -74 -157C-84 -154 -92 -146 -95 -132C-97 -120 -95 -108 -88 -98C-82 -90 -72 -86 -60 -88C-50 -90 -42 -92 -34 -90C-16 -86 12 -84 30 -88C40 -90 46 -94 52 -98C62 -100 74 -106 80 -116C85 -124 86 -134 80 -144C72 -154 56 -161 40 -160Z';
+const HALS1 = 'M36 -152Q43 -177 64 -185L96 -164C94 -150 90 -136 86 -124C70 -120 46 -134 36 -152Z';
+const HALS2 = 'M64 -185Q67 -211 92 -219L106 -205C102 -190 99 -176 96 -164Z';
+const KOPF = 'M90 -212C98 -219 110 -213 117 -203C124 -191 132 -178 138 -167C142 -160 141 -152 135 -150C130 -149 126 -152 121 -154C115 -158 110 -163 104 -168C96 -173 89 -182 89 -193C89 -201 87 -207 90 -212Z';
+const linie = (d, o = .12, w = 1.6) => `<path class="det" d="${d}" fill="none" stroke="#000" stroke-opacity="${o}" stroke-width="${w}" stroke-linecap="round"/>`;
+const sv = v => `style="stop-color:var(--${v})"`;
+const SMIL = (p, w, dur) => `<animateTransform attributeName="transform" type="rotate" values="0 ${p};${w} ${p};0 ${p};${-w * .7} ${p};0 ${p}" dur="${dur}s" repeatCount="indefinite"/>`;
+
+// Farben als CSS-Variablen am Pferd
+function stil(P, sp, m) {
+  const f = FELL[sp.coat] || FELL.fuchs, c = { ...f };
+  if (m.mc && (sp.coat === 'fuchs' || sp.coat === 'braun')) { c.h1 = m.mc; c.h2 = '#f8efd6'; }
+  if (sp.so) c.u = '#f1eee6';
+  let s = '';
+  for (const k of ['k1', 'k2', 'k3', 'u', 'maul', 'h1', 'h2', 'huf']) s += `--${k}:${c[k]};--f${k}:${mische(c[k], '#1a2418', .2)};`;
+  s += `--aal:${f.aal ? .5 : 0};--beh:${f.beh || m.fe ? 1 : 0};--bl:${sp.bl ? 1 : 0};--sch:${f.sch ? 1 : 0};--gu:${sp.gu || '#e8508f'};`;
+  for (const g of ['gK', 'gN', 'gN2', 'gH', 'gB', 'gBf']) s += `--${g}:url(#${P}${g});`;
+  return s;
+}
+
+function bild(P, sp, opt = {}) {
+  const m = masse(sp), L = beinLage(m), idle = !!opt.idle;
+  const art = m.fohlen ? 'fohlen' : (sp.zo && sp.ma === 'lang' ? 'zoepfe' : 'offen'), mf = m.ml * (m.fohlen ? 1 : (MAEHNE[sp.ma] || 1));
+  const bein = (id, fn, fern) => `<g transform="translate(${r1(L[id][0])} ${r1(L[id][1])}) scale(${m.lw} ${m.ls})">${fn(id, fern)}</g>`;
+  const T = (x, y) => [r1(x * m.bx), r1(m.by * (y + 100) - 100 * m.ls)];
+  const [nx, ny] = T(62, -132), [tx, ty] = T(-85, -150), ks = (m.bx + m.by) / 2;
+  const roh = `<g id="pferd"><defs>
+<linearGradient id="gK" gradientUnits="userSpaceOnUse" x1="0" y1="-232" x2="0" y2="-84"><stop offset="0" ${sv('k1')}/><stop offset=".46" ${sv('k1')}/><stop offset=".76" ${sv('k2')}/><stop offset="1" ${sv('k3')}/></linearGradient>
+<linearGradient id="gN" gradientUnits="userSpaceOnUse" x1="44" y1="-178" x2="94" y2="-140"><stop offset=".15" ${sv('k1')}/><stop offset="1" ${sv('k2')}/></linearGradient>
+<linearGradient id="gN2" gradientUnits="userSpaceOnUse" x1="70" y1="-200" x2="104" y2="-178"><stop offset=".1" ${sv('k1')}/><stop offset="1" ${sv('k2')}/></linearGradient>
+<linearGradient id="gH" gradientUnits="userSpaceOnUse" x1="96" y1="-214" x2="122" y2="-158"><stop offset=".2" ${sv('k1')}/><stop offset="1" ${sv('k2')}/></linearGradient>
+<linearGradient id="gB" gradientUnits="userSpaceOnUse" x1="0" y1="-2" x2="0" y2="48"><stop offset="0" ${sv('k3')}/><stop offset=".45" ${sv('k2')}/><stop offset="1" ${sv('k3')}/></linearGradient>
+<linearGradient id="gBf" gradientUnits="userSpaceOnUse" x1="0" y1="-2" x2="0" y2="48"><stop offset="0" ${sv('fk3')}/><stop offset=".45" ${sv('fk2')}/><stop offset="1" ${sv('fk3')}/></linearGradient>
+<clipPath id="kopfClip"><use href="#kopfForm"/></clipPath><clipPath id="koerperClip"><use href="#koerperForm"/></clipPath>
+</defs>
+<ellipse id="schatten" cx="-4" cy="1" rx="${r1(104 * m.bx)}" ry="10" class="schatten2d"/>
+<g id="koerper">
+ <use href="#fernTeile" class="umriss"/>
+ <g class="fuell"><g id="fernTeile">${bein('vf', vorderbein, 1)}${bein('hf', hinterbein, 1)}</g></g>
+ <use href="#nahTeile" class="umriss"/>
+ <g class="fuell"><g id="nahTeile">
+  <g transform="translate(${tx} ${ty}) scale(${r1(ks * 100) / 100}) translate(85 150)"><g id="schweif">${idle ? SMIL('-85 -150', 7, 3.4) : ''}${schweif(m.tl, m.fohlen)}</g></g>
+  ${bein('hn', hinterbein, 0)}${bein('vn', vorderbein, 0)}
+  <g transform="translate(0 ${r1(-100 * m.ls)}) scale(${m.bx} ${m.by}) translate(0 100)">
+   <path id="koerperForm" class="kK" d="${KOERPER}"/>
+   <g clip-path="url(#koerperClip)" class="fleck"><ellipse cx="6" cy="-108" rx="30" ry="24"/><ellipse cx="-62" cy="-140" rx="21" ry="15"/><ellipse cx="44" cy="-150" rx="15" ry="10"/><ellipse cx="-26" cy="-160" rx="12" ry="8"/></g>
+   <ellipse class="glanz" cx="-64" cy="-138" rx="25" ry="15" transform="rotate(-18 -64 -138)"/><ellipse class="glanz" cx="56" cy="-142" rx="15" ry="10"/>
+   <path class="aal" d="M38 -158C18 -152 -8 -153 -36 -157C-52 -159 -66 -159 -80 -153"/>
+   ${linie('M42 -152C52 -140 64 -127 74 -117')}${linie('M-36 -148C-46 -132 -48 -114 -42 -97', .1)}${linie('M-30 -89C-6 -85 16 -85 32 -89', .06, 3)}
+  </g>
+  <g transform="translate(${nx} ${ny}) scale(${r1(m.ns * 100) / 100}) translate(-62 132)">
+   <g id="hals1"><path class="kN" d="${HALS1}"/><circle class="kN" cx="80" cy="-172" r="17"/>
+    ${maehne([38, -156], [43, -177], [64, -185], 6, t => (26 + t * 8) * mf, 10, 1, art)}
+    <g id="hals2"><path class="kN2" d="${HALS2}"/><circle class="kN2" cx="80" cy="-172" r="16.5"/>${linie('M86 -158C91 -170 96 -184 100 -196', .08, 1.4)}
+     ${maehne([64, -185], [67, -211], [92, -219], 7, t => (38 - t * 12) * mf, 30, 2, art)}
+     <g transform="translate(98 -210) scale(${r1(m.hs / m.ns * 100) / 100}) translate(-98 210)"><g id="kopf">${idle ? SMIL('98 -210', 3, 4.6) : ''}
+      <path class="kKf" d="M91 -211C88 -218 87 -225 88.5 -231C93 -225 96 -219 96.5 -211Z"/><path id="kopfForm" class="kH" d="${KOPF}"/>
+      <g clip-path="url(#kopfClip)"><ellipse class="maul" cx="134" cy="-158" rx="11.5" ry="10.5"/><ellipse class="glanz" cx="103" cy="-186" rx="10" ry="8"/>
+       <path class="blesse" d="M107 -204C113 -200 123 -187 131 -173C134 -168 136 -163 135.5 -159L131.5 -161C127 -171 118 -185 105 -199Z"/></g>
+      ${linie('M96 -177C104 -169 113 -161 121 -156', .2, 1.4)}${linie('M133 -164C136 -166 138.5 -163 136.5 -159.5', .5)}${linie('M137.5 -153.5C134 -152.4 130 -152.8 126.5 -154.2', .35, 1.2)}
+      <g id="auge" class="det"><path d="M105.5 -196.5Q111 -201.5 116.5 -195.5Q111 -192.2 105.5 -196.5Z" fill="#1c1410"/><circle cx="113" cy="-197.3" r="1.25" fill="#fff"/></g>
+      ${linie('M104.5 -199.2Q111 -204.6 117.5 -197.6', .3, 1.2)}
+      <g id="ohr"><path class="kH" d="M98 -213C96.5 -221 97 -228 99.5 -234C103 -227 106 -220 105.5 -212Z"/><path class="det" d="M99.6 -215C99 -221 99.5 -226 100.3 -229C102.3 -224 103.5 -219 103.2 -214Z" fill="#000" opacity=".22"/></g>
+      ${stirnschopf(m.fohlen ? .7 : ({ kurz: .7, mittel: 1, lang: 1.35 }[sp.ma] || 1))}
+     </g></g>
+    </g>
+   </g>
+  </g>
+ </g></g>
+</g></g>`;
+  const mitP = roh.replace(/\bid="([^"]+)"/g, `id="${P}$1"`).replace(/(href="#|url\(#)([\w-]+)/g, `$1${P}$2`);
+  return mitP.replace(`<g id="${P}pferd">`, `<g id="${P}pferd" class="pferd2d" style="${stil(P, sp, m)}">`);
+}
+
+// ---------- Bewegung ----------
+const rot = (el, a, p) => el.setAttribute('transform', `rotate(${r1(a)} ${p[0]} ${p[1]})`);
+const GANG = {
+  walk: { duty: .62, A: { v: 21, h: 19 }, flex: { v: 64, h: 36 }, off: { hn: 0, vn: .25, hf: .5, vf: .75 }, halt: [6, 0, 0] },
+  trot: { duty: .5, A: { v: 26, h: 23 }, flex: { v: 80, h: 46 }, off: { hn: 0, vf: 0, hf: .5, vn: .5 }, halt: [10, -3, 4] },
+  gallop: { duty: .4, A: { v: 36, h: 31 }, flex: { v: 100, h: 58 }, off: { hf: 0, hn: .12, vf: .45, vn: .57 }, halt: [20, -4, 10] }
+};
+function beinWinkel(g, typ, q) {
+  const A = g.A[typ], d = g.duty; let a, s = 0;
+  if (q < d) a = -A + 2 * A * (q / d); else { s = (q - d) / (1 - d); a = A - 2 * A * (.5 - .5 * Math.cos(Math.PI * s)); }
+  const fl = Math.sin(Math.PI * s) * g.flex[typ];
+  return typ === 'v' ? [a, fl, fl * .45] : [a * .9, -fl, fl * .6];
+}
+const RUHE = { vn: [0, 0, 0], vf: [2, 0, 0], hn: [0, 0, 0], hf: [-3, 0, 0] };
+const GRASEN = { vn: [-13, 6, 2], vf: [6, 0, 0], hn: [4, 0, 0], hf: [-6, 0, 0] }, GRAS_HALS = [55, 50, -66];
+const PIV = { v: [[0, 0], [0, 42], [0, 76]], h: [[0, 0], [-10, 48], [-8, 80]] };
+
+class Rig {
+  constructor(P) {
+    const $ = id => document.getElementById(P + id);
+    this.G = Object.fromEntries(['koerper', 'schweif', 'hals1', 'hals2', 'kopf', 'auge', 'ohr', 'schatten'].map(k => [k, $(k)]));
+    this.B = Object.fromEntries(['vn', 'vf', 'hn', 'hf'].map(k => [k, { typ: k[0], g: [1, 2, 3].map(n => $(k + n)) }]));
+    const root = $('pferd');
+    this.MH = root ? [...root.querySelectorAll(`#${P}nahTeile .mh`)].map(el => ({ el, teil: +el.dataset.t, p: [+el.dataset.x, +el.dataset.y] })) : [];
+    Object.assign(this, { zeit: Math.random() * 9, blinzeln: 1 + Math.random() * 3, ohrZeit: 2 + Math.random() * 2, schlagen: 0, schlagZeit: 2 + Math.random() * 4 });
+  }
+  // a: g Gangart (walk/trot/gallop), am 0..1 Bewegung, ph Phase 0..1, gr 0..1 Grasen, hop Hüpfer nach oben
+  pose(dt, a) {
+    this.zeit += dt;
+    const g = GANG[a.g] || GANG.walk, am = a.am || 0, gr = a.gr || 0, ph = a.ph || 0, hop = a.hop || 0;
+    for (const k in this.B) {
+      const b = this.B[k], w = beinWinkel(g, b.typ, (ph + g.off[k]) % 1), piv = PIV[b.typ];
+      b.g.forEach((el, i) => { const st = RUHE[k][i] + (GRASEN[k][i] - RUHE[k][i]) * gr; rot(el, w[i] * am + st * (1 - am), piv[i]); });
+    }
+    const gal = a.g === 'gallop', tr = a.g === 'trot';
+    const bob = am * (gal ? -9 * Math.max(0, Math.sin(Math.PI * 2 * (ph - .25))) : tr ? -3 * Math.abs(Math.sin(Math.PI * 2 * ph)) : 1.6 * Math.sin(ph * Math.PI * 4));
+    const kipp = gal ? am * 4.5 * Math.sin(Math.PI * 2 * ph + 1) : 0;
+    this.G.koerper.setAttribute('transform', `translate(0 ${r1(bob - hop)}) rotate(${r1(kipp)} 0 -110)`);
+    const sch = Math.max(.4, 1 - hop / 160);
+    this.G.schatten.setAttribute('transform', `scale(${r1(sch * 100) / 100} 1)`);
+    const nick = am * (gal ? 7 * Math.sin(ph * Math.PI * 2 + 2.2) : tr ? 2.5 * Math.sin(ph * Math.PI * 4) : 3.5 * Math.sin(ph * Math.PI * 4 + 1));
+    const hw = [0, 1, 2].map(i => GRAS_HALS[i] * gr * (1 - am) + g.halt[i] * am);
+    const kauen = gr > .6 ? 2.2 * Math.sin(this.zeit * 9) : 0;
+    const h1 = hw[0] + nick * .4, h2 = h1 + hw[1] + nick * .6;
+    rot(this.G.hals1, h1, [62, -132]); rot(this.G.hals2, hw[1] + nick * .6, [80, -172]); rot(this.G.kopf, hw[2] - nick * .5 + kauen, [98, -210]);
+    const wind = (gal ? am * 14 : 0) + Math.sin(this.zeit * 2.1) * 1.5;
+    for (const mh of this.MH) rot(mh.el, -(mh.teil === 1 ? h1 : h2) * .8 + wind, mh.p);
+    if (dt > 0) { this.schlagZeit -= dt; if (this.schlagZeit <= 0) { this.schlagen = 1; this.schlagZeit = 3 + Math.random() * 5; } this.schlagen = Math.max(0, this.schlagen - dt * 1.6); }
+    rot(this.G.schweif, 3 * Math.sin(this.zeit * 1.4) + am * (gal ? 26 : tr ? 12 : 6 * Math.sin(ph * Math.PI * 2)) + 16 * Math.sin(this.schlagen * Math.PI * 3) * this.schlagen + (hop > 5 ? 18 : 0), [-85, -150]);
+    if (dt > 0) { this.blinzeln -= dt; if (this.blinzeln <= 0) this.blinzeln = 2.5 + Math.random() * 4; this.ohrZeit -= dt; if (this.ohrZeit <= 0) this.ohrZeit = 2 + Math.random() * 4; }
+    this.G.auge.setAttribute('transform', this.blinzeln < .13 ? 'translate(0 -196.5) scale(1 .12) translate(0 196.5)' : '');
+    rot(this.G.ohr, this.ohrZeit < .35 ? -14 * Math.sin(this.ohrZeit / .35 * Math.PI) : 0, [101, -213]);
+  }
+}
+return { bild, Rig, FELL };
+})();
