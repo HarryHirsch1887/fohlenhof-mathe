@@ -14,6 +14,10 @@ body.fly main{display:none}
 #fly[hidden]{display:none}
 #fly span{color:#fff;font-size:14px;text-shadow:0 1px 3px #000a}
 #fly button{background:#fffd;color:#26331f;border:0}
+/* Countdown vor der Hof-Sperre: unten in der Mitte, auch über dem Rundflug */
+#sperre{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:80;background:#fffbe9;color:#26331f;border:2px solid #e2b24a;border-radius:16px;padding:8px 16px;font-size:17px;box-shadow:0 4px 14px #0003;white-space:nowrap}
+#sperre b{display:inline-block;min-width:1.4em;text-align:center;font-size:22px;color:#b0412f}
+#sperre[hidden]{display:none}
 h1{font:700 28px "Palatino Linotype",Palatino,Georgia,serif;margin:8px 0}h2{font:700 20px "Palatino Linotype",Palatino,Georgia,serif;margin:20px 0 8px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
 button,select,input{font:inherit;color:inherit}
