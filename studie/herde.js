@@ -66,7 +66,7 @@ const KOERPER = 'M40 -160C28 -156 16 -153 4 -153C-12 -153 -22 -157 -36 -158C-50 
 const HALS1 = 'M36 -152Q43 -177 64 -185L96 -164C94 -150 90 -136 86 -124C70 -120 46 -134 36 -152Z';
 const HALS2 = 'M64 -185Q67 -211 92 -219L106 -205C102 -190 99 -176 96 -164Z';
 const KOPF = 'M90 -212C98 -219 110 -213 117 -203C124 -191 132 -178 138 -167C142 -160 141 -152 135 -150C130 -149 126 -152 121 -154C115 -158 110 -163 104 -168C96 -173 89 -182 89 -193C89 -201 87 -207 90 -212Z';
-const linie = (d, o = .12, w = 1.6) => `<path d="${d}" fill="none" stroke="#000" stroke-opacity="${o}" stroke-width="${w}" stroke-linecap="round"/>`;
+const linie = (d, o = .12, w = 1.6) => `<path class="det" d="${d}" fill="none" stroke="#000" stroke-opacity="${o}" stroke-width="${w}" stroke-linecap="round"/>`;
 const sv = v => `style="stop-color:var(--${v})"`;
 // Ein Pferd mit eigenen Farbverläufen. Alle Kennungen bekommen das Präfix P, damit mehrere Pferde nebeneinander funktionieren.
 function pferdMarkup(P) {
@@ -98,7 +98,7 @@ function pferdMarkup(P) {
     <g id="kopf"><path class="kKf" d="M91 -211C88 -218 87 -225 88.5 -231C93 -225 96 -219 96.5 -211Z"/><path id="kopfForm" class="kH" d="${KOPF}"/>
      <g clip-path="url(#kopfClip)"><ellipse class="maul" cx="134" cy="-158" rx="11.5" ry="10.5"/><ellipse class="glanz" cx="103" cy="-186" rx="10" ry="8"/></g>
      ${linie('M96 -177C104 -169 113 -161 121 -156', .2, 1.4)}${linie('M133 -164C136 -166 138.5 -163 136.5 -159.5', .5)}${linie('M137.5 -153.5C134 -152.4 130 -152.8 126.5 -154.2', .35, 1.2)}
-     <g id="auge"><path d="M105.5 -196.5Q111 -201.5 116.5 -195.5Q111 -192.2 105.5 -196.5Z" fill="#1c1410"/><circle cx="113" cy="-197.3" r="1.25" fill="#fff"/></g>
+     <g id="auge" class="det"><path d="M105.5 -196.5Q111 -201.5 116.5 -195.5Q111 -192.2 105.5 -196.5Z" fill="#1c1410"/><circle cx="113" cy="-197.3" r="1.25" fill="#fff"/></g>
      ${linie('M104.5 -199.2Q111 -204.6 117.5 -197.6', .3, 1.2)}
      <g id="ohr"><path class="kH" d="M98 -213C96.5 -221 97 -228 99.5 -234C103 -227 106 -220 105.5 -212Z"/><path d="M99.6 -215C99 -221 99.5 -226 100.3 -229C102.3 -224 103.5 -219 103.2 -214Z" fill="#000" opacity=".22"/></g>
      ${stirnschopf()}
@@ -163,6 +163,8 @@ svg.innerHTML = `<defs><style>
 .hu{fill:var(--huf)}.hf{fill:var(--fhuf)}.h1{fill:var(--h1);stroke:#000;stroke-opacity:.22;stroke-width:.8}.h2{fill:var(--h2);stroke:#000;stroke-opacity:.18;stroke-width:.8}
 .glanz{fill:var(--k1);opacity:.55}.maul{fill:var(--maul);opacity:.8}.beh{fill:var(--h1);opacity:calc(var(--beh) * .85)}.aal{fill:none;stroke:var(--u);stroke-width:3.4;stroke-linecap:round;opacity:var(--aal)}
 .umriss{stroke:#2a1d14;stroke-opacity:.6;stroke-width:3.8;stroke-linejoin:round}.fuell{stroke:none}.ohneUmriss .umriss{display:none}
+/* Umriss leicht: Haare, Glanz und Details werden in der Umriss-Kopie weggelassen (Variable erbt in die Kopie), hintere Pferde ohne Umriss */
+.h1,.h2,.glanz,.maul,.aal,.beh,.det{display:var(--ohneUm,inline)}.leicht .umriss{--ohneUm:none}.leicht .hinten .umriss{display:none}
 </style>
 <linearGradient id="gHimmel" gradientUnits="userSpaceOnUse" x1="0" y1="-1300" x2="0" y2="-80"><stop offset="0" stop-color="#3f95dc"/><stop offset=".62" stop-color="#8ac5ec"/><stop offset="1" stop-color="#e4f2f6"/></linearGradient>
 <radialGradient id="gSonne"><stop offset="0" stop-color="#fffbe6"/><stop offset=".22" stop-color="#fff3c4" stop-opacity=".85"/><stop offset="1" stop-color="#fff3c4" stop-opacity="0"/></radialGradient>
@@ -202,7 +204,7 @@ const ziehe = (w, z, k, dt) => w + (z - w) * Math.min(1, dt * k);
 class Pferd {
   constructor(i, fell, d) {
     const P = 'p' + i; this.P = P; this.d = d; this.s = .5 + .5 * d; this.gy = -70 + 70 * d;
-    this.el = $(P + 'pferd');
+    this.el = $(P + 'pferd'); if (d < .5) this.el.classList.add('hinten');
     for (const [k, v] of Object.entries({ gK: 'gK', gN: 'gN', gN2: 'gN2', gH: 'gH', gB: 'gB', gBf: 'gBf' })) this.el.style.setProperty('--' + k, `url(#${P}${v})`);
     this.fell(fell);
     this.G = Object.fromEntries(['koerper', 'schweif', 'hals1', 'hals2', 'kopf', 'auge', 'ohr', 'schatten'].map(k => [k, $(P + k)]));
@@ -320,7 +322,7 @@ function fertig() {
   const schnitt = m.n / m.t, min = Math.min(...m.sek);
   const urteil = schnitt >= 45 && min >= 30 ? 'flüssig' : schnitt >= 28 ? 'geht so (leichtes Ruckeln möglich)' : 'ruckelt';
   const gr = szene.classList.contains('kopf') ? 'wie Startseite' : 'Vollbild';
-  erg.innerHTML = `<b>${Math.round(schnitt)} Bilder/s im Schnitt</b>, langsamste Sekunde ${Math.round(min)}, längste Pause ${Math.round(m.lang * 1000)} ms.<br>Bewertung: <b>${urteil}</b><br><span class="klein">${anzahl} Pferd${anzahl > 1 ? 'e' : ''}, ${gr}, Umriss ${svg.classList.contains('ohneUmriss') ? 'aus' : 'an'}, Bildschirm ${screen.width}×${screen.height}, Pixeldichte ${devicePixelRatio}</span>`;
+  erg.innerHTML = `<b>${Math.round(schnitt)} Bilder/s im Schnitt</b>, langsamste Sekunde ${Math.round(min)}, längste Pause ${Math.round(m.lang * 1000)} ms.<br>Bewertung: <b>${urteil}</b><br><span class="klein">${anzahl} Pferd${anzahl > 1 ? 'e' : ''}, ${gr}, Umriss ${UMRISS[umriss]}, Bildschirm ${screen.width}×${screen.height}, Pixeldichte ${devicePixelRatio}</span>`;
   $('messen').disabled = false;
 }
 $('messen').addEventListener('click', () => { mess = { n: 0, t: 0, lang: 0, sek: [] }; fN = 0; fT = 0; $('messen').disabled = true; erg.textContent = 'Messe … noch 10 Sekunden'; });
@@ -331,7 +333,15 @@ $('anzahl').addEventListener('click', e => {
   pferde.forEach((p, i) => { p.an = i < anzahl; p.el.style.display = p.an ? '' : 'none'; });
 });
 $('groesse').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; markiere('#groesse button', b); szene.classList.toggle('kopf', b.dataset.g === 'kopf'); });
-$('umriss').addEventListener('click', e => { const aus = svg.classList.toggle('ohneUmriss'); e.target.classList.toggle('an', !aus); e.target.textContent = aus ? 'Umriss aus' : 'Umriss an'; });
+// Umriss: voll -> leicht -> aus -> voll
+const UMRISS = ['voll', 'leicht', 'aus'];
+let umriss = 0;
+function setzeUmriss(n) {
+  umriss = n; svg.classList.toggle('leicht', n === 1); svg.classList.toggle('ohneUmriss', n === 2);
+  $('umriss').textContent = 'Umriss ' + UMRISS[n]; $('umriss').classList.toggle('an', n < 2);
+}
+$('umriss').addEventListener('click', () => setzeUmriss((umriss + 1) % 3));
+setzeUmriss(0);
 requestAnimationFrame(bild);
-window.studie = { geladen: true, pferde, get mess() { return mess; } };
+window.studie = { geladen: true, pferde, setzeUmriss, get mess() { return mess; } };
 })();
