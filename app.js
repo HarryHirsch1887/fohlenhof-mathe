@@ -6,6 +6,12 @@ const COATS={fuchs:['Fuchs','#b5612b','#6e3414'],braun:['Brauner','#7b4a2a','#1c
  falbe:['Falbe','#cfae7c','#4a3b31',0,'#3b2f28'],wind:['Windfarben','#2b2628','#ece2c8']};
 // Wachstumsstufen: x = Erfahrung ab, s = Größe in der Szene, rx/ry = Körper, h = Kopfgröße, l = sichtbare Beinlänge
 const GS=[{n:'Fohlen',x:0,s:.72,rx:33,ry:17,h:1.05,l:66,w:5.5,nk:.45},{n:'Jährling',x:250,s:.8,rx:42,ry:21,h:1.0,l:58,w:7.5,nk:.7},{n:'Jungpferd',x:700,s:.9,rx:50,ry:24,h:.97,l:51,w:9,nk:.88},{n:'Pferd',x:1500,s:1,rx:58,ry:28,h:.95,l:46,w:10,nk:1}];
+// Wachstum über Tage mit Mathe (seit 2026-10-16): Ein Tag zählt, wenn an ihm mindestens eine Runde fertig gerechnet wurde (höchstens einmal pro Tag).
+// Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten.
+// x (Erfahrung) wird nur noch für alte Spielstände gebraucht: Sie behalten ihre bisher erreichte Stufe. Erfahrung schaltet künftig Extras frei.
+const TAGE=[3,5,10],D3AB=2;// D3AB: 3D-Fenster ab Jungpferd
+// Tageslimit: 20 Minuten pro Kind und Kalendertag, fest eingestellt. Eine laufende Runde wird nicht unterbrochen.
+const LIMIT=20*60;
 const BR={std:{n:'Warmblut',rx:1,ry:1,l:1,nk:1,mw:1,tl:1,h:1,fe:0},hafl:{n:'Haflinger',mc:'#f0deb0',rx:1.04,ry:1.08,l:.9,nk:1.12,mw:1.5,tl:1.15,h:1,fe:0},isl:{n:'Isländer',rx:1,ry:1.08,l:.8,nk:1.15,mw:1.9,tl:1.35,h:1,fe:0},voll:{n:'Vollblut',rx:1.06,ry:.9,l:1.1,nk:.85,mw:.6,tl:.9,h:.93,fe:0},fries:{n:'Friese',rx:1.05,ry:1.05,l:1,nk:1.2,mw:1.9,tl:1.4,h:1,fe:1}};
 const SK=[['jump','Springen'],['gal','Galopp'],['aus','Ausdauer'],['ges','Geschick']];
 // Mähne und Zöpfe: Mähnenlänge ab Jährling kostenlos. Zöpfe (mit rosa Gummi) und weitere Gummifarben kosten Äpfel.
@@ -25,6 +31,9 @@ function clean(d){
  const o={pin:ct(d.pin,8),kids:[]};if(d.np&&!o.pin)o.np=1;if(d.snd===0)o.snd=0;if(d.calm)o.calm=1;
  for(const k of d.kids.slice(0,20)){if(!k||typeof k!=='object')continue;
   const c={id:nn(k.id,1,Number.MAX_SAFE_INTEGER),name:ct(k.name,20)||'Kind',g:[5,6,7,8].includes(+k.g)?+k.g:5,xp:nn(k.xp),ap:nn(k.ap),s:nn(k.s),best:nn(k.best),total:nn(k.total),r:nn(k.r),perfect:nn(k.perfect),b:[],t:{},mist:[]};
+  // st = Wachstumsstufe, sd = gesammelte Tage für die nächste Stufe, ld = letzter gezählter Tag, zd/zt = Spielzeit (Sekunden) an diesem Tag
+  c.st=k.st==null?GS.reduce((a,g,i)=>c.xp>=g.x?i:a,0):nn(k.st,0,3);c.sd=nn(k.sd,0,999);c.zt=nn(k.zt,0,86400);
+  if(/^\d{4}-\d\d-\d\d$/.test(k.ld))c.ld=k.ld;if(/^\d{4}-\d\d-\d\d$/.test(k.zd))c.zd=k.zd;
   if(o.kids.some(z=>z.id==c.id))c.id=Date.now()+o.kids.length;
   if(Array.isArray(k.b))c.b=k.b.filter(x=>BD.some(b=>b[0]==x));
   if(k.t&&typeof k.t==='object')for(const key of Object.keys(k.t)){const s=k.t[key];if(s&&typeof s==='object'&&/^[a-z0-9]{1,12}$/.test(key))c.t[key]={d:nn(s.d,1,5),n:nn(s.n),r:nn(s.r),run:Math.max(-9,Math.min(9,Math.trunc(+s.run)||0))}}
@@ -48,29 +57,39 @@ const $=s=>document.querySelector(s),kid=()=>S.kids.find(k=>k.id==cur);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ts=(k,key)=>k.t[key]||(k.t[key]={d:1,n:0,r:0,run:0});
 const hh=k=>{let H=k.h;H.brs=H.brs||['std'];H.br=H.br||'std';H.sk=H.sk||{};H.it=H.it||{};H.ma=H.ma||'mittel';H.gus=H.gus||['rosa'];H.gu=H.gu||'rosa';return H};
-const gst=x=>GS.reduce((a,g,i)=>x>=g.x?i:a,0);
+const stg=k=>k.st||0;
+// Datum als Text (lokale Zeit), o = Tage Abstand zu heute
+const tag=(o=0)=>{const d=new Date();d.setDate(d.getDate()+o);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const heute=k=>k.ld==tag();
+const serie=k=>k.sd||0;// gesammelte Tage für die nächste Stufe, ausgefallene Tage löschen nichts
+const tageBis=(k,z)=>{let n=-serie(k);for(let i=stg(k);i<z;i++)n+=TAGE[i];return Math.max(0,n)};
+// Nach einer fertigen Runde: Tag zählen (einmal pro Tag) und eventuell wachsen
+function tagZaehlt(k){const t=tag();if(k.ld==t)return{};k.sd=(k.sd||0)+1;k.ld=t;
+ if(stg(k)<3&&k.sd>=TAGE[stg(k)]){k.st=stg(k)+1;k.sd=0;return{neu:1,grow:GS[k.st].n}}return{neu:1}}
+const zeit=k=>k.zd==tag()?(k.zt||0):0,ausZeit=k=>zeit(k)>=LIMIT;
 const dots=d=>`<span class="dots" title="Stufe ${d} von 5">${[1,2,3,4,5].map(i=>`<i class="${i<=d?'on':''}"></i>`).join('')}</span>`;
 // Gezeichnetes Pferd (pferd.js): Spielstand -> Aussehen. Mähnenlänge und Zöpfe erst ab Jährling.
 const pfSpec=(H,st)=>({coat:H.coat,st,br:H.br,bl:H.bl,so:H.so,ma:st>=1?(H.ma||'mittel'):'mittel',zo:st>=1&&H.zk&&H.zo&&H.ma=='lang'?1:0,gu:GUMMI[H.gu||'rosa'][1]});
 // Jedes Bild bekommt ein eigenes Präfix für seine Kennungen (wird bei jedem Seitenaufbau neu gezählt)
 let PZ=0;const pfBild=(spec,opt)=>PF.bild('b'+(PZ++)+'_',spec,opt),PFVB='-118 -252 272 262';
 const RM=typeof matchMedia!='undefined'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-const scene=(k,an,idle)=>{let h=k.h,st=gst(k.xp),s=GS[st].s;return`<svg class="scene" viewBox="0 0 320 180" role="img" aria-label="${esc(h.name)} auf der Weide"><rect width="320" height="180" style="fill:var(--sky)"/><circle cx="268" cy="36" r="16" fill="#e2b24a"/><path d="M0 118Q80 88 170 116T320 106V180H0Z" style="fill:var(--h2)"/>${[0,1,2,3,4].map(i=>`<rect x="${24+i*68}" y="120" width="5" height="40" fill="#b9a27a"/>`).join('')}<rect y="130" width="320" height="4" fill="#b9a27a"/><rect y="144" width="320" height="4" fill="#b9a27a"/><rect y="158" width="320" height="22" style="fill:var(--h1)"/><g id="hg"${an?` class="an-${an.t}" style="--a:${an.a}px"`:''}><g transform="translate(${160-10*s} 163) scale(${s*.5})">${pfBild(pfSpec(hh(k),st),{idle:idle&&!RM})}</g></g><g id="ht"></g></svg>`};
+const scene=(k,an,idle)=>{let h=k.h,st=stg(k),s=GS[st].s;return`<svg class="scene" viewBox="0 0 320 180" role="img" aria-label="${esc(h.name)} auf der Weide"><rect width="320" height="180" style="fill:var(--sky)"/><circle cx="268" cy="36" r="16" fill="#e2b24a"/><path d="M0 118Q80 88 170 116T320 106V180H0Z" style="fill:var(--h2)"/>${[0,1,2,3,4].map(i=>`<rect x="${24+i*68}" y="120" width="5" height="40" fill="#b9a27a"/>`).join('')}<rect y="130" width="320" height="4" fill="#b9a27a"/><rect y="144" width="320" height="4" fill="#b9a27a"/><rect y="158" width="320" height="22" style="fill:var(--h1)"/><g id="hg"${an?` class="an-${an.t}" style="--a:${an.a}px"`:''}><g transform="translate(${160-10*s} 163) scale(${s*.5})">${pfBild(pfSpec(hh(k),st),{idle:idle&&!RM})}</g></g><g id="ht"></g></svg>`};
 const pick=(c)=>`<button class="pick ${CH==c?'on':''}" onclick="CH='${c}';ui()" aria-pressed="${CH==c}"><svg viewBox="${PFVB}">${pfBild({coat:c,st:0})}</svg>${COATS[c][0]}</button>`;
 function ui(){let h='';PZ=0;
  if(v=='home'&&!S.pin&&!S.np){h=`<h1>Pferdehof Mathe</h1><div class="card"><b>Willkommen!</b><p>Soll es eine <b>Eltern-Ansicht mit PIN</b> geben? Dort stehen Statistik, Klassenwahl, Zurücksetzen und die Sicherung.</p><p><b>Mit Eltern-Ansicht:</b> PIN festlegen (mindestens 4 Zeichen).</p><input id="pin0" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp()"> <button onclick="sp()">PIN festlegen</button><p class="no">${warn}</p><p><b>Ohne Eltern-Ansicht:</b> passt zum Beispiel auf dem eigenen Handy eines Kindes. Die Einstellungen sind dann für alle offen.</p><button class="alt" onclick="nopin()">Ohne Eltern-Ansicht starten</button><p class="small">Das lässt sich später jederzeit ändern.</p></div>`}
- else if(v=='home'){h=`<h1>Pferdehof Mathe</h1><p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[gst(k.xp)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
+ else if(v=='home'){h=`<h1>Pferdehof Mathe</h1><p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[stg(k)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
  `<div class="card"><b>Neues Kind</b><div class="row"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name"><select id="gr" aria-label="Klasse"><option value="5">Klasse 5</option><option value="6">Klasse 6</option><option value="7">Klasse 7</option><option value="8">Klasse 8</option></select><button onclick="add()">Hinzufügen</button></div></div><p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button></p>`}
  if(v=='choose'){h=`<button class="alt" onclick="v='home';ui()">Zurück</button><h1>Dein Fohlen</h1><p>Welche Fellfarbe soll es haben? Später kannst du mit Äpfeln weitere Farben und Abzeichen freischalten.</p><div class="grid">${Object.keys(COATS).map(pick).join('')}</div><p><label>Name des Fohlens<br><input id="hn" maxlength="16" placeholder="z. B. Luna" onkeydown="if(event.key=='Enter')mk()"></label></p><button class="go" onclick="mk()">Los geht’s</button>`}
- if(v=='kid'){let k=kid(),st=gst(k.xp),g=GS[st],nx=GS[st+1],pr=nx?(k.xp-g.x)/(nx.x-g.x)*100:100;
- h=`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button><button class="alt" onclick="snd()" aria-pressed="${S.snd!==0}">Ton: ${S.snd===0?'aus':'an'}</button></div><p class="small" style="margin:8px 0 0">Tippe oben auf dein Pferd, um es zu streicheln.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button></div><div class="row sp"><h1>${esc(k.h.name)} <span class="small">${g.n} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}</span></div>
- <div class="bar" style="margin:6px 0"><b style="width:${pr}%"></b></div><p class="small">${nx?`Noch ${nx.x-k.xp} Erfahrung bis „${nx.n}“`:'Dein Pferd ist ausgewachsen!'} · Serie ${k.s} · Rekord ${k.best}${mcount(k)?` · Fehlerheft: ${mcount(k)} zum Wiederholen`:''}</p>
- ${nx?'':`${d3Fenster('')}<p class="small" style="margin-top:0">Wische über das Bild, um ${esc(k.h.name)} von allen Seiten zu sehen.</p>`}
+ if(v=='kid'){let k=kid(),st=stg(k),nx=GS[st+1],se=serie(k),pr=nx?se/TAGE[st]*100:100,rest=Math.max(1,Math.ceil((LIMIT-zeit(k))/60));
+ h=`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button><button class="alt" onclick="snd()" aria-pressed="${S.snd!==0}">Ton: ${S.snd===0?'aus':'an'}</button></div><p class="small" style="margin:8px 0 0">Tippe oben auf dein Pferd, um es zu streicheln.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button></div><div class="row sp"><h1>${esc(k.h.name)} <span class="small">${GS[st].n} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}</span></div>
+ <div class="bar" style="margin:6px 0"><b style="width:${pr}%"></b></div><p class="small">${nx?`Tag ${se} von ${TAGE[st]} bis „${nx.n}“ · ${heute(k)?'heute schon gerechnet':'rechne heute eine Runde, damit der Tag zählt'}`:'Dein Pferd ist ausgewachsen!'}</p>
+ <p class="small">Noch ${rest} Minute${rest>1?'n':''} für heute · ${k.xp} Erfahrung · Serie ${k.s} · Rekord ${k.best}${mcount(k)?` · Fehlerheft: ${mcount(k)} zum Wiederholen`:''}</p>
+ ${st<D3AB?'':`${d3Fenster('')}<p class="small" style="margin-top:0">Wische über das Bild, um ${esc(k.h.name)} von allen Seiten zu sehen.</p>`}
  <h2>Thema wählen</h2>`+T[k.g].map(t=>{let s=ts(k,t[0]);return`<button class="big" onclick="start('${t[0]}')"><span>${t[1]}</span>${dots(s.d)}</button>`}).join('')+
  `<h2>Wunschbaum</h2><button class="big" onclick="v='wish';note='';ui()"><span>Farbe, Mähne und Abzeichen für ${esc(k.h.name)}</span><span class="ap">${AP}</span></button><h2>Abzeichen</h2>`+BD.map(b=>`<span class="badge ${k.b.includes(b[0])?'':'off'}">${b[1]}</span>`).join('')}
- if(v=='wish'){let k=kid(),H=hh(k),st=gst(k.xp);
+ if(v=='wish'){let k=kid(),H=hh(k),st=stg(k);
  h=`<button class="alt" onclick="v='kid';ui()">Zurück</button><div class="row sp"><h1>Wunschbaum</h1><span class="ap">${k.ap||0} ${AP}</span></div><p class="no">${note}</p>
- ${st==3?d3Fenster('kleb'):`<div class="card small">Wenn ${esc(H.name)} ausgewachsen ist, kannst du ${esc(H.name)} hier in 3D von allen Seiten ansehen. Noch ${GS[3].x-k.xp} Erfahrung bis „${GS[3].n}“.</div>`}
+ ${st>=D3AB?d3Fenster('kleb'):`<div class="card small">Wenn ${esc(H.name)} ein ${GS[D3AB].n} ist, kannst du ${esc(H.name)} hier in 3D von allen Seiten ansehen. Noch ${tageBis(k,D3AB)} Tage mit Mathe.</div>`}
  <h2>Mähne</h2>${st<1?`<p class="small">Ab „${GS[1].n}“ kannst du die Mähne kürzer oder länger machen und Zöpfe flechten.</p>`:
  `<div class="row">${Object.entries(MA).map(([id,n])=>`<button class="${H.ma==id?'go':'alt'}" onclick="wish('ma','${id}')" aria-pressed="${H.ma==id}">${n}</button>`).join('')}<button class="${H.zk&&H.zo?'go':'alt'}" onclick="wish('zk')" aria-pressed="${!!(H.zk&&H.zo)}">Zöpfe ${H.zk?(H.zo?'an':'aus'):'· '+PREIS.zopf+' '+AP}</button></div>
  ${H.zk?`<p class="small" style="margin-bottom:4px">Farbe der Haargummis:</p><div class="row">${Object.entries(GUMMI).map(([id,[n,c]])=>`<button class="${H.gu==id?'go':'alt'}" onclick="wish('gu','${id}')" aria-pressed="${H.gu==id}"><span class="gummi" style="background:${c}"></span> ${n}${H.gus.includes(id)?'':' · '+PREIS.gummi+' '+AP}</button>`).join('')}</div>`:''}
@@ -82,14 +101,17 @@ function ui(){let h='';PZ=0;
  (Q.hint&&q[2]?`<p class="small">Tipp: ${esc(de(q[2]))}</p>`:'')+
  (Q.fb?`${Q.fb.ok?`<div style="max-width:300px">${scene(k,Q.fb.an)}</div>`:''}<p class="${Q.fb.ok?'ok':'no'}"><b>${Q.fb.ok?'Richtig! +'+Q.fb.g+' Erfahrung, +'+Q.fb.a+' Äpfel':'Leider falsch. Richtig ist '+de(q[1])+'.'}</b>${Q.fb.m?' '+Q.fb.m:''}</p>${!Q.fb.ok&&q[3]?`<div class="card" style="white-space:pre-line;font-size:16px"><b>So geht’s:</b>\n${esc(de(q[3]))}</div>`:''}<button class="go" onclick="nx()">${Q.i==9?'Fertig':'Weiter'} (Enter)</button>`:
  `<input id="ans" autocomplete="off" aria-label="Antwort" onkeydown="if(event.key=='Enter')chk()"><div class="row"><button class="go" onclick="chk()">Prüfen</button>${q[2]&&!Q.hint?'<button class="alt" onclick="tip()">Tipp (halbe Punkte)</button>':''}</div>`)}
- if(v=='done'){let k=kid();h=`<h1>Geschafft!</h1><div class="card">${scene(k)}<p><b>${Q.right} von 10</b> richtig, <b>+${Q.gain} Erfahrung</b> und <b class="ap">+${Q.ap} ${AP}</b>.</p>${Q.grow?`<p class="ok"><b>${esc(k.h.name)} ist jetzt ein ${Q.grow}!</b></p>`:''}${Q.mast?`<p class="ok"><b>${Q.mast} Aufgabe${Q.mast>1?'n':''} aus dem Fehlerheft gemeistert!</b></p>`:''}${Q.newb.map(b=>`<span class="badge">Neues Abzeichen: ${b}</span>`).join('')}</div><div class="row"><button class="go" onclick="start('${Q.key}')">Nochmal</button><button class="alt" onclick="v='kid';ui()">Zurück zum Hof</button></div>`}
+ if(v=='done'){let k=kid();h=`<h1>Geschafft!</h1><div class="card">${scene(k)}<p><b>${Q.right} von 10</b> richtig, <b>+${Q.gain} Erfahrung</b> und <b class="ap">+${Q.ap} ${AP}</b>.</p>${Q.grow?`<p class="ok"><b>${esc(k.h.name)} ist jetzt ein ${Q.grow}!</b></p>`:''}${Q.tg?`<p class="small">${Q.tg}</p>`:''}${Q.mast?`<p class="ok"><b>${Q.mast} Aufgabe${Q.mast>1?'n':''} aus dem Fehlerheft gemeistert!</b></p>`:''}${Q.newb.map(b=>`<span class="badge">Neues Abzeichen: ${b}</span>`).join('')}</div>`+
+ (ausZeit(k)?`<div class="card" id="limit"><b>Für heute ist Schluss.</b><p>Deine 20 Minuten auf dem Hof sind um. Morgen geht es weiter, ${esc(k.h.name)} wartet auf dich!</p></div><button class="go" onclick="v='home';ui()">Tschüss, bis morgen</button>`:
+ `<div class="row"><button class="go" onclick="start('${Q.key}')">Nochmal</button><button class="alt" onclick="v='kid';ui()">Zurück zum Hof</button></div>`)}
+ if(v=='bye'){let k=kid();h=`<h1>Bis morgen, ${esc(k.name)}!</h1><div class="card">${k.h?scene(k):''}<p>Für heute sind deine 20 Minuten auf dem Hof um.${k.h?` ${esc(k.h.name)} freut sich, wenn du morgen wiederkommst.`:''}</p>${k.h&&stg(k)<3&&heute(k)?'<p class="small">Heute hast du gerechnet, der Tag zählt fürs Wachstum.</p>':''}</div><button class="go" onclick="v='home';ui()">Tschüss</button>`}
  if(v=='parent'){h=`<button class="alt" onclick="v='home';lock()">Zurück</button><h1>${S.pin?'Eltern-Ansicht':'Einstellungen'}</h1>`;
  if(S.pin&&!open)h+=`<div class="card"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p></div>`;
  else{h+=S.kids.map(k=>`<div class="card"><div class="row sp"><b>${esc(k.name)}</b><span>Klasse <select onchange="gr(${k.id},this.value)" aria-label="Klasse">${[5,6,7,8].map(c=>`<option ${k.g==c?'selected':''}>${c}</option>`).join('')}</select></span></div>
- <p class="small">${k.h?esc(k.h.name)+' · '+GS[gst(k.xp)].n+' · ':''}${k.xp} Erfahrung · ${k.ap||0} Äpfel · ${k.r} von ${k.total} Aufgaben richtig (${k.total?Math.round(k.r/k.total*100):0} %) · Rekordserie ${k.best} · Fehlerheft ${mcount(k)} offen</p>
+ <p class="small">${k.h?esc(k.h.name)+' · '+GS[stg(k)].n+' · ':''}${k.h&&stg(k)<3?`Tag ${serie(k)} von ${TAGE[stg(k)]} bis „${GS[stg(k)+1].n}“ · `:''}heute ${Math.min(20,Math.floor(zeit(k)/60))} von 20 Minuten · ${k.xp} Erfahrung · ${k.ap||0} Äpfel · ${k.r} von ${k.total} Aufgaben richtig (${k.total?Math.round(k.r/k.total*100):0} %) · Rekordserie ${k.best} · Fehlerheft ${mcount(k)} offen</p>
  <table><tr><th>Thema</th><th>Stufe</th><th>Aufgaben</th><th>Richtig</th></tr>${T[k.g].map(t=>{let s=ts(k,t[0]);return`<tr><td>${t[1]}</td><td>${s.d}</td><td>${s.n}</td><td>${s.n?Math.round(s.r/s.n*100)+' %':'–'}</td></tr>`}).join('')}</table>
  <p class="small">Ein Thema wechselt hoch nach 3 richtigen Antworten in Folge und runter nach 2 falschen.</p><div class="row"><button class="alt" onclick="rst(${k.id})">Fortschritt zurücksetzen</button><button class="alt" onclick="del(${k.id})">Kind löschen</button></div></div>`).join('')||'<p>Noch keine Kinder angelegt.</p>';
- h+=`<div class="card"><b>Anzeige</b><p class="small">Der animierte Hintergrund kann ruhig gestellt werden, zum Beispiel bei älteren Geräten oder um den Akku zu schonen. Dann stehen die Pferde still.</p><button class="alt" onclick="S.calm=S.calm?0:1;save();ui()">Ruhiger Hintergrund: ${S.calm?'an':'aus'}</button></div><div class="card"><b>Sicherung</b><p class="small">Der Stand liegt nur in diesem Browser. Exportiere ihn regelmäßig als Datei, besonders vor dem Löschen von Browserdaten oder bei einem Gerätewechsel.</p><div class="row"><button onclick="exp()">Exportieren</button><input type="file" accept=".json" onchange="imp(this)" aria-label="Sicherung importieren"></div><p class="no">${warn}</p></div>
+ h+=`<div class="card"><b>Spielzeit und Wachstum</b><p class="small">Jedes Kind kann höchstens 20 Minuten pro Tag auf den Hof (fest eingestellt). Eine laufende Runde wird nicht unterbrochen. Das Pferd wächst mit Tagen, an denen mindestens eine Runde gerechnet wurde (einmal pro Tag): Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten.</p></div><div class="card"><b>Anzeige</b><p class="small">Der animierte Hintergrund kann ruhig gestellt werden, zum Beispiel bei älteren Geräten oder um den Akku zu schonen. Dann stehen die Pferde still.</p><button class="alt" onclick="S.calm=S.calm?0:1;save();ui()">Ruhiger Hintergrund: ${S.calm?'an':'aus'}</button></div><div class="card"><b>Sicherung</b><p class="small">Der Stand liegt nur in diesem Browser. Exportiere ihn regelmäßig als Datei, besonders vor dem Löschen von Browserdaten oder bei einem Gerätewechsel.</p><div class="row"><button onclick="exp()">Exportieren</button><input type="file" accept=".json" onchange="imp(this)" aria-label="Sicherung importieren"></div><p class="no">${warn}</p></div>
  <div class="card"><b>PIN-Schutz</b>${S.pin?`<p class="small">Diese Ansicht ist mit einer PIN geschützt. Ohne PIN heißt sie „Einstellungen“ und ist für alle offen, zum Beispiel auf dem eigenen Handy eines Kindes.</p><button class="alt" onclick="npin()">PIN entfernen</button>`:`<p class="small">Ohne PIN kann jeder hier die Klasse ändern, Fortschritt zurücksetzen und Kinder löschen. Mit einer PIN (mindestens 4 Zeichen) wird daraus die geschützte Eltern-Ansicht.</p><input id="pin1" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp('pin1')"> <button onclick="sp('pin1')">PIN festlegen</button>`}<p class="no">${pw}</p></div>`+(S.pin?`<button class="alt" onclick="lock()">Sperren</button>`:'')}}
  $('#app').innerHTML='<div class="in">'+h+'</div>';hofSync();d3Sync();setTimeout(()=>{let a=$('#ans')||$('#pin')||$('#hn')||$('#pin0');a&&(v!='home'||a.id=='pin0')&&a.focus({preventScroll:a.id=='hn'})})}
 // 3D-Fenster für ausgewachsene Pferde: Platzhalter im Seitenaufbau, das Modul (3d/vorschau.js) wird erst beim ersten Anzeigen geladen
@@ -101,18 +123,29 @@ function d3Sync(){const el=$('#d3');
  const H=hh(kid()),spec={coat:H.coat,ma:H.ma,zo:H.zk&&H.zo?1:0,gu:GUMMI[H.gu][1],bl:H.bl,so:H.so,br:H.br};
  D3=D3||import('./3d/vorschau.js');
  D3.then(m=>{if($('#d3')===el)m.zeige(el,spec)}).catch(e=>{D3=null;el.classList.add('fehler');console.warn('3D nicht verfügbar',e)})}
-function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,xp:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{}});save();ui()}
+function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{}});save();ui()}
 // PIN festlegen: ohne id beim ersten Start (Feld pin0), mit id='pin1' nachträglich in den Einstellungen
 function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=p;delete S.np;if(id)open=true;save();ui()}
 function nopin(){S.np=1;save();ui()}
 function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellungen öffnen.'))return;S.pin='';S.np=1;open=false;save();ui()}
-function sel(id){cur=id;v=kid().h?'kid':'choose';ui();scrollTo(0,0)}
+function sel(id){cur=id;const k=kid();if(!k)return;v=ausZeit(k)?'bye':k.h?'kid':'choose';ui();scrollTo(0,0)}
+// Tageslimit erreicht: Rundflug beenden und verabschieden
+function bye(){if(HF.mode=='fly')flyOff();v='bye';ui();scrollTo(0,0)}
+// Spielzeit messen: nur, solange ein Kind auf seinem Hof ist und die App sichtbar ist (auch im Rundflug, der läuft über der Kind-Ansicht)
+let ZL=Date.now(),ZS=0;const ZV=['choose','kid','wish','quiz','done'];
+setInterval(()=>{const now=Date.now(),dt=Math.min(5,(now-ZL)/1000);ZL=now;
+ const k=cur&&kid();if(!k||document.visibilityState!='visible'||!ZV.includes(v))return;
+ const t=tag();if(k.zd!=t){k.zd=t;k.zt=0}const vor=ausZeit(k);k.zt+=dt;
+ if(now-ZS>15000){ZS=now;save()}
+ if(!vor&&ausZeit(k)){save();if(v=='done')ui();else if(v!='quiz')bye()}},1000);
+// Beim Verlassen nur speichern, wenn gerade Zeit gezählt wurde (sonst könnte ein frisch gelöschter oder importierter Stand überschrieben werden)
+document.addEventListener('visibilitychange',()=>{ZL=Date.now();if(document.visibilityState=='hidden'&&cur&&kid()&&ZV.includes(v))save()});
 function mk(){let k=kid();k.h={coat:CH,coats:[CH],name:($('#hn').value.trim()||'Fohlen'),own:{},bl:0,so:0};save();v='kid';ui()}
 function wish(t,c){let k=kid(),H=hh(k),no=()=>{note='Dafür fehlen noch Äpfel.';ui()};note='';
  if(t=='br'){if(!H.brs.includes(c)){if((k.ap||0)<40)return no();k.ap-=40;H.brs.push(c)}H.br=c}
  else if(t=='sk'){let l=H.sk[c]||0,p=10*(l+1);if(l>=5)return;if((k.ap||0)<p)return no();k.ap-=p;H.sk[c]=l+1}
  else if(t=='coat'){if(!H.coats.includes(c)){if((k.ap||0)<25)return no();k.ap-=25;H.coats.push(c)}H.coat=c}
- else if(t=='ma'||t=='zk'||t=='gu'){if(gst(k.xp)<1)return;
+ else if(t=='ma'||t=='zk'||t=='gu'){if(stg(k)<1)return;
   if(t=='ma'){H.ma=c;if(c!='lang')H.zo=0}
   else if(t=='zk'){if(!H.zk){if((k.ap||0)<PREIS.zopf)return no();k.ap-=PREIS.zopf;H.zk=1;H.zo=1}else H.zo=H.zo?0:1;if(H.zo)H.ma='lang'}
   else{if(!H.gus.includes(c)){if((k.ap||0)<PREIS.gummi)return no();k.ap-=PREIS.gummi;H.gus.push(c)}H.gu=c}}
@@ -122,7 +155,7 @@ function wish(t,c){let k=kid(),H=hh(k),no=()=>{note='Dafür fehlen noch Äpfel.'
 // Fehlerheft: falsch beantwortete Aufgaben (max. 30 pro Kind). Pro Runde kommen bis zu 3 davon aus dem gewählten Thema erneut dran.
 const ms=k=>k.mist||(k.mist=[]);
 const mcount=k=>(k.mist||[]).filter(x=>T[k.g].some(t=>t[0]==x.key)).length;
-function start(key){let k=kid(),rep=ms(k).filter(x=>x.key==key).map(x=>x.q).sort(()=>Math.random()-.5).slice(0,3),pool=[1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-.5);
+function start(key){if(ausZeit(kid()))return bye();let k=kid(),rep=ms(k).filter(x=>x.key==key).map(x=>x.q).sort(()=>Math.random()-.5).slice(0,3),pool=[1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-.5);
  Q={key,i:0,right:0,hint:0,gain:0,ap:0,grow:'',newb:[],fb:null,seen:[],rep,slots:pool.slice(0,rep.length),rp:0,mast:0};Q.q=gen();v='quiz';ui()}
 const gen=()=>{let k=kid(),t=T[k.g].find(x=>x[0]==Q.key),q,n=0;Q.rp=0;
  if(Q.rep.length&&Q.slots.includes(Q.i)){Q.rp=1;q=Q.rep.shift();Q.seen.push(q[0]);return q}
@@ -131,21 +164,24 @@ const gen=()=>{let k=kid(),t=T[k.g].find(x=>x[0]==Q.key),q,n=0;Q.rp=0;
 // Tipp anzeigen, ohne die bereits getippte Antwort zu verlieren (ui() baut die Seite neu auf)
 function tip(){let el=$('#ans'),val=el?el.value:'';Q.hint=1;ui();let n=$('#ans');if(n)n.value=val}
 function chk(){let k=kid(),s=ts(k,Q.key),raw=$('#ans').value.trim().replace(',','.').replace('−','-');if(raw===''||isNaN(raw))return $('#ans').focus();
- let ok=Math.abs(+raw-Q.q[1])<1e-9,g=0,a=0,m='',s0=gst(k.xp);k.total++;s.n++;
+ let ok=Math.abs(+raw-Q.q[1])<1e-9,g=0,a=0,m='';k.total++;s.n++;
  if(ok){s.r++;k.r++;k.s++;k.best=Math.max(k.best,k.s);Q.right++;g=Math.round((8+3*s.d)*(Q.hint?.5:1))+(k.s>=5?5:0);a=1+(s.d>=4?1:0);k.xp+=g;k.ap=(k.ap||0)+a;Q.gain+=g;Q.ap+=a;s.run=s.run>0?s.run+1:1;
-  if(s.run>=3&&s.d<5){s.d++;s.run=0;m='Stufe '+s.d+' erreicht!'}
-  if(gst(k.xp)>s0){Q.grow=GS[gst(k.xp)].n;m+=' '+k.h.name+' wird zum '+Q.grow+'!'}}
+  if(s.run>=3&&s.d<5){s.d++;s.run=0;m='Stufe '+s.d+' erreicht!'}}
  else{k.s=0;s.run=s.run<0?s.run-1:-1;if(s.run<=-2&&s.d>1){s.d--;s.run=0;m='Wir üben eine Stufe leichter.'}}
  BD.forEach(b=>{if(!k.b.includes(b[0])&&b[2](k)){k.b.push(b[0]);Q.newb.push(b[1])}});
  let L=ms(k),ix=L.findIndex(x=>x.key==Q.key&&x.q[0]==Q.q[0]);
  if(ok){if(ix>=0){L.splice(ix,1);Q.mast++}}else if(ix<0){L.push({key:Q.key,q:Q.q});if(L.length>30)L.shift()}
  let H=hh(k),ow=SK.filter(x=>H.sk[x[0]]>0),pk=ow.length?P(ow)[0]:'hop',ls=H.sk[pk]||0;Q.fb={ok,g,a,m,an:ok?{t:{jump:'jump',gal:'gal',aus:'aus',ges:'wig',hop:'hop'}[pk],a:pk=='gal'?20+14*ls:8+9*ls}:null};Q.ts=Date.now();save();ui()}
-function nx(){Q.i++;if(Q.i>=10){let k=kid();if(Q.right==10){k.perfect++;BD.forEach(b=>{if(!k.b.includes(b[0])&&b[2](k)){k.b.push(b[0]);Q.newb.push(b[1])}});save()}v='done'}else{Q.q=gen();Q.fb=null;Q.hint=0}ui()}
+function nx(){Q.i++;if(Q.i>=10){let k=kid();if(Q.right==10){k.perfect++;BD.forEach(b=>{if(!k.b.includes(b[0])&&b[2](k)){k.b.push(b[0]);Q.newb.push(b[1])}})}
+  // Runde fertig: Der Tag zählt fürs Wachstum (einmal pro Tag)
+  const w=tagZaehlt(k),st=stg(k);Q.grow=w.grow||'';
+  Q.tg=w.neu&&st<3?(w.grow?`Bis „${GS[st+1].n}“ braucht es jetzt ${TAGE[st]} Tage mit Mathe.`:`Heute zählt fürs Wachstum: Tag ${k.sd} von ${TAGE[st]} bis „${GS[st+1].n}“.`):'';
+  save();v='done'}else{Q.q=gen();Q.fb=null;Q.hint=0}ui()}
 // Sperren: muss eine Funktion sein. In onclick-Attributen würde "open=false" sonst document.open überschreiben statt diese Variable.
 function lock(){open=false;ui()}
 function unl(){let p=$('#pin').value;if(!p)return;if(p==S.pin)open=true;else{warn='Falsche PIN.';ui();warn='';return}ui()}
 function gr(id,g){let k=S.kids.find(x=>x.id==id);k.g=+g;save();ui()}
-function rst(id){if(!confirm('Fortschritt wirklich zurücksetzen? Das Pferd beginnt wieder als Fohlen.'))return;let k=S.kids.find(x=>x.id==id);Object.assign(k,{xp:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},mist:[]});if(k.h){k.h.coats=[k.h.coat];k.h.own={};k.h.bl=0;k.h.so=0;k.h.br='std';k.h.brs=['std'];k.h.sk={};k.h.it={}}save();ui()}
+function rst(id){if(!confirm('Fortschritt wirklich zurücksetzen? Das Pferd beginnt wieder als Fohlen.'))return;let k=S.kids.find(x=>x.id==id);delete k.ld;Object.assign(k,{xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},mist:[]});if(k.h){k.h.coats=[k.h.coat];k.h.own={};k.h.bl=0;k.h.so=0;k.h.br='std';k.h.brs=['std'];k.h.sk={};k.h.it={}}save();ui()}
 function del(id){if(!confirm('Kind samt Fortschritt löschen?'))return;S.kids=S.kids.filter(x=>x.id!=id);save();ui()}
 function exp(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='pferdehof-sicherung.json';a.click()}
 function imp(el){let f=el.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=clean(JSON.parse(r.result));if(!d)throw 0;if(!confirm('Aktuellen Stand durch die Sicherung ersetzen? Der PIN-Schutz wird aus der Sicherung übernommen.'))return;if(!d.pin)d.np=1;S=d;save();ui()}catch(e){warn='Datei konnte nicht gelesen werden.';ui()}};r.readAsText(f)}
