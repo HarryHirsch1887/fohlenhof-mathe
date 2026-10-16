@@ -69,7 +69,7 @@ const HF={mode:'bg',horses:[],ord:[],key:'',t:0,last:0,raf:0,run:false,cam:0,cv:
 
 function fillers(){if(!HF.fill){const ks=Object.keys(COATS),bs=Object.keys(BR);HF.fill=[...Array(5)].map((_,i)=>{const c=ks[(i*2+R(0,5))%ks.length],b=bs[R(0,bs.length-1)];return{id:'f'+i,c,st:i==3?1:3,m:{br:b,bl:R(0,1),so:R(0,1)},name:BR[b].n+' · '+COATS[c][0],own:0}})}return HF.fill}
 function hofSpecs(kind){
- const A=[],km=k=>{const H=hh(k);return{id:'k'+k.id,c:H.coat,st:gst(k.xp),m:pfSpec(H,gst(k.xp)),name:H.name,own:k.id}};
+ const A=[],km=k=>{const H=hh(k);return{id:'k'+k.id,c:H.coat,st:stg(k),m:pfSpec(H,stg(k)),name:H.name,own:k.id}};
  if(kind=='kid'){const k=kid(),H=hh(k);A.push(km(k));H.brs.filter(b=>b!='std').slice(0,4).forEach((b,i)=>{const c=H.coats[(i+1)%H.coats.length];A.push({id:'c'+k.id+b,c,st:3,m:{br:b,bl:0,so:i%2},name:BR[b].n+' · '+COATS[c][0],own:0})})}
  else{S.kids.filter(k=>k.h).slice(0,5).forEach(k=>A.push(km(k)));const f=fillers();for(let i=0;A.length<5;i++)A.push(f[i])}
  return A}
@@ -180,7 +180,7 @@ function hofSync(force){
  if(!show){hofStop();svg.style.display='none';root.setProperty('--wh','0px');return}
  svg.style.display='block';root.setProperty('--wh',(fly?0:Math.max(210,Math.min(360,Math.round(innerHeight*.34))))+'px');
  const k=(v=='kid'||v=='wish'||v=='done')?kid():null,kind=k&&k.h?'kid':'home';
- const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,gst(k.xp),H.bl,H.so,H.br,H.ma,H.brs.join(),H.coats.join(),Object.keys(H.it).join()].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,gst(x.xp),x.h.br,x.h.bl,x.h.so,x.h.ma].join():'').join(';');
+ const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.br,H.ma,H.brs.join(),H.coats.join(),Object.keys(H.it).join()].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.br,x.h.bl,x.h.so,x.h.ma].join():'').join(';');
  const key=[kind,sig,pal(new Date().getHours()).n,fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
  if(force||key!=HF.key){HF.key=key;hofBuild(kind)}
  hofRun()}

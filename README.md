@@ -2,7 +2,7 @@
 
 (Früher „Fohlenhof Mathe“. Adresse, Repository `fohlenhof-mathe` und Speicherschlüssel behalten den alten Namen, damit installierte Apps und Spielstände erhalten bleiben.)
 
-Eine kleine Lern-App, in der Kinder Mathe üben und dabei ein Pferd großziehen. Je mehr Aufgaben richtig gelöst werden, desto mehr wächst das Fohlen zum ausgewachsenen Pferd. Für richtig gelöste Aufgaben gibt es Äpfel, mit denen sich Fellfarben, Abzeichen, Rassen und Fähigkeiten freischalten lassen. Fellfarben: Fuchs, Brauner, Rappe, Schimmel, Palomino, Schecke, Falbe (mit dunklen Beinen und Aalstrich) und Windfarben (dunkles Fell, helle Mähne).
+Eine kleine Lern-App, in der Kinder Mathe üben und dabei ein Pferd großziehen. Wer an mehreren Tagen rechnet, lässt das Fohlen zum ausgewachsenen Pferd wachsen. Für richtig gelöste Aufgaben gibt es Äpfel, mit denen sich Fellfarben, Abzeichen, Rassen und Fähigkeiten freischalten lassen. Fellfarben: Fuchs, Brauner, Rappe, Schimmel, Palomino, Schecke, Falbe (mit dunklen Beinen und Aalstrich) und Windfarben (dunkles Fell, helle Mähne).
 
 Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnasium).
 
@@ -17,7 +17,9 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 - **Rundflug:** Eine ruhige Fahrt über den ganzen Hof. Wischen zum Umschauen, Tippen auf ein Pferd zeigt den Namen.
 - Die Animation lässt sich in der Eltern-Ansicht ruhigstellen und stoppt bei "Bewegung reduzieren". Bei langsamen Geräten schaltet sie selbst um: zuerst ohne Umriss, dann auf die halbe Bildrate.
 - **Mähne und Zöpfe:** Ab der Stufe „Jährling“ lässt sich die Mähne kostenlos auf Kurz, Mittel oder Lang stellen. Zöpfe kosten 10 Äpfel (mit rosa Haargummi), weitere Gummifarben je 3 Äpfel.
-- **3D-Ansicht:** Ist das Pferd ausgewachsen, zeigen Kind-Ansicht und Wunschbaum es in einem kleinen 3D-Fenster, drehbar mit dem Finger. Fellfarbe, Abzeichen, Mähne und Zöpfe erscheinen dort sofort. Die 3D-Dateien (etwa 3,3 MB) werden erst beim ersten Öffnen geladen und danach offline gespeichert.
+- **Wachstum über Tage mit Mathe:** Ein Tag zählt, wenn mindestens eine Runde fertig gerechnet wurde (höchstens einmal pro Tag). Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten. Die Erfahrung schaltet künftig Extras frei.
+- **Tageslimit:** Höchstens 20 Minuten pro Kind und Tag, fest eingestellt. Eine laufende Runde wird nicht unterbrochen. Danach verabschiedet sich die App bis zum nächsten Tag.
+- **3D-Ansicht:** Ab der Stufe „Jungpferd“ zeigen Kind-Ansicht und Wunschbaum es in einem kleinen 3D-Fenster, drehbar mit dem Finger. Fellfarbe, Abzeichen, Mähne und Zöpfe erscheinen dort sofort. Die 3D-Dateien (etwa 3,3 MB) werden erst beim ersten Öffnen geladen und danach offline gespeichert.
 - **Eltern-Ansicht** mit Statistik, Einstellungen und Sicherung (Export und Import). Beim ersten Start wählbar: mit PIN geschützt oder ohne PIN als offene „Einstellungen“, zum Beispiel auf dem eigenen Handy eines Kindes. Lässt sich später im Kasten „PIN-Schutz“ umstellen.
 - Funktioniert ohne Konto und ohne Internetverbindung, sobald die App geladen und als App installiert ist.
 
