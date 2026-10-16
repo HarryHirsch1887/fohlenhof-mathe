@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tempo-Test: fünf gezeichnete Pferde</title>
+<meta name="theme-color" content="#4f8a4a">
+<link rel="icon" type="image/png" href="../icon-192.png">
+<link rel="stylesheet" href="studie.css">
+<style>
+ #szene.kopf{height:34vh;height:34dvh;min-height:210px;max-height:360px}
+ #ergebnis{max-width:560px;margin:0 auto;text-align:center;font-size:15px}
+ #ergebnis b{font-size:18px}
+ .leiste.fest{position:static;background:none;padding:12px 10px 20px}
+ .leiste.fest .hinweis,.leiste.fest .etikett{color:inherit;text-shadow:none}
+</style>
+</head>
+<body>
+<div id="szene">
+ <svg id="bild" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fünf Pferde auf der Koppel"></svg>
+ <div class="oben"><a class="knopf" href="./">Zurück</a><span class="titel">Tempo-Test</span><span id="fps" class="fps">–</span></div>
+</div>
+<div class="leiste fest">
+ <div class="reihe" id="anzahl"><span class="etikett">Pferde:</span><button data-n="1">1</button><button data-n="3">3</button><button data-n="5" class="an">5</button></div>
+ <div class="reihe" id="groesse"><span class="etikett">Größe:</span><button data-g="kopf">Wie Startseite</button><button data-g="voll" class="an">Vollbild (wie Flug)</button></div>
+ <div class="reihe"><button id="umriss" class="an">Umriss an</button><button id="messen">10 Sekunden messen</button></div>
+ <p id="ergebnis" class="hinweis">Tippe auf „10 Sekunden messen“ und lass das Gerät dabei in Ruhe. Am besten einmal mit „Wie Startseite“ und einmal mit „Vollbild“ messen.</p>
+</div>
+<script src="herde.js"></script>
+</body>
+</html>
