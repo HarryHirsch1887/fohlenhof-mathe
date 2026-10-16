@@ -72,6 +72,21 @@ function maehne(a, c, b, n, laenge, seed, teilNr, art) {
   }
   return s + hell;
 }
+// Mähne am Halsgelenk: kurzer Bogen um den Drehpunkt (80,-172) durch den Anfang des oberen Mähnenkamms, mit hängenden Strähnen.
+// Liegt im oberen Halsteil über dessen Fell und dreht sich beim Senken nur halb mit (Rig: id "gelenk"),
+// so sitzt es immer in der Mitte des Knicks und schließt die Lücke zwischen den beiden Mähnenstücken.
+function gelenkMaehne(art, laenge) {
+  const cx = 80, cy = -172, r = Math.hypot(64 - cx, -185 - cy), f0 = Math.atan2(-185 - cy, 64 - cx), d = 32 * Math.PI / 180, fa = f0 - d, fb = f0 + d;
+  const p = (f, rr) => `${r1(cx + Math.cos(f) * rr)} ${r1(cy + Math.sin(f) * rr)}`, ro = r + (art === 'fohlen' ? 4 : 5), ri = r - 3;
+  let s = `<path class="ha1" d="M${p(fa, ro)}A${r1(ro)} ${r1(ro)} 0 0 1 ${p(fb, ro)}L${p(fb, ri)}A${r1(ri)} ${r1(ri)} 0 0 0 ${p(fa, ri)}Z"/>`;
+  if (art !== 'zoepfe') for (let i = 0; i < 4; i++) {
+    const f = fa + (i + .5) / 4 * (fb - fa), rx = Math.cos(f), ry = Math.sin(f), bx = r1(cx + rx * (r + 2)), by = r1(cy + ry * (r + 2));
+    if (art === 'fohlen') { s += straehne(bx, by, rx * .9, ry * .9 - .2, 9 + rnd(i) * 3, 7, 0, 'ha1'); continue; }
+    let dx = -rx * .4, dy = -ry * .4 + .8; const l = Math.hypot(dx, dy); dx /= l; dy /= l;
+    s += `<g class="mh" data-t="3" data-x="${bx}" data-y="${by}">${straehne(bx, by, dx, dy, laenge * (.85 + rnd(i * 7) * .25), laenge > 40 ? 13 : 11, 3, i === 2 ? 'ha2' : 'ha1')}</g>`;
+  }
+  return `<g id="gelenk">${s}</g>`;
+}
 function schweif(tl, fohlen) {
   let s = '', hell = '';
   const n = fohlen ? 8 : 12;
@@ -156,6 +171,7 @@ function bild(P, sp, opt = {}) {
    <g id="hals1"><path class="kN" d="${HALS1}"/><circle class="kN" cx="80" cy="-172" r="17"/>
     ${maehne([38, -156], [43, -177], [64, -185], 6, t => (26 + t * 8) * mf, 10, 1, art)}
     <g id="hals2"><path class="kN2" d="${HALS2}"/><circle class="kN2" cx="80" cy="-172" r="16.5"/>${linie('M86 -158C91 -170 96 -184 100 -196', .08, 1.4)}
+     ${gelenkMaehne(art, 34 * mf)}
      ${maehne([64, -185], [67, -211], [92, -219], 7, t => (38 - t * 12) * mf, 30, 2, art)}
      <g transform="translate(98 -210) scale(${r1(m.hs / m.ns * 100) / 100}) translate(-98 210)"><g id="kopf">${idle ? SMIL('98 -210', 3, 4.6) : ''}
       <path class="kKf" d="M91 -211C88 -218 87 -225 88.5 -231C93 -225 96 -219 96.5 -211Z"/><path id="kopfForm" class="kH" d="${KOPF}"/>
@@ -196,7 +212,7 @@ const PIV = { v: [[0, 0], [0, 42], [0, 76]], h: [[0, 0], [-10, 48], [-8, 80]] };
 class Rig {
   constructor(P) {
     const $ = id => document.getElementById(P + id);
-    this.G = Object.fromEntries(['koerper', 'schweif', 'hals1', 'hals2', 'kopf', 'auge', 'ohr', 'schatten'].map(k => [k, $(k)]));
+    this.G = Object.fromEntries(['koerper', 'schweif', 'hals1', 'hals2', 'gelenk', 'kopf', 'auge', 'ohr', 'schatten'].map(k => [k, $(k)]));
     this.B = Object.fromEntries(['vn', 'vf', 'hn', 'hf'].map(k => [k, { typ: k[0], g: [1, 2, 3].map(n => $(k + n)) }]));
     const root = $('pferd');
     this.MH = root ? [...root.querySelectorAll(`#${P}nahTeile .mh`)].map(el => ({ el, teil: +el.dataset.t, p: [+el.dataset.x, +el.dataset.y] })) : [];
@@ -220,9 +236,12 @@ class Rig {
     const hw = [0, 1, 2].map(i => GRAS_HALS[i] * gr * (1 - am) + g.halt[i] * am);
     const kauen = gr > .6 ? 2.2 * Math.sin(this.zeit * 9) : 0;
     const h1 = hw[0] + nick * .4, h2 = h1 + hw[1] + nick * .6;
-    rot(this.G.hals1, h1, [62, -132]); rot(this.G.hals2, hw[1] + nick * .6, [80, -172]); rot(this.G.kopf, hw[2] - nick * .5 + kauen, [98, -210]);
-    const wind = (gal ? am * 14 : 0) + Math.sin(this.zeit * 2.1) * 1.5;
-    for (const mh of this.MH) rot(mh.el, -(mh.teil === 1 ? h1 : h2) * .8 + wind, mh.p);
+    const k2 = hw[1] + nick * .6;
+    rot(this.G.hals1, h1, [62, -132]); rot(this.G.hals2, k2, [80, -172]); rot(this.G.kopf, hw[2] - nick * .5 + kauen, [98, -210]);
+    // Gelenk-Mähne dreht nur halb mit und sitzt so in der Mitte des Knicks
+    if (this.G.gelenk) rot(this.G.gelenk, -k2 * .5, [80, -172]);
+    const wind = (gal ? am * 14 : 0) + Math.sin(this.zeit * 2.1) * 1.5, hm = h1 + k2 * .5;
+    for (const mh of this.MH) rot(mh.el, -(mh.teil === 1 ? h1 : mh.teil === 3 ? hm : h2) * .8 + wind, mh.p);
     if (dt > 0) { this.schlagZeit -= dt; if (this.schlagZeit <= 0) { this.schlagen = 1; this.schlagZeit = 3 + Math.random() * 5; } this.schlagen = Math.max(0, this.schlagen - dt * 1.6); }
     rot(this.G.schweif, 3 * Math.sin(this.zeit * 1.4) + am * (gal ? 26 : tr ? 12 : 6 * Math.sin(ph * Math.PI * 2)) + 16 * Math.sin(this.schlagen * Math.PI * 3) * this.schlagen + (hop > 5 ? 18 : 0), [-85, -150]);
     if (dt > 0) { this.blinzeln -= dt; if (this.blinzeln <= 0) this.blinzeln = 2.5 + Math.random() * 4; this.ohrZeit -= dt; if (this.ohrZeit <= 0) this.ohrZeit = 2 + Math.random() * 4; }
