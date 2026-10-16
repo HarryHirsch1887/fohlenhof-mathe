@@ -16,6 +16,8 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 - **Persönlicher Hof:** Nach der Anmeldung zeigt der Hintergrund das Pferd des Kindes. Mit Äpfeln lassen sich Gegenstände bauen (Apfelbaum, Eiche, Blumenwiese, Heuballen, Wassertrog, Stall, Teich, Windrad, Regenbogen). Jede gekaufte Rasse bringt einen Pferdefreund mit.
 - **Rundflug:** Eine ruhige Fahrt über den ganzen Hof. Wischen zum Umschauen, Tippen auf ein Pferd zeigt den Namen.
 - Die Animation lässt sich in der Eltern-Ansicht ruhigstellen und stoppt bei "Bewegung reduzieren". Bei langsamen Geräten schaltet sie selbst auf die halbe Bildrate.
+- **Mähne und Zöpfe:** Ab der Stufe „Jährling“ lässt sich die Mähne kostenlos auf Kurz, Mittel oder Lang stellen. Zöpfe kosten 10 Äpfel (mit rosa Haargummi), weitere Gummifarben je 3 Äpfel.
+- **3D-Ansicht:** Ist das Pferd ausgewachsen, zeigen Kind-Ansicht und Wunschbaum es in einem kleinen 3D-Fenster, drehbar mit dem Finger. Fellfarbe, Abzeichen, Mähne und Zöpfe erscheinen dort sofort. Die 3D-Dateien (etwa 3,3 MB) werden erst beim ersten Öffnen geladen und danach offline gespeichert.
 - **Eltern-Ansicht** mit Statistik, Einstellungen und Sicherung (Export und Import). Beim ersten Start wählbar: mit PIN geschützt oder ohne PIN als offene „Einstellungen“, zum Beispiel auf dem eigenen Handy eines Kindes. Lässt sich später im Kasten „PIN-Schutz“ umstellen.
 - Funktioniert ohne Konto und ohne Internetverbindung, sobald die App geladen und als App installiert ist.
 
@@ -64,7 +66,11 @@ Dann `http://localhost:3000` öffnen. Auf `localhost` lässt sich die App auch a
 | `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | App-Symbole |
 | `icon-maskable-192.png`, `icon-maskable-512.png` | App-Symbole für Android (werden rund oder abgerundet zugeschnitten, Motiv liegt in der Sicherheitszone) |
 
-Es gibt keine Abhängigkeiten und keinen Build-Schritt. Alles ist reines HTML, CSS und JavaScript.
+| `3d/vorschau.js` | 3D-Fenster für das eigene Pferd (wird erst bei Bedarf geladen) |
+| `3d/three.module.js`, `3d/three.core.js`, `3d/addons/` | Bibliothek three.js 0.186.1 (MIT-Lizenz, siehe `3d/LICENSE-three.txt`), Importe auf feste Pfade umgeschrieben |
+| `3d/pferd.glb` | 3D-Pferd „Horse“ von Quaternius (CC0, gemeinfrei) |
+
+Es gibt keinen Build-Schritt. Alles ist reines HTML, CSS und JavaScript. Die einzige fremde Bibliothek ist three.js für das 3D-Fenster.
 
 ## Hinweise für Änderungen
 
