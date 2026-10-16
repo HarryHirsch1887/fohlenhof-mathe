@@ -15,7 +15,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 - **Animierte Weide** als Hintergrund: Auf der Startseite laufen die Pferde der Kinder (aufgefüllt auf 5) über die Koppel, mit stehen, grasen, Schritt, Trab und Galopp. Himmel und Licht folgen der echten Uhrzeit (Tag, Dämmerung, Nacht).
 - **Persönlicher Hof:** Nach der Anmeldung zeigt der Hintergrund das Pferd des Kindes. Mit Äpfeln lassen sich Gegenstände bauen (Apfelbaum, Eiche, Blumenwiese, Heuballen, Wassertrog, Stall, Teich, Windrad, Regenbogen). Jede gekaufte Rasse bringt einen Pferdefreund mit.
 - **Rundflug:** Eine ruhige Fahrt über den ganzen Hof. Wischen zum Umschauen, Tippen auf ein Pferd zeigt den Namen.
-- Die Animation lässt sich in der Eltern-Ansicht ruhigstellen und stoppt bei "Bewegung reduzieren". Bei langsamen Geräten schaltet sie selbst auf die halbe Bildrate.
+- Die Animation lässt sich in der Eltern-Ansicht ruhigstellen und stoppt bei "Bewegung reduzieren". Bei langsamen Geräten schaltet sie selbst um: zuerst ohne Umriss, dann auf die halbe Bildrate.
 - **Mähne und Zöpfe:** Ab der Stufe „Jährling“ lässt sich die Mähne kostenlos auf Kurz, Mittel oder Lang stellen. Zöpfe kosten 10 Äpfel (mit rosa Haargummi), weitere Gummifarben je 3 Äpfel.
 - **3D-Ansicht:** Ist das Pferd ausgewachsen, zeigen Kind-Ansicht und Wunschbaum es in einem kleinen 3D-Fenster, drehbar mit dem Finger. Fellfarbe, Abzeichen, Mähne und Zöpfe erscheinen dort sofort. Die 3D-Dateien (etwa 3,3 MB) werden erst beim ersten Öffnen geladen und danach offline gespeichert.
 - **Eltern-Ansicht** mit Statistik, Einstellungen und Sicherung (Export und Import). Beim ersten Start wählbar: mit PIN geschützt oder ohne PIN als offene „Einstellungen“, zum Beispiel auf dem eigenen Handy eines Kindes. Lässt sich später im Kasten „PIN-Schutz“ umstellen.
@@ -59,6 +59,7 @@ Dann `http://localhost:3000` öffnen. Auf `localhost` lässt sich die App auch a
 | `index.html` | Startseite, bindet alles ein |
 | `style.css` | Aussehen |
 | `aufgaben.js` | Aufgaben-Generatoren mit Tipps und Lösungswegen |
+| `pferd.js` | Gezeichnetes Pferd im Bilderbuch-Look: Fellfarben, Rassen, Wachstumsstufen, Mähne, Zöpfe, Bewegung (Schritt, Trab, Galopp, Grasen) |
 | `hof.js` | Animierte Weide, Hof-Gegenstände, Herde, Rundflug |
 | `app.js` | Spiellogik, Oberfläche, Speicher, Eltern-Ansicht, Pferd-Zeichnung |
 | `manifest.webmanifest` | Angaben für die Installation als App |

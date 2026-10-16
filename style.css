@@ -39,6 +39,15 @@ input,select{background:var(--card);border:1px solid var(--line);border-radius:1
 .an-jump,.an-hop{animation:jump .9s ease-out .5s}.an-gal{animation:gal 1.2s ease-in-out .5s}.an-wig{animation:wig .8s ease-in-out .5s;transform-origin:160px 160px}.an-aus{animation:aus 1.1s ease-out .5s}.now{animation-delay:0s!important}
 @keyframes hrt{0%{opacity:0;transform:translateY(0)}15%{opacity:1}100%{opacity:0;transform:translateY(-36px)}}.hrt{animation:hrt 1.3s ease-out both}
 @media(prefers-reduced-motion:reduce){[class^=an-],.hrt{animation:none}}
+/* Gezeichnetes Pferd (pferd.js): Farben kommen als CSS-Variablen vom jeweiligen Pferd.
+   Umriss leicht (fest): Haare, Glanz und Details bekommen keinen Rand, hintere Pferde gar keinen. Sparmodus: Klasse ohneUmriss. */
+.kK{fill:var(--gK)}.kN{fill:var(--gN)}.kN2{fill:var(--gN2)}.kH{fill:var(--gH)}.kKf{fill:var(--fk3)}.bO{fill:var(--gB)}.bOf{fill:var(--gBf)}.bU{fill:var(--u)}.bUf{fill:var(--fu)}
+.hu{fill:var(--huf)}.hf{fill:var(--fhuf)}.ha1{fill:var(--h1);stroke:#000;stroke-opacity:.22;stroke-width:.8}.ha2{fill:var(--h2);stroke:#000;stroke-opacity:.18;stroke-width:.8}
+.glanz{fill:var(--k1);opacity:.55}.maul{fill:var(--maul);opacity:.8}.beh{fill:var(--h1);opacity:calc(var(--beh) * .85)}.aal{fill:none;stroke:var(--u);stroke-width:3.4;stroke-linecap:round;opacity:var(--aal)}
+.fleck{fill:#f4f1ea;opacity:var(--sch)}.blesse{fill:#f4f1ea;opacity:var(--bl)}.gummi2d{fill:var(--gu);stroke:#0004;stroke-width:.6}.schatten2d{fill:#2d4a1f;opacity:.22}
+.umriss{stroke:#2a1d14;stroke-opacity:.6;stroke-width:3.8;stroke-linejoin:round;--ohneUm:none}.fuell{stroke:none}
+.ha1,.ha2,.glanz,.maul,.aal,.beh,.det,.fleck,.blesse,.gummi2d{display:var(--ohneUm,inline)}
+.hinten .umriss,.ohneUmriss .umriss{display:none}
 /* 3D-Fenster (nur ausgewachsene Pferde); im Wunschbaum bleibt es beim Scrollen oben stehen */
 .d3{position:relative;height:220px;border-radius:14px;overflow:hidden;margin:10px 0;background:linear-gradient(#cfe5ef 0%,#e6f2ea 70%,#d8ebcc 100%);border:1px solid var(--line)}
 .d3.kleb{position:sticky;top:6px;z-index:3;box-shadow:0 4px 14px #0003}
