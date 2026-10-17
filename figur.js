@@ -2,7 +2,7 @@
 // Füße auf y = 0, Kopf mit Helm oben bei etwa y = -110, Mitte x = 0. Nur Code (SVG), keine Bilddateien.
 // Gespeichert am Kind als k.f = {g: 'm' (Mädchen) oder 'j' (Junge), hf: Hautfarbe, ha: Haarfarbe, lg: Farbe der Reitleggings}
 // Immer dabei: schwarzer Reithelm und Reitstiefel. Weitere Leggings-Farben kommen später gegen Äpfel dazu.
-const HAUT={hell:['Hell','#f5d5bf','#dcae94'],mittel:['Leicht braun','#d6a07a','#b9825d'],dunkel:['Dunkel','#8a5737','#6c4229']};
+const HAUT={hell:['Hell','#f5d5bf','#dcae94'],mittel:['Hellbraun','#d6a07a','#b9825d'],dunkel:['Dunkel','#8a5737','#6c4229']};
 const HAAR={blond:['Blond','#ecc96c','#c9a145'],braun:['Braun','#7b4b2b','#5a341c'],schwarz:['Schwarz','#2b2321','#151010'],rot:['Rot','#c4562c','#9a3e1c']};
 const LEG={schwarz:['Schwarz','#27272c']};
 const FIGUR0={g:'m',hf:'hell',ha:'braun',lg:'schwarz'};
@@ -34,16 +34,23 @@ function figurBild(f){
  // Kurze Haare im Nacken, hinter Kopf und Ohren (Junge)
  if(!m)s+=`<path d="M-13.6 -97Q-15.2 -88 -11 -84.6L11 -84.6Q15.2 -88 13.6 -97Z" fill="${ac}" ${st}/>`;
  // Kopf mit Ohren
- s+=`<circle cx="-11.8" cy="-92" r="2.5" fill="${hc}" ${st}/><circle cx="11.8" cy="-92" r="2.5" fill="${hc}" ${st}/><circle cy="-93" r="12" fill="${hc}" ${st}/>`;
+ s+=`<circle cx="-11.8" cy="-92" r="2.5" fill="${hc}" ${st}/><circle cx="11.8" cy="-92" r="2.5" fill="${hc}" ${st}/>${m?`<circle cy="-93" r="12" fill="${hc}" ${st}/>`:`<ellipse cy="-92.8" rx="12.5" ry="11.9" fill="${hc}" ${st}/>`}`;
  // Haare vorn: Strähnen neben dem Gesicht (Mädchen) bzw. kurze Koteletten (Junge)
  s+=m?`<path d="M-12.6 -99Q-14.2 -90 -11.8 -82.5L-9.6 -85Q-10.6 -92 -9 -99.5Z" fill="${ac}" ${st}/><path d="M12.6 -99Q14.2 -90 11.8 -82.5L9.6 -85Q10.6 -92 9 -99.5Z" fill="${ac}" ${st}/>`
   :`<path d="M-12.8 -99Q-13.6 -93 -12 -88.6L-9.4 -91Q-10 -96 -8.4 -99.6Z" fill="${ac}" ${st}/><path d="M12.8 -99Q13.6 -93 12 -88.6L9.4 -91Q10 -96 8.4 -99.6Z" fill="${ac}" ${st}/>`+
    `<path d="M-10.4 -94.4Q-9.4 -91.6 -7.6 -93.6Q-6.6 -91.8 -5.4 -94.2ZM10.4 -94.4Q9.4 -91.6 7.6 -93.6Q6.6 -91.8 5.4 -94.2Z" fill="${ac}" stroke="${ul}" stroke-width=".7" stroke-linejoin="round"/>`;
- // Gesicht: Augen mit Glanzpunkt, Wangen, Nase, Lächeln (Mädchen mit kleinen Wimpern)
- s+=`<ellipse cx="-4.4" cy="-91.4" rx="1.45" ry="1.85" fill="${ul}"/><ellipse cx="4.4" cy="-91.4" rx="1.45" ry="1.85" fill="${ul}"/><circle cx="-4" cy="-92.2" r=".55" fill="#fff"/><circle cx="4.8" cy="-92.2" r=".55" fill="#fff"/>`+
-  (m?`<path d="M-5.9 -92.6l-1.2 -.8M5.9 -92.6l1.2 -.8" stroke="${ul}" stroke-width=".55"/>`:'')+
-  `<circle cx="-7.2" cy="-87.6" r="2.2" fill="#e8787a" opacity=".35"/><circle cx="7.2" cy="-87.6" r="2.2" fill="#e8787a" opacity=".35"/>`+
-  `<path d="M.2 -89.6q.9 1.2 -.2 1.9" stroke="${hs}" stroke-width=".8" fill="none" stroke-linecap="round"/><path d="M-3.4 -85Q0 -82.2 3.4 -85" stroke="#7a3b2e" stroke-width=".95" fill="none" stroke-linecap="round"/>`;
+ // Gesicht (Augenbrauen gehen nicht, sie lägen unter dem Helmschirm)
+ // Mädchen: große Augen mit Wimpern, rosige Wangen, feines Lächeln
+ // Junge: kleinere runde Augen, breites Grinsen mit Zähnen, Sommersprossen, kaum Wangenröte
+ const nase=`<path d="M.2 -89.6q.9 1.2 -.2 1.9" stroke="${hs}" stroke-width=".8" fill="none" stroke-linecap="round"/>`;
+ s+=m?`<ellipse cx="-4.4" cy="-91.3" rx="1.65" ry="2.1" fill="${ul}"/><ellipse cx="4.4" cy="-91.3" rx="1.65" ry="2.1" fill="${ul}"/><circle cx="-3.9" cy="-92.2" r=".65" fill="#fff"/><circle cx="4.9" cy="-92.2" r=".65" fill="#fff"/>`+
+   `<path d="M-6 -92.4l-1.3 -.9M-5.8 -91.4l-1.4 -.2M6 -92.4l1.3 -.9M5.8 -91.4l1.4 -.2" stroke="${ul}" stroke-width=".55" stroke-linecap="round"/>`+
+   `<circle cx="-7.2" cy="-87.6" r="2.3" fill="#e8787a" opacity=".38"/><circle cx="7.2" cy="-87.6" r="2.3" fill="#e8787a" opacity=".38"/>`+nase+
+   `<path d="M-3 -85.1Q0 -82.6 3 -85.1" stroke="#a8454f" stroke-width=".95" fill="none" stroke-linecap="round"/>`
+  :`<circle cx="-4.6" cy="-91.2" r="1.3" fill="${ul}"/><circle cx="4.6" cy="-91.2" r="1.3" fill="${ul}"/><circle cx="-4.2" cy="-91.7" r=".45" fill="#fff"/><circle cx="5" cy="-91.7" r=".45" fill="#fff"/>`+
+   `<circle cx="-7.4" cy="-87.4" r="1.9" fill="#e8787a" opacity=".18"/><circle cx="7.4" cy="-87.4" r="1.9" fill="#e8787a" opacity=".18"/>`+
+   `<g fill="${hs}" opacity=".9"><circle cx="-7.6" cy="-88.6" r=".42"/><circle cx="-6.2" cy="-87.6" r=".42"/><circle cx="-8.4" cy="-87.2" r=".42"/><circle cx="7.6" cy="-88.6" r=".42"/><circle cx="6.2" cy="-87.6" r=".42"/><circle cx="8.4" cy="-87.2" r=".42"/></g>`+nase+
+   `<path d="M-4.2 -85.6Q0 -80.4 4.2 -85.6Z" fill="#7a3b2e" stroke="${ul}" stroke-width=".6" stroke-linejoin="round"/><path d="M-3.6 -85.4Q0 -84.5 3.6 -85.4L3.2 -84.4Q0 -83.7 -3.2 -84.4Z" fill="#fff"/>`;
  // Schwarzer Reithelm mit Schirm, Glanz, Lüftungsschlitzen und Kinnriemen
  s+=`<path d="M-13.7 -93.4Q-14.4 -109.6 0 -110Q14.4 -109.6 13.7 -93.4Q0 -97.6 -13.7 -93.4Z" fill="#1d1d22" ${st}/>`+
   `<path d="M-11.4 -96.6Q0 -99.6 11.4 -96.6Q12.4 -94.3 10.8 -93.8Q0 -95.8 -10.8 -93.8Q-12.4 -94.3 -11.4 -96.6Z" fill="#2e2e34" ${st}/>`+
