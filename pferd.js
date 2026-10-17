@@ -129,6 +129,8 @@ const SMIL = (p, w, dur) => `<animateTransform attributeName="transform" type="r
 function stil(P, sp, m) {
   const f = FELL[sp.coat] || FELL.fuchs, c = { ...f };
   if (m.mc && (sp.coat === 'fuchs' || sp.coat === 'braun')) { c.h1 = m.mc; c.h2 = '#f8efd6'; }
+  // Eigene Mähnenfarbe [dunkel, hell], z. B. für Lieblingspferde wie Jacko (Falbe mit heller Mähne)
+  if (Array.isArray(sp.mh)) { c.h1 = sp.mh[0]; c.h2 = sp.mh[1]; }
   if (sp.so) c.u = '#f1eee6';
   let s = '';
   for (const k of ['k1', 'k2', 'k3', 'u', 'maul', 'h1', 'h2', 'huf']) s += `--${k}:${c[k]};--f${k}:${mische(c[k], '#1a2418', .2)};`;
