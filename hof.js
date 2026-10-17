@@ -98,6 +98,8 @@ function hofBuild(kind){
  HF.horses=hofSpecs(kind).map(s=>{const o=old[s.id];return Object.assign({ph:0,am:0,g:'walk',ha:0,joy:0,state:'stand',t:R(1,3),dir:R(0,1)?1:-1,d:Math.random(),dd:.5,sw:Math.random()*6,x:HF.cam+30+Math.random()*(W-60)},s,o?{x:o.x,d:o.d,dir:o.dir,state:o.state,t:o.t,ph:o.ph,am:o.am,g:o.g,ha:o.ha,dd:o.dd,ziel:kind=='kid'?o.ziel:null}:{})});
  // Gras nicht auf Gegenständen: belegte Flächen [links, rechts, Fußlinie]
  const belegt=ITEMS.filter(i=>items.includes(i[0])&&FUSS[i[0]]).map(i=>{const x=Math.round(i[3]*WW),[w,b]=FUSS[i[0]];return[x-w,x+w,b]}),frei=(x,y)=>!belegt.some(([a,b,f])=>x>a&&x<b&&y<f+1);
+ // Figuren: auf dem Hof eines Kindes die eigene vorn, alle anderen (höchstens 5) hinter dem Zaun
+ const mitF=S.kids.filter(x=>x.f),eig=kind=='kid'?mitF.find(x=>x.id==kidId):null,figs={eigen:eig,zaun:mitF.filter(x=>x!==eig).slice(0,5)};
  const nacht=P.n=='nacht',gras=nacht?['#2f5a38','#376640','#28503a']:['#6d9f4c','#7fb258','#5f9245','#86b960'];
  // Farbverläufe: Himmel, Sonnen- bzw. Mondschein, Wolken, Wiese, Teich, Schatten an der Stallwand
  let s=`<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.t}"/><stop offset=".55" stop-color="${P.m}"/><stop offset="1" stop-color="${P.b}"/></linearGradient>`+
@@ -120,11 +122,15 @@ function hofBuild(kind){
  // Wiese mit Verlauf, Büsche am Rand, Holzzaun mit Lichtkante, Gegenstände, Gras hinter den Pferden
  s+=`<g id="hw"><rect x="0" y="${GY-8}" width="${WW}" height="${WH-GY+8}" fill="url(#bodenG)"/>`+
   [[.12,.06],[.52,.13],[.9,.05]].map(([a,b],i)=>busch(a*WW,GY+1,6+b*40,i%2?P.bu:'#4f8a4a')).join('')+
+  // Figuren der anderen Kinder (auf dem Startbild: aller Kinder) stehen hinter dem Zaun und schauen den Pferden zu
+  figs.zaun.map((x,i)=>`<g class="fig" data-k="${x.id}" transform="translate(${r1((.43+i*.022)*WW)} ${GY-3}) scale(.3)">${figurBild(x.f)}</g>`).join('')+
   `<g fill="#a9805a">${[GY-6,GY].map(y=>`<rect x="0" y="${y-1}" width="${WW}" height="2.2" rx=".8"/><rect x="0" y="${y+1.2}" width="${WW}" height=".8" fill="#7d5c3c" opacity=".5"/>`).join('')}</g>`+
   [...Array(Math.ceil(WW/28)+1)].map((_,i)=>`<rect x="${i*28}" y="${GY-12}" width="3.2" height="18" rx=".8" fill="#9b7449"/><rect x="${i*28}" y="${GY-12}" width="1.1" height="18" rx=".5" fill="#b78c5e"/>`).join('')+
   ITEMS.filter(i=>items.includes(i[0])&&DR[i[0]]).map(i=>{const z=DR[i[0]](Math.round(i[3]*WW)),u=UMR[i[0]]?`<g stroke="#3a261466" stroke-width=".55" stroke-linejoin="round">${z}</g>`:z;
    return kind=='kid'&&AKT[i[0]]?`<g data-act="${i[0]}" style="cursor:pointer">${u}</g>`:u}).join('')+
   grasStreifen(WW,Math.round(WW/6),GY-2,GY+12,3,5.5,200,gras,frei)+
+  // Eigene Figur steht auf dem Hof vor dem Zaun
+  (figs.eigen?`<g class="fig eigen" data-k="${figs.eigen.id}" transform="translate(${r1(.47*WW)} ${GY+15}) scale(.36)">${figurBild(figs.eigen.f)}</g>`:'')+
   // Ebene für Apfel, Frosch, Wellen und Pferdeäpfel (hinter den Pferden)
   `<g id="hap">${kind=='kid'?HF.mist.map(mistSvg).join(''):''}</g>`+
   HF.horses.map((h,i)=>`<g class="hs" id="hs${i}" data-i="${i}">${PF.bild('h'+i+'_',{...h.m,coat:h.c,st:h.st})}</g>`).join('')+
@@ -196,14 +202,26 @@ function herzen(L){if(!HF.hfx)return;
 function welle(x,y){if(!HF.hap)return;const el=document.createElementNS('http://www.w3.org/2000/svg','ellipse');el.setAttribute('fill','none');el.setAttribute('stroke','#e8f6ff');el.setAttribute('stroke-width','.8');HF.hap.appendChild(el);HF.wellen.push({x,y,t:0,el})}
 // Ein Pferd erreicht den Apfel: das erste nascht ihn (3 Sekunden) und freut sich
 function apfelDa(h){const A=HF.apfel;if(A&&A.lande&&A.weg==null&&Math.abs(h.x-A.x)<20){A.weg=3;herzen([h]);if(S.snd!==0)neigh(h.st)}}
-// Quaken: kurzer, knarzender Ton per Web Audio (keine Audiodatei, kein Netzwerk)
+// Quaken: ein lautes "Quaaak" per Web Audio (keine Audiodatei, kein Netzwerk), aufgebaut wie eine Stimme:
+// knarzender Grundton (Sägezahn mit schnellen Lautstärke-Pulsen) durch drei Resonanzfilter (Formanten), die von "u" nach "a" wandern,
+// davor ein kurzes Rauschen für das "Q". QV = Gesamtlautstärke (per Messung so eingestellt, dass nichts übersteuert).
+const QV=.75;
 function quak(){if(S.snd===0)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state=='suspended')AC.resume();
- const t=AC.currentTime,o=AC.createOscillator(),am=AC.createOscillator(),ag=AC.createGain(),f=AC.createBiquadFilter(),g=AC.createGain(),v=AC.createGain();
- o.type='sawtooth';o.frequency.setValueAtTime(210,t);o.frequency.exponentialRampToValueAtTime(130,t+.38);
- am.type='square';am.frequency.value=26;ag.gain.value=.5;v.gain.value=.5;am.connect(ag);ag.connect(v.gain);
- f.type='bandpass';f.frequency.value=750;f.Q.value=2.5;o.connect(f);f.connect(v);v.connect(g);g.connect(AC.destination);
- g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(1.2,t+.03);g.gain.setValueAtTime(1.2,t+.3);g.gain.linearRampToValueAtTime(0,t+.4);
- [o,am].forEach(x=>{x.start(t);x.stop(t+.45)})}catch(e){}}
+ const t=AC.currentTime+.02,T=.5,o=AC.createOscillator(),puls=AC.createOscillator(),pg=AC.createGain(),src=AC.createGain(),aus=AC.createGain(),lp=AC.createBiquadFilter();
+ // Grundton: setzt tief ein, steigt zum "a" und sinkt am Ende ab
+ o.type='sawtooth';o.frequency.setValueAtTime(70,t);o.frequency.linearRampToValueAtTime(115,t+.12);o.frequency.linearRampToValueAtTime(100,t+.32);o.frequency.exponentialRampToValueAtTime(60,t+T);
+ // Knarzen: 32 Pulse pro Sekunde in der Lautstärke
+ puls.type='square';puls.frequency.value=32;pg.gain.value=.45;src.gain.value=.55;puls.connect(pg);pg.connect(src.gain);o.connect(src);
+ // Formanten [Start, Mitte, Ende, Schärfe, Anteil]: "u" -> "a" -> leicht "o"
+ [[300,750,620,6,1],[900,1500,1150,8,.7],[2300,2600,2400,9,.25]].forEach(([a,b,c,q,gn])=>{const f=AC.createBiquadFilter(),g=AC.createGain();f.type='bandpass';f.Q.value=q;
+  f.frequency.setValueAtTime(a,t);f.frequency.linearRampToValueAtTime(b,t+.1);f.frequency.linearRampToValueAtTime(c,t+T);g.gain.value=gn;src.connect(f);f.connect(g);g.connect(aus)});
+ // Lautstärke: kurzer Einsatz, langes "aaa", weiches Ende
+ aus.gain.setValueAtTime(0,t);aus.gain.linearRampToValueAtTime(2.2*QV,t+.04);aus.gain.linearRampToValueAtTime(3*QV,t+.12);aus.gain.setValueAtTime(3*QV,t+.34);aus.gain.linearRampToValueAtTime(0,t+T);
+ lp.type='lowpass';lp.frequency.value=3500;aus.connect(lp);lp.connect(AC.destination);
+ // "Q": kurzes, abklingendes Rauschen
+ const n=AC.createBufferSource(),b=AC.createBuffer(1,Math.round(AC.sampleRate*.03),AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);
+ const nf=AC.createBiquadFilter(),ng=AC.createGain();n.buffer=b;nf.type='bandpass';nf.frequency.value=1800;nf.Q.value=1.5;ng.gain.value=.5*QV;n.connect(nf);nf.connect(ng);ng.connect(AC.destination);n.start(t-.015);
+ [o,puls].forEach(x=>{x.start(t);x.stop(t+T+.05)})}catch(e){}}
 // Animation kurz laufen lassen, auch wenn der Hintergrund ruhig gestellt ist (nicht bei "Bewegung reduzieren")
 function hofKick(s){if(RM)return;HF.bis=Math.max(HF.bis,performance.now()+s*1000);if(!HF.raf){HF.last=performance.now();HF.raf=requestAnimationFrame(hofFrame)}}
 // Antippen eines Gegenstands auf dem Hof des Kindes (gesperrt, solange erst wieder gerechnet werden muss)
@@ -264,13 +282,14 @@ function hofRun(){
  if(HF.run){if(!HF.raf){HF.last=performance.now();HF.raf=requestAnimationFrame(hofFrame)}}else{hofStop();hofDraw(0)}}
 // Wird nach jeder Änderung der Ansicht aufgerufen (aus ui()).
 function hofSync(force){
- const svg=$('#hof'),root=document.documentElement.style,fly=HF.mode=='fly',show=fly||['home','choose','kid','wish','done'].includes(v);
+ const svg=$('#hof'),root=document.documentElement.style,fly=HF.mode=='fly',show=fly||['home','choose','figur','kid','wish','done'].includes(v);
  document.body.classList.toggle('nohof',!show);
  if(!show){hofStop();svg.style.display='none';root.setProperty('--wh','0px');return}
  svg.style.display='block';root.setProperty('--wh',(fly?0:Math.max(210,Math.min(360,Math.round(innerHeight*.34))))+'px');
  const k=(v=='kid'||v=='wish'||v=='done')?kid():null,kind=k&&k.h?'kid':'home';
  const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.br,H.ma,H.brs.join(),H.coats.join(),Object.keys(H.it).join()].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.br,x.h.bl,x.h.so,x.h.ma].join():'').join(';');
- const key=[kind,sig,pal(new Date().getHours()).n,fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
+ const fsig=S.kids.map(x=>x.f?[x.id,x.f.g,x.f.hf,x.f.ha,x.f.lg].join(''):'').join();
+ const key=[kind,sig,fsig,pal(new Date().getHours()).n,fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
  if(force||key!=HF.key){HF.key=key;hofBuild(kind)}
  hofRun()}
 function hofTap(h){

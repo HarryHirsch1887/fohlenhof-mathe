@@ -15,6 +15,8 @@ const LIMIT=20*60;
 // Hof-Sperre: Nach 3 Minuten auf dem Hof (Kind-Ansicht, Wunschbaum, Rundflug) läuft ein Countdown von 10 Sekunden,
 // danach muss erst wieder eine Runde mit mindestens 75 % (8 von 10) geschafft werden. Gespeichert: hz = Hofzeit in Sekunden, hl = gesperrt
 const HOFZEIT=180,FREI=8;
+// Neue Kinder erstellen zuerst ihre Figur (figur.js) und dürfen nach 5 richtigen Aufgaben ihr Fohlen aussuchen
+const FOHLEN=5;
 const BR={std:{n:'Warmblut',rx:1,ry:1,l:1,nk:1,mw:1,tl:1,h:1,fe:0},hafl:{n:'Haflinger',mc:'#f0deb0',rx:1.04,ry:1.08,l:.9,nk:1.12,mw:1.5,tl:1.15,h:1,fe:0},isl:{n:'Isländer',rx:1,ry:1.08,l:.8,nk:1.15,mw:1.9,tl:1.35,h:1,fe:0},voll:{n:'Vollblut',rx:1.06,ry:.9,l:1.1,nk:.85,mw:.6,tl:.9,h:.93,fe:0},fries:{n:'Friese',rx:1.05,ry:1.05,l:1,nk:1.2,mw:1.9,tl:1.4,h:1,fe:1}};
 const SK=[['jump','Springen'],['gal','Galopp'],['aus','Ausdauer'],['ges','Geschick']];
 // Mähne und Zöpfe: Mähnenlänge ab Jährling kostenlos. Zöpfe (mit rosa Gummi) und weitere Gummifarben kosten Äpfel.
@@ -37,6 +39,7 @@ function clean(d){
   // st = Wachstumsstufe, sd = gesammelte Tage für die nächste Stufe, ld = letzter gezählter Tag, zd/zt = Spielzeit (Sekunden) an diesem Tag
   c.st=k.st==null?GS.reduce((a,g,i)=>c.xp>=g.x?i:a,0):nn(k.st,0,3);c.sd=nn(k.sd,0,999);c.zt=nn(k.zt,0,86400);
   c.hz=nn(k.hz,0,HOFZEIT);if(k.hl)c.hl=1;
+  if(k.f&&typeof k.f==='object')c.f={g:k.f.g==='j'?'j':'m',hf:HAUT[k.f.hf]?k.f.hf:'hell',ha:HAAR[k.f.ha]?k.f.ha:'braun',lg:LEG[k.f.lg]?k.f.lg:'schwarz'};
   if(/^\d{4}-\d\d-\d\d$/.test(k.ld))c.ld=k.ld;if(/^\d{4}-\d\d-\d\d$/.test(k.zd))c.zd=k.zd;
   if(o.kids.some(z=>z.id==c.id))c.id=Date.now()+o.kids.length;
   if(Array.isArray(k.b))c.b=k.b.filter(x=>BD.some(b=>b[0]==x));
@@ -69,7 +72,7 @@ const serie=k=>k.sd||0;// gesammelte Tage für die nächste Stufe, ausgefallene 
 const tageBis=(k,z)=>{let n=-serie(k);for(let i=stg(k);i<z;i++)n+=TAGE[i];return Math.max(0,n)};
 // Nach einer fertigen Runde: Tag zählen (einmal pro Tag) und eventuell wachsen
 function tagZaehlt(k){const t=tag();if(k.ld==t)return{};k.sd=(k.sd||0)+1;k.ld=t;
- if(stg(k)<3&&k.sd>=TAGE[stg(k)]){k.st=stg(k)+1;k.sd=0;return{neu:1,grow:GS[k.st].n}}return{neu:1}}
+ if(k.h&&stg(k)<3&&k.sd>=TAGE[stg(k)]){k.st=stg(k)+1;k.sd=0;return{neu:1,grow:GS[k.st].n}}return{neu:1}}
 const zeit=k=>k.zd==tag()?(k.zt||0):0,ausZeit=k=>zeit(k)>=LIMIT;
 const dots=d=>`<span class="dots" title="Stufe ${d} von 5">${[1,2,3,4,5].map(i=>`<i class="${i<=d?'on':''}"></i>`).join('')}</span>`;
 // Gezeichnetes Pferd (pferd.js): Spielstand -> Aussehen. Mähnenlänge und Zöpfe erst ab Jährling.
@@ -83,9 +86,27 @@ function ui(){let h='';PZ=0;
  if(v=='home'&&!S.pin&&!S.np){h=`<h1>Pferdehof Mathe</h1><div class="card"><b>Willkommen!</b><p>Soll es eine <b>Eltern-Ansicht mit PIN</b> geben? Dort stehen Statistik, Klassenwahl, Zurücksetzen und die Sicherung.</p><p><b>Mit Eltern-Ansicht:</b> PIN festlegen (mindestens 4 Zeichen).</p><input id="pin0" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp()"> <button onclick="sp()">PIN festlegen</button><p class="no">${warn}</p><p><b>Ohne Eltern-Ansicht:</b> passt zum Beispiel auf dem eigenen Handy eines Kindes. Die Einstellungen sind dann für alle offen.</p><button class="alt" onclick="nopin()">Ohne Eltern-Ansicht starten</button><p class="small">Das lässt sich später jederzeit ändern.</p></div>`}
  else if(v=='home'){h=`<h1>Pferdehof Mathe</h1><p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[stg(k)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
  `<div class="card"><b>Neues Kind</b><div class="row"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name"><select id="gr" aria-label="Klasse"><option value="5">Klasse 5</option><option value="6">Klasse 6</option><option value="7">Klasse 7</option><option value="8">Klasse 8</option></select><button onclick="add()">Hinzufügen</button></div></div><p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button></p>`}
- if(v=='choose'){h=`<button class="alt" onclick="v='home';ui()">Zurück</button><h1>Dein Fohlen</h1><p>Welche Fellfarbe soll es haben? Später kannst du mit Äpfeln weitere Farben und Abzeichen freischalten.</p><div class="grid">${Object.keys(COATS).map(pick).join('')}</div><p><label>Name des Fohlens<br><input id="hn" maxlength="16" placeholder="z. B. Luna" onkeydown="if(event.key=='Enter')mk()"></label></p><button class="go" onclick="mk()">Los geht’s</button>`}
- if(v=='kid'){let k=kid(),st=stg(k),nx=GS[st+1],se=serie(k),pr=nx?se/TAGE[st]*100:100,rest=Math.max(1,Math.ceil((LIMIT-zeit(k))/60));
- h=`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button><button class="alt" onclick="snd()" aria-pressed="${S.snd!==0}">Ton: ${S.snd===0?'aus':'an'}</button></div><p class="small" style="margin:8px 0 0">${k.hl?'Tippe oben auf dein Pferd, um es zu streicheln.</p>'+SPERRINFO:`Tippe oben auf dein Pferd, um es zu streicheln. Probier auch Apfelbaum, Windrad und Teich aus, wenn du sie gebaut hast.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button></div>`}<div class="row sp"><h1>${esc(k.h.name)} <span class="small">${GS[st].n} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}</span></div>
+ // Figur erstellen oder ändern (FE: Entwurf, wird erst mit "Fertig" bzw. "Speichern" übernommen)
+ if(v=='figur'){let k=kid(),neu=!k.f,opt=(t,id,lab,sw)=>`<button class="${FE[t]==id?'go':'alt'}" onclick="FE.${t}='${id}';ui()" aria-pressed="${FE[t]==id}">${sw?`<span class="gummi" style="background:${sw}"></span> `:''}${lab}</button>`;
+ h=`<button class="alt" onclick="v='${k.f||k.h?'kid':'home'}';ui()">Zurück</button><h1>${neu?'Deine Figur':'Figur ändern'}</h1>`+
+ (neu?`<p>${k.h?`<b>Neu!</b> Wie siehst du auf dem Hof aus? Deine Figur steht dann bei ${esc(k.h.name)}.`:`Wie siehst du auf dem Hof aus? Danach rechnest du deine ersten Aufgaben. Nach 5 richtigen darfst du dir dein Fohlen aussuchen.`}</p>`:'')+
+ `<div class="card" style="text-align:center;padding:8px">${figurMini(FE,190)}</div>
+ <h2>Mädchen oder Junge</h2><div class="row">${opt('g','m','Mädchen')}${opt('g','j','Junge')}</div>
+ <h2>Hautfarbe</h2><div class="row">${Object.entries(HAUT).map(([id,[n,c]])=>opt('hf',id,n,c)).join('')}</div>
+ <h2>Haare</h2><div class="row">${Object.entries(HAAR).map(([id,[n,c]])=>opt('ha',id,n,c)).join('')}</div>
+ <h2>Reitleggings</h2><div class="row">${Object.entries(LEG).map(([id,[n,c]])=>opt('lg',id,n,c)).join('')}</div>
+ <p class="small">Weitere Farben für die Reitleggings kannst du später mit Äpfeln freischalten. Schwarzer Reithelm und Reitstiefel sind immer dabei.</p>
+ <button class="go" onclick="figurOk()">${neu?'Fertig':'Speichern'}</button>`}
+ if(v=='choose'){h=`<button class="alt" onclick="v='kid';ui()">Zurück</button><h1>Dein Fohlen</h1><p>Welche Fellfarbe soll es haben? Später kannst du mit Äpfeln weitere Farben und Abzeichen freischalten.</p><div class="grid">${Object.keys(COATS).map(pick).join('')}</div><p><label>Name des Fohlens<br><input id="hn" maxlength="16" placeholder="z. B. Luna" onkeydown="if(event.key=='Enter')mk()"></label></p><button class="go" onclick="mk()">Los geht’s</button>`}
+ // Kind ohne Pferd: erst 5 Aufgaben richtig, dann Fohlenwahl
+ if(v=='kid'&&!kid().h){let k=kid(),n=Math.max(0,FOHLEN-k.r);
+ h=`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button><button class="alt" onclick="figurEdit()">Figur</button></div>
+ <div class="card row" style="align-items:center;flex-wrap:nowrap">${figurMini(k.f,90)}<div><h1 style="margin:0">Hallo ${esc(k.name)}!</h1><p class="small" style="margin:4px 0 0">${n?`Löse ${n} Aufgabe${n>1?'n':''} richtig, dann darfst du dir dein Fohlen aussuchen.`:'Du darfst dir jetzt dein Fohlen aussuchen!'}</p></div></div>
+ ${n?`<div class="bar" style="margin:6px 0"><b style="width:${(FOHLEN-n)/FOHLEN*100}%"></b></div>`:`<button class="go" onclick="v='choose';ui();scrollTo(0,0)">Fohlen aussuchen</button>`}
+ <h2>Thema wählen</h2>${themen(k)}`}
+ if(v=='kid'&&kid().h){let k=kid(),st=stg(k),nx=GS[st+1],se=serie(k),pr=nx?se/TAGE[st]*100:100,rest=Math.max(1,Math.ceil((LIMIT-zeit(k))/60));
+ h=`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button><button class="alt" onclick="figurEdit()">Figur</button><button class="alt" onclick="snd()" aria-pressed="${S.snd!==0}">Ton: ${S.snd===0?'aus':'an'}</button></div>
+ ${k.f?'':`<div class="card row sp" style="margin-top:8px"><span><b>Neu!</b> Erstelle deine eigene Figur. Sie steht dann auf deinem Hof.</span><button class="go" onclick="figurEdit()">Figur erstellen</button></div>`}<p class="small" style="margin:8px 0 0">${k.hl?'Tippe oben auf dein Pferd, um es zu streicheln.</p>'+SPERRINFO:`Tippe oben auf dein Pferd, um es zu streicheln. Probier auch Apfelbaum, Windrad und Teich aus, wenn du sie gebaut hast.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button></div>`}<div class="row sp"><h1>${esc(k.h.name)} <span class="small">${GS[st].n} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}</span></div>
  <div class="bar" style="margin:6px 0"><b style="width:${pr}%"></b></div><p class="small">${nx?`Tag ${se} von ${TAGE[st]} bis „${nx.n}“ · ${heute(k)?'heute schon gerechnet':'rechne heute eine Runde, damit der Tag zählt'}`:'Dein Pferd ist ausgewachsen!'}</p>
  <p class="small">Noch ${rest} Minute${rest>1?'n':''} für heute · ${k.xp} Erfahrung · Serie ${k.s} · Rekord ${k.best}${mcount(k)?` · Fehlerheft: ${mcount(k)} zum Wiederholen`:''}</p>
  ${st<D3AB?'':`${d3Fenster('')}<p class="small" style="margin-top:0">Wische über das Bild, um ${esc(k.h.name)} von allen Seiten zu sehen.</p>`}
@@ -103,11 +124,12 @@ function ui(){let h='';PZ=0;
  if(v=='quiz'){let k=kid(),s=ts(k,Q.key),t=T[k.g].find(x=>x[0]==Q.key),q=Q.q;
  h=`<div class="row sp"><button class="alt" onclick="v='kid';ui()">Beenden</button><span>${t[1]} ${dots(s.d)}</span></div><div class="bar" style="margin:12px 0"><b style="width:${Q.i*10}%"></b></div><p class="small">Aufgabe ${Q.i+1} von 10${Q.rp?' · <b>Nochmal versuchen:</b> Die kennst du schon aus dem Fehlerheft':''}</p><div class="q">${esc(de(q[0]))}</div>`+
  (Q.hint&&q[2]?`<p class="small">Tipp: ${esc(de(q[2]))}</p>`:'')+
- (Q.fb?`${Q.fb.ok?`<div style="max-width:300px">${scene(k,Q.fb.an)}</div>`:''}<p class="${Q.fb.ok?'ok':'no'}"><b>${Q.fb.ok?'Richtig! +'+Q.fb.g+' Erfahrung, +'+Q.fb.a+' Äpfel':'Leider falsch. Richtig ist '+de(q[1])+'.'}</b>${Q.fb.m?' '+Q.fb.m:''}</p>${!Q.fb.ok&&q[3]?`<div class="card" style="white-space:pre-line;font-size:16px"><b>So geht’s:</b>\n${esc(de(q[3]))}</div>`:''}<button class="go" onclick="nx()">${Q.i==9?'Fertig':'Weiter'} (Enter)</button>`:
+ (Q.fb?`${Q.fb.ok&&k.h?`<div style="max-width:300px">${scene(k,Q.fb.an)}</div>`:''}<p class="${Q.fb.ok?'ok':'no'}"><b>${Q.fb.ok?'Richtig! +'+Q.fb.g+' Erfahrung, +'+Q.fb.a+' Äpfel':'Leider falsch. Richtig ist '+de(q[1])+'.'}</b>${Q.fb.m?' '+Q.fb.m:''}</p>${!Q.fb.ok&&q[3]?`<div class="card" style="white-space:pre-line;font-size:16px"><b>So geht’s:</b>\n${esc(de(q[3]))}</div>`:''}<button class="go" onclick="nx()">${Q.i==9?'Fertig':'Weiter'} (Enter)</button>`:
  `<input id="ans" autocomplete="off" aria-label="Antwort" onkeydown="if(event.key=='Enter')chk()"><div class="row"><button class="go" onclick="chk()">Prüfen</button>${q[2]&&!Q.hint?'<button class="alt" onclick="tip()">Tipp (halbe Punkte)</button>':''}</div>`)}
- if(v=='done'){let k=kid();h=`<h1>Geschafft!</h1><div class="card">${scene(k)}<p><b>${Q.right} von 10</b> richtig, <b>+${Q.gain} Erfahrung</b> und <b class="ap">+${Q.ap} ${AP}</b>.</p>${Q.grow?`<p class="ok"><b>${esc(k.h.name)} ist jetzt ein ${Q.grow}!</b></p>`:''}${Q.tg?`<p class="small">${Q.tg}</p>`:''}${Q.frei?`<p class="ok"><b>Super! Der Hof ist wieder offen.</b></p>`:''}${Q.zu?`<p class="no">Für den Hof brauchst du mindestens ${FREI} von 10 richtig. Versuch es gleich noch einmal!</p>`:''}${Q.mast?`<p class="ok"><b>${Q.mast} Aufgabe${Q.mast>1?'n':''} aus dem Fehlerheft gemeistert!</b></p>`:''}${Q.newb.map(b=>`<span class="badge">Neues Abzeichen: ${b}</span>`).join('')}</div>`+
- (ausZeit(k)?`<div class="card" id="limit"><b>Für heute ist Schluss.</b><p>Deine 20 Minuten auf dem Hof sind um. Morgen geht es weiter, ${esc(k.h.name)} wartet auf dich!</p></div><button class="go" onclick="v='home';ui()">Tschüss, bis morgen</button>`:
- `<div class="row"><button class="go" onclick="start('${Q.key}')">Nochmal</button><button class="alt" onclick="v='kid';ui()">Zurück zum Hof</button></div>`)}
+ if(v=='done'){let k=kid(),fw=!k.h&&k.r>=FOHLEN;h=`<h1>Geschafft!</h1><div class="card">${k.h?scene(k):`<div style="text-align:center">${figurMini(k.f,120)}</div>`}`+
+ (k.h?'':fw?`<p class="ok"><b>Super, ${FOHLEN} Aufgaben richtig! Jetzt darfst du dir dein Fohlen aussuchen.</b></p>`:`<p class="small">Noch ${FOHLEN-k.r} richtige Aufgabe${FOHLEN-k.r>1?'n':''} bis zu deinem Fohlen.</p>`)+`<p><b>${Q.right} von 10</b> richtig, <b>+${Q.gain} Erfahrung</b> und <b class="ap">+${Q.ap} ${AP}</b>.</p>${Q.grow?`<p class="ok"><b>${esc(k.h.name)} ist jetzt ein ${Q.grow}!</b></p>`:''}${Q.tg?`<p class="small">${Q.tg}</p>`:''}${Q.frei?`<p class="ok"><b>Super! Der Hof ist wieder offen.</b></p>`:''}${Q.zu?`<p class="no">Für den Hof brauchst du mindestens ${FREI} von 10 richtig. Versuch es gleich noch einmal!</p>`:''}${Q.mast?`<p class="ok"><b>${Q.mast} Aufgabe${Q.mast>1?'n':''} aus dem Fehlerheft gemeistert!</b></p>`:''}${Q.newb.map(b=>`<span class="badge">Neues Abzeichen: ${b}</span>`).join('')}</div>`+
+ (ausZeit(k)?`<div class="card" id="limit"><b>Für heute ist Schluss.</b><p>Deine 20 Minuten auf dem Hof sind um. Morgen geht es weiter${k.h?`, ${esc(k.h.name)} wartet auf dich`:''}!</p></div><button class="go" onclick="v='home';ui()">Tschüss, bis morgen</button>`:
+ `<div class="row">${fw?`<button class="go" onclick="v='choose';ui();scrollTo(0,0)">Fohlen aussuchen</button>`:''}<button class="${fw?'alt':'go'}" onclick="start('${Q.key}')">Nochmal</button><button class="alt" onclick="v='kid';ui()">Zurück zum Hof</button></div>`)}
  if(v=='bye'){let k=kid();h=`<h1>Bis morgen, ${esc(k.name)}!</h1><div class="card">${k.h?scene(k):''}<p>Für heute sind deine 20 Minuten auf dem Hof um.${k.h?` ${esc(k.h.name)} freut sich, wenn du morgen wiederkommst.`:''}</p>${k.h&&stg(k)<3&&heute(k)?'<p class="small">Heute hast du gerechnet, der Tag zählt fürs Wachstum.</p>':''}</div><button class="go" onclick="v='home';ui()">Tschüss</button>`}
  if(v=='parent'){h=`<button class="alt" onclick="v='home';lock()">Zurück</button><h1>${S.pin?'Eltern-Ansicht':'Einstellungen'}</h1>`;
  if(S.pin&&!open)h+=`<div class="card"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p></div>`;
@@ -132,7 +154,15 @@ function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();S.kids.
 function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=p;delete S.np;if(id)open=true;save();ui()}
 function nopin(){S.np=1;save();ui()}
 function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellungen öffnen.'))return;S.pin='';S.np=1;open=false;save();ui()}
-function sel(id){cur=id;const k=kid();if(!k)return;v=ausZeit(k)?'bye':k.h?'kid':'choose';ui();scrollTo(0,0)}
+function sel(id){cur=id;const k=kid();if(!k)return;if(!k.h&&!k.f)FE={...FIGUR0};v=ausZeit(k)?'bye':!k.h&&!k.f?'figur':'kid';ui();scrollTo(0,0)}
+// Figur: Entwurf FE bearbeiten und übernehmen
+let FE={...FIGUR0};
+function figurEdit(){FE={...FIGUR0,...(kid().f||{})};v='figur';ui();scrollTo(0,0)}
+function figurOk(){const k=kid();k.f={g:FE.g,hf:FE.hf,ha:FE.ha,lg:FE.lg};save();v='kid';ui();scrollTo(0,0)}
+// Kleine Figur als eigenes Bild (Höhe h in Pixeln)
+const figurMini=(f,h)=>`<svg class="figmini" viewBox="-21 -114 42 118" width="${Math.round(h*42/118)}" height="${h}" role="img" aria-label="Figur">${figurBild(f)}</svg>`;
+// Themenliste einer Klasse als Knöpfe
+const themen=k=>T[k.g].map(t=>{let s=ts(k,t[0]);return`<button class="big" onclick="start('${t[0]}')"><span>${t[1]}</span>${dots(s.d)}</button>`}).join('');
 // Tageslimit erreicht: Rundflug beenden und verabschieden
 function bye(){if(HF.mode=='fly')flyOff();v='bye';ui();scrollTo(0,0)}
 // Spielzeit messen: nur, solange ein Kind auf seinem Hof ist und die App sichtbar ist (auch im Rundflug, der läuft über der Kind-Ansicht)
@@ -184,13 +214,13 @@ function chk(){let k=kid(),s=ts(k,Q.key),raw=$('#ans').value.trim().replace(',',
  BD.forEach(b=>{if(!k.b.includes(b[0])&&b[2](k)){k.b.push(b[0]);Q.newb.push(b[1])}});
  let L=ms(k),ix=L.findIndex(x=>x.key==Q.key&&x.q[0]==Q.q[0]);
  if(ok){if(ix>=0){L.splice(ix,1);Q.mast++}}else if(ix<0){L.push({key:Q.key,q:Q.q});if(L.length>30)L.shift()}
- let H=hh(k),ow=SK.filter(x=>H.sk[x[0]]>0),pk=ow.length?P(ow)[0]:'hop',ls=H.sk[pk]||0;Q.fb={ok,g,a,m,an:ok?{t:{jump:'jump',gal:'gal',aus:'aus',ges:'wig',hop:'hop'}[pk],a:pk=='gal'?20+14*ls:8+9*ls}:null};Q.ts=Date.now();save();ui()}
+ let H=k.h?hh(k):{sk:{}},ow=SK.filter(x=>H.sk[x[0]]>0),pk=ow.length?P(ow)[0]:'hop',ls=H.sk[pk]||0;Q.fb={ok,g,a,m,an:ok?{t:{jump:'jump',gal:'gal',aus:'aus',ges:'wig',hop:'hop'}[pk],a:pk=='gal'?20+14*ls:8+9*ls}:null};Q.ts=Date.now();save();ui()}
 function nx(){Q.i++;if(Q.i>=10){let k=kid();if(Q.right==10){k.perfect++;BD.forEach(b=>{if(!k.b.includes(b[0])&&b[2](k)){k.b.push(b[0]);Q.newb.push(b[1])}})}
   // Runde fertig: Der Tag zählt fürs Wachstum (einmal pro Tag)
   // Hof-Sperre: Eine Runde mit mindestens 8 von 10 richtig öffnet den Hof und startet die 3 Minuten neu
   if(Q.right>=FREI){k.hz=0;if(k.hl){delete k.hl;Q.frei=1}}else if(k.hl)Q.zu=1;
   const w=tagZaehlt(k),st=stg(k);Q.grow=w.grow||'';
-  Q.tg=w.neu&&st<3?(w.grow?`Bis „${GS[st+1].n}“ braucht es jetzt ${TAGE[st]} Tage mit Mathe.`:`Heute zählt fürs Wachstum: Tag ${k.sd} von ${TAGE[st]} bis „${GS[st+1].n}“.`):'';
+  Q.tg=w.neu&&k.h&&st<3?(w.grow?`Bis „${GS[st+1].n}“ braucht es jetzt ${TAGE[st]} Tage mit Mathe.`:`Heute zählt fürs Wachstum: Tag ${k.sd} von ${TAGE[st]} bis „${GS[st+1].n}“.`):'';
   save();v='done'}else{Q.q=gen();Q.fb=null;Q.hint=0}ui()}
 // Sperren: muss eine Funktion sein. In onclick-Attributen würde "open=false" sonst document.open überschreiben statt diese Variable.
 function lock(){open=false;ui()}

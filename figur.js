@@ -1,0 +1,52 @@
+// Pferdehof Mathe: gezeichnete Figur (Reiterin oder Reiter) im Bilderbuch-Stil, Ansicht von vorn.
+// Füße auf y = 0, Kopf mit Helm oben bei etwa y = -110, Mitte x = 0. Nur Code (SVG), keine Bilddateien.
+// Gespeichert am Kind als k.f = {g: 'm' (Mädchen) oder 'j' (Junge), hf: Hautfarbe, ha: Haarfarbe, lg: Farbe der Reitleggings}
+// Immer dabei: schwarzer Reithelm und Reitstiefel. Weitere Leggings-Farben kommen später gegen Äpfel dazu.
+const HAUT={hell:['Hell','#f5d5bf','#dcae94'],mittel:['Leicht braun','#d6a07a','#b9825d'],dunkel:['Dunkel','#8a5737','#6c4229']};
+const HAAR={blond:['Blond','#ecc96c','#c9a145'],braun:['Braun','#7b4b2b','#5a341c'],schwarz:['Schwarz','#2b2321','#151010'],rot:['Rot','#c4562c','#9a3e1c']};
+const LEG={schwarz:['Schwarz','#27272c']};
+const FIGUR0={g:'m',hf:'hell',ha:'braun',lg:'schwarz'};
+
+function figurBild(f){
+ f={...FIGUR0,...(f||{})};
+ const hc=(HAUT[f.hf]||HAUT.hell)[1],hs=(HAUT[f.hf]||HAUT.hell)[2],ac=(HAAR[f.ha]||HAAR.braun)[1],as=(HAAR[f.ha]||HAAR.braun)[2],
+  lc=(LEG[f.lg]||LEG.schwarz)[1],m=f.g!=='j',sh='#5b8fc7',ul='#2b1d12',
+  st=`stroke="${ul}" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"`;
+ // Arm von der Schulter zur Hand: dunkler Umriss, Haut, darüber der kurze Ärmel
+ const arm=d=>`<path d="${d}" fill="none" stroke="${ul}" stroke-width="6.8" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${hc}" stroke-width="4.6" stroke-linecap="round"/>`;
+ const armL='M-11.6 -75Q-15.6 -66 -15.2 -53',armR='M11.6 -75Q15.6 -66 15.2 -53';
+ let s=`<ellipse rx="16" ry="2.8" fill="#000" opacity=".15"/>`;
+ // Lange Haare hinter Kopf und Schultern (Mädchen)
+ if(m)s+=`<path d="M-13 -97Q-17.5 -80 -14.5 -64Q-8 -59.5 0 -60.5Q8 -59.5 14.5 -64Q17.5 -80 13 -97Z" fill="${ac}" ${st}/><path d="M-10 -70Q-11 -78 -10.5 -86M10 -70Q11 -78 10.5 -86" stroke="${as}" stroke-width="1" fill="none"/>`;
+ // Reitleggings und Reitstiefel
+ s+=`<g ${st}><path d="M-8.6 -50L-8.2 -21H-2.6L-2.1 -50Z" fill="${lc}"/><path d="M8.6 -50L8.2 -21H2.6L2.1 -50Z" fill="${lc}"/>`+
+  `<path d="M-8.7 -25H-2.2V-2.8Q-2.2 0 -5 0H-11.2Q-12.8 0 -12.5 -1.7Q-11.8 -4.2 -8.7 -4.8Z" fill="#2a2420"/><path d="M8.7 -25H2.2V-2.8Q2.2 0 5 0H11.2Q12.8 0 12.5 -1.7Q11.8 -4.2 8.7 -4.8Z" fill="#2a2420"/></g>`+
+  `<path d="M-8.2 -22.6H-2.6M8.2 -22.6H2.6" stroke="#4a3f38" stroke-width="1.3"/><path d="M-6.6 -16V-6M6.6 -16V-6" stroke="#fff" stroke-width=".9" opacity=".18"/>`;
+ // Hals, Oberkörper (Reitshirt mit Kragen), Gürtel
+ s+=`<rect x="-3.3" y="-84" width="6.6" height="7" fill="${hc}" ${st}/>`+
+  `<path d="M-12.6 -78.5Q0 -81.5 12.6 -78.5L13 -74Q11 -62 10.2 -49H-10.2Q-11 -62 -13 -74Z" fill="${sh}" ${st}/>`+
+  `<path d="M-12.4 -78Q-13.2 -72 -12.2 -67" stroke="#fff" stroke-width="1" opacity=".25" fill="none"/>`+
+  `<rect x="-10.4" y="-52.4" width="20.8" height="3.4" fill="#6b4a2b" ${st}/><rect x="-1.8" y="-52.8" width="3.6" height="4.2" rx=".6" fill="#d9b25a" stroke="${ul}" stroke-width=".6"/>`+
+  `<path d="M-5.4 -80L0 -73.6L5.4 -80Q0 -78.6 -5.4 -80Z" fill="#f4f6f8" ${st}/><circle cy="-70.5" r=".7" fill="#f4f6f8"/><circle cy="-66.5" r=".7" fill="#f4f6f8"/>`;
+ // Arme mit Händen
+ s+=arm(armL)+arm(armR)+`<path d="M-11.6 -75Q-14.6 -70 -15 -66.5M11.6 -75Q14.6 -70 15 -66.5" fill="none" stroke="${sh}" stroke-width="5.4" stroke-linecap="round"/>`+
+  `<circle cx="-15.2" cy="-51.6" r="2.9" fill="${hc}" ${st}/><circle cx="15.2" cy="-51.6" r="2.9" fill="${hc}" ${st}/>`;
+ // Kurze Haare im Nacken, hinter Kopf und Ohren (Junge)
+ if(!m)s+=`<path d="M-13.6 -97Q-15.2 -88 -11 -84.6L11 -84.6Q15.2 -88 13.6 -97Z" fill="${ac}" ${st}/>`;
+ // Kopf mit Ohren
+ s+=`<circle cx="-11.8" cy="-92" r="2.5" fill="${hc}" ${st}/><circle cx="11.8" cy="-92" r="2.5" fill="${hc}" ${st}/><circle cy="-93" r="12" fill="${hc}" ${st}/>`;
+ // Haare vorn: Strähnen neben dem Gesicht (Mädchen) bzw. kurze Koteletten (Junge)
+ s+=m?`<path d="M-12.6 -99Q-14.2 -90 -11.8 -82.5L-9.6 -85Q-10.6 -92 -9 -99.5Z" fill="${ac}" ${st}/><path d="M12.6 -99Q14.2 -90 11.8 -82.5L9.6 -85Q10.6 -92 9 -99.5Z" fill="${ac}" ${st}/>`
+  :`<path d="M-12.8 -99Q-13.6 -93 -12 -88.6L-9.4 -91Q-10 -96 -8.4 -99.6Z" fill="${ac}" ${st}/><path d="M12.8 -99Q13.6 -93 12 -88.6L9.4 -91Q10 -96 8.4 -99.6Z" fill="${ac}" ${st}/>`+
+   `<path d="M-10.4 -94.4Q-9.4 -91.6 -7.6 -93.6Q-6.6 -91.8 -5.4 -94.2ZM10.4 -94.4Q9.4 -91.6 7.6 -93.6Q6.6 -91.8 5.4 -94.2Z" fill="${ac}" stroke="${ul}" stroke-width=".7" stroke-linejoin="round"/>`;
+ // Gesicht: Augen mit Glanzpunkt, Wangen, Nase, Lächeln (Mädchen mit kleinen Wimpern)
+ s+=`<ellipse cx="-4.4" cy="-91.4" rx="1.45" ry="1.85" fill="${ul}"/><ellipse cx="4.4" cy="-91.4" rx="1.45" ry="1.85" fill="${ul}"/><circle cx="-4" cy="-92.2" r=".55" fill="#fff"/><circle cx="4.8" cy="-92.2" r=".55" fill="#fff"/>`+
+  (m?`<path d="M-5.9 -92.6l-1.2 -.8M5.9 -92.6l1.2 -.8" stroke="${ul}" stroke-width=".55"/>`:'')+
+  `<circle cx="-7.2" cy="-87.6" r="2.2" fill="#e8787a" opacity=".35"/><circle cx="7.2" cy="-87.6" r="2.2" fill="#e8787a" opacity=".35"/>`+
+  `<path d="M.2 -89.6q.9 1.2 -.2 1.9" stroke="${hs}" stroke-width=".8" fill="none" stroke-linecap="round"/><path d="M-3.4 -85Q0 -82.2 3.4 -85" stroke="#7a3b2e" stroke-width=".95" fill="none" stroke-linecap="round"/>`;
+ // Schwarzer Reithelm mit Schirm, Glanz, Lüftungsschlitzen und Kinnriemen
+ s+=`<path d="M-13.7 -93.4Q-14.4 -109.6 0 -110Q14.4 -109.6 13.7 -93.4Q0 -97.6 -13.7 -93.4Z" fill="#1d1d22" ${st}/>`+
+  `<path d="M-11.4 -96.6Q0 -99.6 11.4 -96.6Q12.4 -94.3 10.8 -93.8Q0 -95.8 -10.8 -93.8Q-12.4 -94.3 -11.4 -96.6Z" fill="#2e2e34" ${st}/>`+
+  `<path d="M-7.4 -105.6Q-1 -108.6 5.6 -106.2" stroke="#fff" stroke-width="1.5" opacity=".3" fill="none" stroke-linecap="round"/><path d="M-3 -101.5v-4M0 -101v-5M3 -101.5v-4" stroke="#3a3a42" stroke-width=".8"/>`+
+  `<path d="M-13.2 -93.2Q-11.4 -82.2 0 -80.6Q11.4 -82.2 13.2 -93.2" stroke="#1d1d22" stroke-width=".9" fill="none"/><rect x="-1.2" y="-81.6" width="2.4" height="1.8" rx=".4" fill="#4a4a52"/>`;
+ return s}

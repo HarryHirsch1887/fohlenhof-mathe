@@ -12,6 +12,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 - Tipps (kosten halbe Punkte) und bei falschen Antworten ein **Lösungsweg** zum Nachvollziehen.
 - **Fehlerheft:** Falsch beantwortete Aufgaben kommen in späteren Runden desselben Themas erneut dran.
 - Mehrere Kinder mit eigenem Fortschritt und eigenem Pferd.
+- **Eigene Figur:** Neue Kinder gestalten zuerst ihre Figur (Mädchen oder Junge, Hautfarbe, Haarfarbe, Reitleggings, immer mit schwarzem Reithelm und Reitstiefeln). Nach 5 richtigen Aufgaben dürfen sie ihr Fohlen aussuchen. Die eigene Figur steht auf dem Hof, die Figuren der anderen Kinder stehen hinter dem Zaun und schauen den Pferden zu. Kinder mit Pferd aus älteren Ständen bekommen einen Hinweis, dass sie eine Figur erstellen können.
 - **Animierte Weide** im Bilderbuch-Stil als Hintergrund: Auf der Startseite laufen die Pferde der Kinder (aufgefüllt auf 5) über die Koppel, mit stehen, grasen, Schritt, Trab und Galopp. Himmel und Licht folgen der echten Uhrzeit (Tag, Dämmerung, Nacht).
 - **Persönlicher Hof:** Nach der Anmeldung zeigt der Hintergrund das Pferd des Kindes. Mit Äpfeln lassen sich Gegenstände bauen (Apfelbaum, Eiche, Blumenwiese, Heuballen, Wassertrog, Stall, Teich, Windrad, Regenbogen). Jede gekaufte Rasse bringt einen Pferdefreund mit.
 - **Rundflug:** Eine ruhige Fahrt über den ganzen Hof. Wischen zum Umschauen, Tippen auf ein Pferd zeigt den Namen.
@@ -64,6 +65,7 @@ Dann `http://localhost:3000` öffnen. Auf `localhost` lässt sich die App auch a
 | `style.css` | Aussehen |
 | `aufgaben.js` | Aufgaben-Generatoren mit Tipps und Lösungswegen |
 | `pferd.js` | Gezeichnetes Pferd im Bilderbuch-Look: Fellfarben, Rassen, Wachstumsstufen, Mähne, Zöpfe, Bewegung (Schritt, Trab, Galopp, Grasen) |
+| `figur.js` | Gezeichnete Figur (Reiterin oder Reiter) im Bilderbuch-Look: Hautfarben, Haarfarben, Reitleggings, Reithelm, Reitstiefel |
 | `hof.js` | Animierte Weide, Hof-Gegenstände, Herde, Rundflug |
 | `app.js` | Spiellogik, Oberfläche, Speicher, Eltern-Ansicht, Pferd-Zeichnung |
 | `manifest.webmanifest` | Angaben für die Installation als App |
