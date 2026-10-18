@@ -32,6 +32,16 @@ input,select{background:var(--card);border:1px solid var(--line);border-radius:1
 .bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar b{display:block;height:100%;background:var(--hay)}
 .scene{width:100%;border-radius:14px;display:block}.q{font-size:22px;white-space:pre-line;margin:12px 0}
 #ans{font-size:24px;width:100%;max-width:240px}
+/* Zeichnungen zu Geometrie-Aufgaben (zeichnung.js), Farben passen sich an Hell und Dunkel an */
+.zeich{display:block;width:100%;max-width:340px;margin:10px 0 0;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.zeich .zf{fill:var(--bg);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.zeich .zl{fill:none;stroke:var(--ink);stroke-width:1.4;stroke-linecap:round}
+.zeich .zd{stroke-dasharray:5 4}.zeich .zdick{stroke-width:3}.zeich .zduenn{stroke-width:1;opacity:.55}
+.zeich .zleiter{fill:none;stroke:#a0703c;stroke-width:4;stroke-linecap:round}
+.zeich .zb{fill:none;stroke:var(--gr);stroke-width:1.6}.zeich .zbr{fill:none;stroke:var(--bar);stroke-width:2.2}
+.zeich .zp{fill:var(--ink)}.zeich .zpa{fill:var(--hay);stroke:var(--ink);stroke-width:1.2}
+.zeich text{font-size:14px;text-anchor:middle;dominant-baseline:middle;fill:var(--ink)}
+.zeich .zr{fill:var(--bar);font-weight:bold;font-size:15px}.zeich .zn{font-size:15px;font-style:italic;font-weight:bold}
 /* Eingabefeld mit Einheit dahinter (z. B. °, cm, €) */
 .antw{display:flex;align-items:center;gap:10px;max-width:300px}
 .einheit{font-size:24px;font-weight:bold;white-space:nowrap}

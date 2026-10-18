@@ -9,6 +9,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 ## Was die App kann
 
 - Jeder Satz einer Aufgabe steht in einer eigenen Zeile. Die Einheit (°, cm, €, …) steht direkt neben dem Eingabefeld.
+- **Zeichnungen** bei allen Aufgaben mit Figur (Umfang & Fläche, Geometrie, Pythagoras): maßstabsgetreu, das Gesuchte als rotes „?“.
 - 10 Aufgaben pro Runde, 5 Schwierigkeitsstufen pro Thema. Die Stufe steigt nach 3 richtigen Antworten in Folge und sinkt nach 2 falschen.
 - Tipps (kosten halbe Punkte) und bei falschen Antworten ein **Lösungsweg** zum Nachvollziehen.
 - **Fehlerheft:** Falsch beantwortete Aufgaben kommen in späteren Runden desselben Themas erneut dran.
@@ -67,6 +68,7 @@ Dann `http://localhost:3000` öffnen. Auf `localhost` lässt sich die App auch a
 | `style.css` | Aussehen |
 | `aufgaben.js` | Aufgaben-Generatoren mit Tipps und Lösungswegen |
 | `pferd.js` | Gezeichnetes Pferd im Bilderbuch-Look: Fellfarben, Rassen, Wachstumsstufen, Mähne, Zöpfe, Bewegung (Schritt, Trab, Galopp, Grasen) |
+| `zeichnung.js` | Zeichnungen zu Geometrie-Aufgaben (Rechtecke, Dreiecke, Vielecke, Leiter, Gitter), passend zu den Zahlen der Aufgabe |
 | `figur.js` | Gezeichnete Figur (Reiterin oder Reiter) im Bilderbuch-Look: Hautfarben, Haarfarben, Reitleggings, Reithelm, Reitstiefel |
 | `hof.js` | Animierte Weide, Hof-Gegenstände, Herde, Rundflug |
 | `app.js` | Spiellogik, Oberfläche, Speicher, Eltern-Ansicht, Pferd-Zeichnung |
