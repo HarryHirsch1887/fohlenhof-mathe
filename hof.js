@@ -53,6 +53,42 @@ const DR={
    `<g transform="translate(${x} ${H})"><g class="wrad">${[...Array(16)].map((_,i)=>`<path d="M-1 -4.5L-2.4 -15L2.4 -15L1 -4.5Z" fill="${i%2?'#f2f4f5':'#dde3e6'}" stroke="#9aa4ab" stroke-width=".35" transform="rotate(${i*22.5}) skewX(-12)"/>`).join('')}<circle r="15.3" fill="none" stroke="#8a949a" stroke-width=".7"/><circle r="6" fill="none" stroke="#8a949a" stroke-width=".6"/></g><circle r="2.4" fill="#6f797f"/></g>`;
   return s}
 };
+// ---------- Hof ausbauen (Entwurf 2026-10-18): Unterstand (2 Plätze), Stall (4 Plätze, Ausbau des Unterstands), Trennzaun zwischen Koppeln ----------
+// Unterstand: offener Holzunterstand mit Pultdach (hinten höher), Rückwand aus Brettern, Heuraufe, Stroh am Boden
+DR.unterstand=x=>{const B=GY+12,L=x-24,R=x+24,yl=B-36,yr=B-28,y=t=>yl+(yr-yl)*(t-L)/(R-L);
+ let s=`<ellipse cx="${x}" cy="${B+1}" rx="32" ry="3.5" fill="#000" opacity=".14" stroke="none"/>`+
+  `<path d="M${L} ${y(L)}L${R} ${y(R)}L${R} ${B}L${L} ${B}Z" fill="#7a5233"/>`+
+  [...Array(7)].map((_,i)=>{const px=L+(i+1)*6.9;return`<path d="M${r1(px)} ${r1(y(px))}V${B}" stroke="#5e3d24" stroke-width=".6"/>`}).join('')+
+  `<path d="M${L} ${B-3}H${R}V${B}H${L}Z" fill="#e2b24a"/><path d="M${L+3} ${B-3}l2 -2M${L+11} ${B-3}l2 -2.4M${x+4} ${B-3}l2.2 -2M${R-9} ${B-3}l2 -2.2" stroke="#c4902f" stroke-width=".6"/>`+
+  `<rect x="${x-9}" y="${B-21}" width="18" height="7" rx="1" fill="#5e3d24"/><path d="M${x-8} ${B-20}h16v5h-16Z" fill="#e2b24a"/>${[0,1,2,3,4].map(i=>`<path d="M${x-7+i*3.5} ${B-21}v7" stroke="#5e3d24" stroke-width=".7"/>`).join('')}`+
+  [L+1.5,x,R-1.5].map(px=>`<rect x="${r1(px-1.8)}" y="${r1(y(px))}" width="3.6" height="${r1(B-y(px))}" fill="#9b6b40"/><rect x="${r1(px-1.8)}" y="${r1(y(px))}" width="1.2" height="${r1(B-y(px))}" fill="#b78656"/>`).join('')+
+  `<path d="M${L-4} ${yl-3}L${R+5} ${yr-2}L${R+5} ${yr+2.5}L${L-4} ${yl+1.5}Z" fill="#5b4a3a"/><path d="M${L-4} ${yl-3}L${R+5} ${yr-2}" stroke="#7d6a56" stroke-width="1.2"/>`+
+  [1,2,3,4].map(i=>{const px=L-4+i*(R-L+9)/5;return`<path d="M${r1(px)} ${r1(yl-3+(yr-yl+1)*i/5)}v4" stroke="#463829" stroke-width=".5"/>`}).join('');
+ return s};
+// Stall (Ausbau des Unterstands auf der Hauptkoppel): heller Holzstall mit Satteldach, zwei Boxentüren (obere Hälfte offen, Heu), Lampe
+DR.pferdestall=x=>{const B=GY+12,L=x-38,R=x+38,T=B-32,F=B-62;
+ let s=`<ellipse cx="${x}" cy="${B+1}" rx="48" ry="4" fill="#000" opacity=".14" stroke="none"/><rect x="${L}" y="${T}" width="76" height="32" fill="#c99a5e"/>`+
+  [...Array(9)].map((_,i)=>`<path d="M${L+(i+1)*7.6} ${T}V${B}" stroke="#a87a45" stroke-width=".55"/>`).join('')+
+  `<rect x="${L}" y="${T}" width="76" height="3" fill="#000" opacity=".18"/><rect x="${L}" y="${T}" width="2.6" height="32" fill="#f1e4c8"/><rect x="${R-2.6}" y="${T}" width="2.6" height="32" fill="#f1e4c8"/>`+
+  [x-27,x+5].map(a=>`<rect x="${a}" y="${B-27}" width="22" height="27" fill="#f1e4c8"/><rect x="${a+1.6}" y="${B-25.5}" width="18.8" height="11" fill="#3a2a1c"/>`+
+   `<path d="M${a+3} ${B-15}q3 -5 6 -1q2 -4 5 0q2 -3 4.5 1Z" fill="#e2b24a"/><rect x="${a+1.6}" y="${B-13}" width="18.8" height="13" fill="#9b6b40"/>`+
+   `<path d="M${a+1.6} ${B-13}L${a+20.4} ${B}M${a+20.4} ${B-13}L${a+1.6} ${B}" stroke="#f1e4c8" stroke-width="1.4"/><rect x="${a+1.6}" y="${B-14.2}" width="18.8" height="1.6" fill="#f1e4c8"/>`).join('')+
+  `<path d="M${L-6} ${T+1}L${x} ${F}L${R+6} ${T+1}Z" fill="#5a3b28"/>`+[1,2,3,4].map(k=>{const yy=T+1-k*6,hw=44*(1-k*6/31);return`<path d="M${r1(x-hw+2)} ${yy}H${r1(x+hw-2)}" stroke="#432b1c" stroke-width=".7" stroke-dasharray="5 1.4"/>`}).join('')+
+  `<path d="M${L-7} ${T+2}L${x} ${F-1}L${R+7} ${T+2}" stroke="#f1e4c8" stroke-width="2" fill="none" stroke-linejoin="round"/>`+
+  `<path d="M${x} ${B-29}v-3" stroke="#3d3a36" stroke-width=".6"/><circle cx="${x}" cy="${B-27.5}" r="1.5" fill="#ffd56a"/>`;
+ return s};
+// Trennzaun zwischen zwei Koppeln: läuft vom hinteren Zaun (GY) nach vorn über die Wiese, Pfosten werden nach vorn größer
+function trennzaun(x){const P=[[x,GY],[x-6,GY+22],[x-13,GY+44],[x-21,GY+68]],h=y=>12+(y-GY)*.18;
+ let s=P.map(([px,py])=>`<rect x="${r1(px-1.6-h(py)*.06)}" y="${r1(py-h(py))}" width="${r1(3.2+h(py)*.12)}" height="${r1(h(py)+4)}" rx=".8" fill="#9b7449"/>`).join('');
+ for(const f of [.92,.5])s+=`<path d="${P.map(([px,py],i)=>(i?'L':'M')+r1(px)+' '+r1(py-h(py)*f)).join('')}" stroke="#a9805a" stroke-width="${f>.6?2.2:2}" fill="none" stroke-linecap="round"/>`;
+ return`<g class="trennzaun">${s}</g>`}
+// Gebäude und Trennzäune eines Hofs: Hauptkoppel-Gebäude auf der freien Stelle zwischen Trog und Heuballen (.477),
+// auf Koppel 2 und 3 in der Mitte. Liefert SVG und die Flächen, auf denen kein Gras wachsen soll.
+function gebaeude(H,OX,WK,WW){let s='';const belegt=[],g=(u,x)=>{if(!u)return'';belegt.push([x-(u==2?40:27),x+(u==2?40:27),GY+12]);return`<g class="gebaeude" data-art="${u==2?'stall':'unterstand'}">${u==2?DR.pferdestall(x):DR.unterstand(x)}</g>`};
+ s+=g(H.ko.u[0],Math.round(OX+.477*WK));
+ if(H.ko.n>=2)s+=trennzaun(OX)+g(H.ko.u[1],Math.round(OX/2));
+ if(H.ko.n>=3)s+=trennzaun(OX+WK)+g(H.ko.u[2],Math.round(OX+WK+(WW-OX-WK)/2));
+ return{s,belegt}}
 // Fläche je Gegenstand für das Gras: [halbe Breite, Fußlinie]; UMR: Gegenstände mit feinem Umriss
 const FUSS={stall:[37,GY+10],windrad:[9,GY+6],heu:[19,GY+16],troge:[17,GY+18],baum1:[6,GY+6],baum2:[7,GY+4]},UMR={stall:1,heu:1,troge:1};
 const hill=(ww,y0,amp,wl,ph,col)=>{let d=`M0 ${WH}`;for(let x=0;x<=ww+16;x+=16)d+=`L${x} ${(y0+amp*Math.sin(x/wl+ph)+amp*.5*Math.sin(x/(wl*.43)+ph*2)).toFixed(1)}`;return `<path d="${d}L${ww+16} ${WH}Z" fill="${col}"/>`};
@@ -79,17 +115,21 @@ const FROSCH=`<g class="frosch"><ellipse cx="-2.2" cy="-1" rx="2.4" ry="1.1" fil
 function fillers(){if(!HF.fill){const ks=Object.keys(COATS),bs=Object.keys(BR);HF.fill=[...Array(5)].map((_,i)=>{const c=ks[(i*2+R(0,5))%ks.length],b=bs[R(0,bs.length-1)];return{id:'f'+i,c,st:i==3?1:3,m:{br:b,bl:R(0,1),so:R(0,1)},name:BR[b].n+' · '+COATS[c][0],own:0}})}return HF.fill}
 function hofSpecs(kind){
  const A=[],km=k=>{const H=hh(k);return{id:'k'+k.id,c:H.coat,st:stg(k),m:pfSpec(H,stg(k)),name:H.name,own:k.id}};
- if(kind=='kid'){const k=kid(),H=hh(k);A.push(km(k));
-  // Freunde auf dem Hof: zuerst die gekauften Lieblingspferde, dann je gekaufte Rasse ein Pferdefreund. Höchstens 5 Freunde (Tempo auf dem Tablet).
-  LIEB.filter(l=>H.lp.includes(l[0])).forEach(([id,n,,sp])=>A.push({id:'l'+k.id+id,c:sp.coat,st:sp.st,m:{...sp,bl:0,so:0},name:n,own:0}));
-  H.brs.filter(b=>b!='std').forEach((b,i)=>{const c=H.coats[(i+1)%H.coats.length];A.push({id:'c'+k.id+b,c,st:3,m:{br:b,bl:0,so:i%2},name:BR[b].n+' · '+COATS[c][0],own:0})});
-  A.length=Math.min(A.length,6)}
+ if(kind=='kid'){const k=kid(),H=hh(k),b=belegung(H);A.push({...km(k),ko:0});
+  // Freunde stehen auf der Koppel, auf der sie einen Platz haben (belegung in app.js). Ohne Platz sind sie nicht auf dem Hof.
+  b.p.forEach((L,i)=>L.forEach(f=>{if(f!='eigen')A.push({...freundInfo(k,f),ko:i})}))}
  else{S.kids.filter(k=>k.h).slice(0,5).forEach(k=>A.push(km(k)));const f=fillers();for(let i=0;A.length<5;i++)A.push(f[i])}
  return A}
 
 function hofBuild(kind){
- const svg=$('#hof'),px=svg.clientWidth||360,ph=svg.clientHeight||240,W=Math.max(200,Math.round(WH*px/ph)),WW=Math.max(720,W+240);
- HF.W=W;HF.WW=WW;HF.cam=Math.min(Math.max(HF.cam||(WW-W)/2,0),WW-W);
+ const svg=$('#hof'),px=svg.clientWidth||360,ph=svg.clientHeight||240,W=Math.max(200,Math.round(WH*px/ph));
+ // Hof ausbauen: Hauptkoppel WK breit (wie früher die ganze Weide), Koppel 2 links und Koppel 3 rechts kommen je EXT breit dazu
+ const H0=kind=='kid'?hh(kid()):null,kn=H0?H0.ko.n:1,EXT=380,WK=Math.max(720,W+240),OX=kn>=2?EXT:0,WW=WK+(kn>=2?EXT:0)+(kn>=3?EXT:0);
+ // Wird links eine Koppel angebaut (oder fällt weg), rückt die Hauptkoppel: Kamera, Pferde, Pferdeäpfel, Apfel und Frosch rücken mit
+ const dOX=OX-(HF.OX||0);
+ HF.W=W;HF.WW=WW;HF.WK=WK;HF.OX=OX;HF.kr=[[OX,OX+WK],[0,OX],[OX+WK,WW]];
+ HF.cam=Math.min(Math.max(HF.cam?HF.cam+dOX:OX+(WK-W)/2,0),WW-W);
+ if(dOX){HF.horses.forEach(h=>{h.x+=dOX;if(h.ziel!=null)h.ziel+=dOX});HF.mist.forEach(m=>m.x+=dOX);if(HF.apfel)HF.apfel.x+=dOX;if(HF.frosch)HF.frosch.x+=dOX}
  svg.setAttribute('viewBox',`0 0 ${W} ${WH}`);svg.setAttribute('preserveAspectRatio','xMidYMid meet');
  const now=new Date(),P=pal(now.getHours()+now.getMinutes()/60),items=kind=='kid'?Object.keys(hh(kid()).it):ITEMS.map(i=>i[0]);
  HF.pal=P;HF.kind=kind;
@@ -99,9 +139,11 @@ function hofBuild(kind){
  if(kind!='kid'){HF.apfel=null;HF.frosch=null}
  HF.wellen=[];
  const old=Object.fromEntries(HF.horses.map(h=>[h.id,h]));
- HF.horses=hofSpecs(kind).map(s=>{const o=old[s.id];return Object.assign({ph:0,am:0,g:'walk',ha:0,joy:0,state:'stand',t:R(1,3),dir:R(0,1)?1:-1,d:Math.random(),dd:.5,sw:Math.random()*6,x:HF.cam+30+Math.random()*(W-60)},s,o?{x:o.x,d:o.d,dir:o.dir,state:o.state,t:o.t,ph:o.ph,am:o.am,g:o.g,ha:o.ha,dd:o.dd,ziel:kind=='kid'?o.ziel:null}:{})});
+ const startX=i=>{const [a,b]=HF.kr[i];return i?a+40+Math.random()*(b-a-80):Math.min(b-30,Math.max(a+30,HF.cam+30+Math.random()*(W-60)))};
+ HF.horses=hofSpecs(kind).map(s=>{s.ko=s.ko|0;const o=old[s.id]&&(old[s.id].ko|0)===s.ko?old[s.id]:null;return Object.assign({ph:0,am:0,g:'walk',ha:0,joy:0,state:'stand',t:R(1,3),dir:R(0,1)?1:-1,d:Math.random(),dd:.5,sw:Math.random()*6,x:startX(s.ko)},s,o?{x:o.x,d:o.d,dir:o.dir,state:o.state,t:o.t,ph:o.ph,am:o.am,g:o.g,ha:o.ha,dd:o.dd,ziel:kind=='kid'?o.ziel:null}:{})});
  // Gras nicht auf Gegenständen: belegte Flächen [links, rechts, Fußlinie]
- const belegt=ITEMS.filter(i=>items.includes(i[0])&&FUSS[i[0]]).map(i=>{const x=Math.round(i[3]*WW),[w,b]=FUSS[i[0]];return[x-w,x+w,b]}),frei=(x,y)=>!belegt.some(([a,b,f])=>x>a&&x<b&&y<f+1);
+ const geb=H0?gebaeude(H0,OX,WK,WW):{s:'',belegt:[]};
+ const belegt=[...ITEMS.filter(i=>items.includes(i[0])&&FUSS[i[0]]).map(i=>{const x=Math.round(OX+i[3]*WK),[w,b]=FUSS[i[0]];return[x-w,x+w,b]}),...geb.belegt],frei=(x,y)=>!belegt.some(([a,b,f])=>x>a&&x<b&&y<f+1);
  // Figuren: auf dem Hof eines Kindes die eigene vorn, alle anderen (höchstens 5) hinter dem Zaun
  const mitF=S.kids.filter(x=>x.f),eig=kind=='kid'?mitF.find(x=>x.id==kidId):null,figs={eigen:eig,zaun:mitF.filter(x=>x!==eig).slice(0,5)};
  const nacht=P.n=='nacht',gras=nacht?['#2f5a38','#376640','#28503a']:['#6d9f4c','#7fb258','#5f9245','#86b960'];
@@ -120,21 +162,21 @@ function hofBuild(kind){
  s+=`<g id="hc">${[0,1,2,3].map(i=>`<g class="cl" data-x="${(sr(i+11)*(W+160)).toFixed(0)}" data-y="${(14+sr(i+21)*40).toFixed(0)}" data-v="${(2+sr(i+31)*4).toFixed(1)}" fill="url(#wolkeG)" opacity="${nacht?.6:.95}"><ellipse cx="0" cy="0" rx="18" ry="5.5"/><circle cx="-8" cy="-3" r="6.5"/><circle cx="2" cy="-5.5" r="8"/><circle cx="10" cy="-2" r="5.5"/></g>`).join('')}</g>`;
  // Ferne Hügel (dunstig) und nahe Hügel mit Büschen
  s+=`<g id="hl0">${hill(WW,96,9,60,1,P.far)}</g>`;
- const cam0=(WW-W)/2;
+ const cam0=OX+(WK-W)/2;
  s+=`<g id="hl1">${hill(WW,108,7,45,2,P.mid)}${[...Array(18)].map((_,i)=>{const x=sr(i+7)*WW;return busch(x,hillY(x,108,7,45,2)+3,3.5+sr(i)*3,P.bu)}).join('')}`+
   (items.includes('regenbogen')?['#e74c3c','#f39c12','#f4d03f','#58b368','#4a90c2','#7d5ba6'].map((c,i)=>`<path d="M${W/2+.5*cam0-80+i*4} 112A${80-i*4} ${80-i*4} 0 0 1 ${W/2+.5*cam0+80-i*4} 112" fill="none" stroke="${c}" stroke-width="4.2" opacity="${nacht?.25:.45}"/>`).join(''):'')+`</g>`;
  // Wiese mit Verlauf, Büsche am Rand, Holzzaun mit Lichtkante, Gegenstände, Gras hinter den Pferden
  s+=`<g id="hw"><rect x="0" y="${GY-8}" width="${WW}" height="${WH-GY+8}" fill="url(#bodenG)"/>`+
   [[.12,.06],[.52,.13],[.9,.05]].map(([a,b],i)=>busch(a*WW,GY+1,6+b*40,i%2?P.bu:'#4f8a4a')).join('')+
   // Figuren der anderen Kinder (auf dem Startbild: aller Kinder) stehen hinter dem Zaun und schauen den Pferden zu
-  figs.zaun.map((x,i)=>`<g class="fig" data-k="${x.id}" transform="translate(${r1((.43+i*.022)*WW)} ${GY-3}) scale(.3)">${figurBild(x.f)}</g>`).join('')+
+  figs.zaun.map((x,i)=>`<g class="fig" data-k="${x.id}" transform="translate(${r1(OX+(H0&&H0.ko.u[0]?[.545,.565,.355,.375,.585][i]:.43+i*.022)*WK)} ${GY-3}) scale(.3)">${figurBild(x.f)}</g>`).join('')+
   `<g fill="#a9805a">${[GY-6,GY].map(y=>`<rect x="0" y="${y-1}" width="${WW}" height="2.2" rx=".8"/><rect x="0" y="${y+1.2}" width="${WW}" height=".8" fill="#7d5c3c" opacity=".5"/>`).join('')}</g>`+
   [...Array(Math.ceil(WW/28)+1)].map((_,i)=>`<rect x="${i*28}" y="${GY-12}" width="3.2" height="18" rx=".8" fill="#9b7449"/><rect x="${i*28}" y="${GY-12}" width="1.1" height="18" rx=".5" fill="#b78c5e"/>`).join('')+
-  ITEMS.filter(i=>items.includes(i[0])&&DR[i[0]]).map(i=>{const z=DR[i[0]](Math.round(i[3]*WW)),u=UMR[i[0]]?`<g stroke="#3a261466" stroke-width=".55" stroke-linejoin="round">${z}</g>`:z;
-   return kind=='kid'&&AKT[i[0]]?`<g data-act="${i[0]}" style="cursor:pointer">${u}</g>`:u}).join('')+
+  ITEMS.filter(i=>items.includes(i[0])&&DR[i[0]]).map(i=>{const z=DR[i[0]](Math.round(OX+i[3]*WK)),u=UMR[i[0]]?`<g stroke="#3a261466" stroke-width=".55" stroke-linejoin="round">${z}</g>`:z;
+   return kind=='kid'&&AKT[i[0]]?`<g data-act="${i[0]}" style="cursor:pointer">${u}</g>`:u}).join('')+geb.s+
   grasStreifen(WW,Math.round(WW/6),GY-2,GY+12,3,5.5,200,gras,frei)+
   // Eigene Figur steht auf dem Hof vor dem Zaun
-  (figs.eigen?`<g class="fig eigen" data-k="${figs.eigen.id}" transform="translate(${r1(.47*WW)} ${GY+15}) scale(.36)">${figurBild(figs.eigen.f)}</g>`:'')+
+  (figs.eigen?`<g class="fig eigen" data-k="${figs.eigen.id}" transform="translate(${r1(OX+(H0&&H0.ko.u[0]?.42:.47)*WK)} ${GY+15}) scale(.36)">${figurBild(figs.eigen.f)}</g>`:'')+
   // Ebene für Apfel, Frosch, Wellen und Pferdeäpfel (hinter den Pferden)
   `<g id="hap">${kind=='kid'?HF.mist.map(mistSvg).join(''):''}</g>`+
   HF.horses.map((h,i)=>`<g class="hs" id="hs${i}" data-i="${i}">${PF.bild('h'+i+'_',{...h.m,coat:h.c,st:h.st})}</g>`).join('')+
@@ -162,9 +204,13 @@ function hofDraw(dt){
  const W=HF.W,WW=HF.WW,cam=HF.cam;
  HF.hw.setAttribute('transform',`translate(${(-cam).toFixed(1)} 0)`);HF.hl0.setAttribute('transform',`translate(${(-cam*.25).toFixed(1)} 0)`);HF.hl1.setAttribute('transform',`translate(${(-cam*.5).toFixed(1)} 0)`);
  HF.clouds.forEach(c=>c.el.setAttribute('transform',`translate(${(((c.x+HF.t*c.v)%(W+160))-80).toFixed(1)} ${c.y})`));
- const rg=HF.mode=='fly'?[20,WW-20]:[cam-20,cam+W+20];
+ const fly=HF.mode=='fly',kr0=HF.kr||[[0,WW]];
  HF.horses.forEach(h=>{
-  if(dt>0){
+  // Jedes Pferd bleibt auf seiner Koppel; im Hintergrund zusätzlich in der Nähe des Bildausschnitts
+  const kr=kr0[h.ko|0]||kr0[0],rg=fly?[kr[0]+20,kr[1]-20]:[Math.max(kr[0]+20,cam-20),Math.min(kr[1]-20,cam+W+20)];
+  // Tempo (Fire-Tablet): Pferde weit außerhalb des Bildes ruhen, nachdem sie einmal gezeichnet wurden
+  if(h.gez&&(h.x<cam-120||h.x>cam+W+120))return;
+  if(dt>0&&rg[0]<rg[1]){
    h.t-=dt;if(h.joy>0)h.joy-=dt;
    // Ziel (z. B. ein gefallener Apfel): hinlaufen, dort grasen bzw. naschen
    if(h.ziel!=null){const dx=h.ziel-h.x;
@@ -186,7 +232,7 @@ function hofDraw(dt){
   // Hintere (kleinere) Pferde ohne Umriss
   if((h.d<.5)!==h.hint){h.hint=h.d<.5;h.g_.classList.toggle('hinten',h.hint)}
   h.sc=sc;h.gy=gy;
-  h.g_.setAttribute('transform',`translate(${h.x.toFixed(1)} ${gy.toFixed(1)}) scale(${(h.dir*sc*PFS).toFixed(3)} ${(sc*PFS).toFixed(3)})`)});
+  h.g_.setAttribute('transform',`translate(${h.x.toFixed(1)} ${gy.toFixed(1)}) scale(${(h.dir*sc*PFS).toFixed(3)} ${(sc*PFS).toFixed(3)})`);h.gez=1});
  hofSpass(dt);
  const ord=[...HF.horses].sort((a,b)=>a.d-b.d);
  if(ord.some((h,i)=>HF.ord[i]!==h)){ord.forEach(h=>HF.hw.insertBefore(h.g_,HF.vorne));HF.ord=ord}
@@ -196,7 +242,7 @@ function hofDraw(dt){
    HF.htg.querySelector('#htt').textContent=txt;const r=HF.htg.querySelector('#htr');r.setAttribute('width',w);r.setAttribute('x',-w/2);HF.htg.setAttribute('transform',`translate(${x.toFixed(1)} ${y.toFixed(1)})`);HF.htg.setAttribute('opacity','1')}}
 }
 // ---------- Hof-Interaktionen: Apfel, Windrad, Frosch, Pferdeäpfel ----------
-const itemX=id=>Math.round(ITEMS.find(i=>i[0]==id)[3]*HF.WW);
+const itemX=id=>Math.round((HF.OX||0)+ITEMS.find(i=>i[0]==id)[3]*(HF.WK||HF.WW));
 // Herzen über einem oder mehreren Pferden
 function herzen(L){if(!HF.hfx)return;
  HF.hfx.innerHTML=L.filter(h=>h.sc).map(h=>{const x=h.x+h.dir*60*PFS*h.sc,y=h.gy-215*PFS*h.sc;
@@ -248,7 +294,7 @@ function hofSpass(dt){
  if(HF.wfahne){const x=+HF.wfahne.dataset.x,c=Math.cos(HF.fa*Math.PI/180);HF.wfahne.setAttribute('transform',`matrix(${c.toFixed(3)} 0 0 1 ${(x-c*x).toFixed(2)} 0)`)}
  // Apfel fällt, landet, die Pferde rennen hin, das erste nascht ihn
  const A=HF.apfel;
- if(A){if(dt>0){if(!A.lande){A.vy+=320*dt;A.y+=A.vy*dt;if(A.y>=A.y1){A.y=A.y1;A.lande=1;HF.horses.forEach(h=>{h.ziel=A.x+(Math.random()-.5)*16;h.dd=Math.random()*.25;h.joy=0})}}
+ if(A){if(dt>0){if(!A.lande){A.vy+=320*dt;A.y+=A.vy*dt;if(A.y>=A.y1){A.y=A.y1;A.lande=1;HF.horses.forEach(h=>{if(h.ko|0)return;h.ziel=A.x+(Math.random()-.5)*16;h.dd=Math.random()*.25;h.joy=0})}}
    else if(A.weg!=null){A.weg-=dt;if(A.weg<=0){A.el.remove();HF.apfel=null}}
    // Sicherung: Kommt kein Pferd an (z. B. weil es vorher angetippt wurde), verschwindet der Apfel nach 12 Sekunden
    else if((A.alt=(A.alt||0)+dt)>12)A.weg=1}
@@ -278,7 +324,7 @@ function hofFrame(ts){
  if(HF.sl>40){HF.sl=0;if(!HF.spar){HF.spar=1;document.getElementById('hof').classList.add('ohneUmriss')}else if(!HF.iv)HF.iv=.066}
  const span=HF.WW-HF.W;
  if(HF.mode=='fly'){if(HF.drag){}else if(HF.idle>0)HF.idle-=d;else{HF.cam+=HF.cv*d;if(HF.cam<=0){HF.cam=0;HF.cv=Math.abs(HF.cv)}if(HF.cam>=span){HF.cam=span;HF.cv=-Math.abs(HF.cv)}}}
- else HF.cam=span/2+Math.sin(HF.t/45)*Math.min(110,span/2);
+ else{const sh=(HF.WK||HF.WW)-HF.W;HF.cam=(HF.OX||0)+sh/2+Math.sin(HF.t/45)*Math.min(110,sh/2)}
  hofDraw(d)}
 function hofStop(){if(HF.raf)cancelAnimationFrame(HF.raf);HF.raf=0}
 function hofRun(){
@@ -286,12 +332,12 @@ function hofRun(){
  if(HF.run){if(!HF.raf){HF.last=performance.now();HF.raf=requestAnimationFrame(hofFrame)}}else{hofStop();hofDraw(0)}}
 // Wird nach jeder Änderung der Ansicht aufgerufen (aus ui()).
 function hofSync(force){
- const svg=$('#hof'),root=document.documentElement.style,fly=HF.mode=='fly',show=fly||['home','choose','figur','kid','wish','done'].includes(v);
+ const svg=$('#hof'),root=document.documentElement.style,fly=HF.mode=='fly',show=fly||['home','choose','figur','kid','wish','koppeln','done'].includes(v);
  document.body.classList.toggle('nohof',!show);
  if(!show){hofStop();svg.style.display='none';root.setProperty('--wh','0px');return}
  svg.style.display='block';root.setProperty('--wh',(fly?0:Math.max(210,Math.min(360,Math.round(innerHeight*.34))))+'px');
- const k=(v=='kid'||v=='wish'||v=='done')?kid():null,kind=k&&k.h?'kid':'home';
- const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.br,H.ma,H.brs.join(),H.coats.join(),Object.keys(H.it).join(),H.lp.join('+')].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.br,x.h.bl,x.h.so,x.h.ma].join():'').join(';');
+ const k=(v=='kid'||v=='wish'||v=='koppeln'||v=='done')?kid():null,kind=k&&k.h?'kid':'home';
+ const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.br,H.ma,H.brs.join(),H.coats.join(),Object.keys(H.it).join(),H.lp.join('+'),JSON.stringify(H.ko)].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.br,x.h.bl,x.h.so,x.h.ma].join():'').join(';');
  const fsig=S.kids.map(x=>x.f?[x.id,x.f.g,x.f.hf,x.f.ha,x.f.lg,x.f.sh].join(''):'').join();
  const key=[kind,sig,fsig,pal(new Date().getHours()).n,fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
  if(force||key!=HF.key){HF.key=key;hofBuild(kind)}

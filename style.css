@@ -32,6 +32,9 @@ input,select{background:var(--card);border:1px solid var(--line);border-radius:1
 .bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar b{display:block;height:100%;background:var(--hay)}
 .scene{width:100%;border-radius:14px;display:block}.q{font-size:22px;white-space:pre-line;margin:12px 0}
 #ans{font-size:24px;width:100%;max-width:240px}
+/* Koppeln-Ansicht: Karten je Koppel, Zeilen mit Pferden und Umzugsknöpfen */
+.koppel.zu{opacity:.8}.pferdzeile{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line)}
+.card.pferdzeile{border-top:0;padding:8px 12px}button.klein{padding:4px 9px;font-size:13px;margin:2px 0 2px 4px}
 /* Wunschbaum: Bild des eigenen Pferds bei den Abzeichen */
 .abz{text-align:center;padding:4px}.abz svg{width:100%;max-width:200px}
 /* Themen-Kategorien: Schulstoff, Mathe-Olympiade & Knobeln, aufklappbar Wiederholen */

@@ -129,15 +129,19 @@ const BLESSE = ['M102 -206.5L108.5 -214L115 -205.5L108.5 -197.5Z',
   'M110 -201C116 -194 123 -184 129.5 -174.5L127.2 -173C121 -182 114 -192 107.8 -199Z',
   'M107 -204C113 -200 123 -187 131 -173C134 -168 136 -163 135.5 -159L131.5 -161C127 -171 118 -185 105 -199Z',
   'M103 -207C112 -204 124 -190 133 -175C136 -169 138.5 -163 138 -157L128.5 -160C124.5 -170 115 -184 100 -199Z'];
-// Schecken-Flecken: ohne Zahl die bekannten vier Flecken, mit Zahl (fs) zufällig, aber bei gleicher Zahl immer gleich
-function flecken(fs) {
-  if (!fs) return '<ellipse cx="6" cy="-108" rx="30" ry="24"/><ellipse cx="-62" cy="-140" rx="21" ry="15"/><ellipse cx="44" cy="-150" rx="15" ry="10"/><ellipse cx="-26" cy="-160" rx="12" ry="8"/>';
-  let s = fs % 2147483646 + 1; const z = () => (s = s * 16807 % 2147483647) / 2147483647; let o = '';
-  const n = 3 + Math.floor(z() * 3);
-  for (let i = 0; i < n; i++) { const rx = 11 + z() * 22, cx = r1(-82 + z() * 155), cy = r1(-152 + z() * 56), ry = r1(rx * (.55 + z() * .3)), w = r1(-35 + z() * 70);
-    o += `<ellipse cx="${cx}" cy="${cy}" rx="${r1(rx)}" ry="${ry}" transform="rotate(${w} ${cx} ${cy})"/>`; }
-  return o;
+// Schecken-Flecken als Liste [cx, cy, rx, ry, Drehung] in Körper-Koordinaten. Ohne Zahl die bekannten Flecken,
+// mit Zahl (fs) zufällig, aber bei gleicher Zahl immer gleich. Seit 2026-10-18 gibt es auch Flecken an Schulter und Hals:
+// bild() zeichnet jeden Fleck auf dem Körper und rechnet ihn zusätzlich in die Hals-Koordinaten um, so laufen Flecken über die Kante weiter.
+function fleckListe(fs) {
+  if (!fs) return [[6, -108, 30, 24, 0], [-62, -140, 21, 15, 0], [44, -150, 15, 10, 0], [-26, -160, 12, 8, 0], [72, -150, 15, 10, -40]];
+  let s = fs % 2147483646 + 1; const z = () => (s = s * 16807 % 2147483647) / 2147483647, L = [];
+  const fleck = (x0, x1, y0, y1, r0, r1_) => { const rx = r0 + z() * (r1_ - r0); L.push([x0 + z() * (x1 - x0), y0 + z() * (y1 - y0), rx, rx * (.55 + z() * .3), -35 + z() * 70]); };
+  const nk = 3 + Math.floor(z() * 2), nh = 1 + Math.floor(z() * 2);
+  for (let i = 0; i < nk; i++) fleck(-82, 50, -152, -96, 11, 30);   // Körper
+  for (let i = 0; i < nh; i++) fleck(62, 96, -185, -138, 9, 16);    // Schulter und unterer Hals (oben liegt die Mähne darüber)
+  return L;
 }
+const fleckSvg = L => L.map(([x, y, rx, ry, w]) => `<ellipse cx="${r1(x)}" cy="${r1(y)}" rx="${r1(rx)}" ry="${r1(ry)}"${w ? ` transform="rotate(${r1(w)} ${r1(x)} ${r1(y)})"` : ''}/>`).join('');
 // Lage der Beine (Drehpunkt) je nach Maßen
 const beinLage = m => ({ vn: [50 * m.bx, -100 * m.ls], vf: [42 * m.bx, -100 * m.ls - 2], hn: [-58 * m.bx, -104 * m.ls], hf: [-66 * m.bx, -104 * m.ls - 2] });
 
@@ -170,6 +174,9 @@ function bild(P, sp, opt = {}) {
   const bein = (id, fn, fern) => `<g transform="translate(${r1(L[id][0])} ${r1(L[id][1])}) scale(${m.lw} ${m.ls})">${fn(id, fern, +sm[SOCKBEIN[id]])}</g>`;
   const T = (x, y) => [r1(x * m.bx), r1(m.by * (y + 100) - 100 * m.ls)];
   const [nx, ny] = T(62, -132), [tx, ty] = T(-85, -150), ks = (m.bx + m.by) / 2;
+  // Flecken: Körper-Koordinaten, für den Hals umgerechnet (gleiche Rechnung wie die Verschiebung des Halses weiter unten)
+  const fl = fleckListe(sp.fs | 0), ns = r1(m.ns * 100) / 100;
+  const flHals = fl.map(([x, y, rx, ry, w]) => { const X = x * m.bx, Y = m.by * (y + 100) - 100 * m.ls; return [(X - nx) / ns + 62, (Y - ny) / ns - 132, rx * m.bx / ns, ry * m.by / ns, w]; });
   const roh = `<g id="pferd"><defs>
 <linearGradient id="gK" gradientUnits="userSpaceOnUse" x1="0" y1="-232" x2="0" y2="-84"><stop offset="0" ${sv('k1')}/><stop offset=".46" ${sv('k1')}/><stop offset=".76" ${sv('k2')}/><stop offset="1" ${sv('k3')}/></linearGradient>
 <linearGradient id="gN" gradientUnits="userSpaceOnUse" x1="44" y1="-178" x2="94" y2="-140"><stop offset=".15" ${sv('k1')}/><stop offset="1" ${sv('k2')}/></linearGradient>
@@ -178,6 +185,7 @@ function bild(P, sp, opt = {}) {
 <linearGradient id="gB" gradientUnits="userSpaceOnUse" x1="0" y1="-2" x2="0" y2="48"><stop offset="0" ${sv('k3')}/><stop offset=".45" ${sv('k2')}/><stop offset="1" ${sv('k3')}/></linearGradient>
 <linearGradient id="gBf" gradientUnits="userSpaceOnUse" x1="0" y1="-2" x2="0" y2="48"><stop offset="0" ${sv('fk3')}/><stop offset=".45" ${sv('fk2')}/><stop offset="1" ${sv('fk3')}/></linearGradient>
 <clipPath id="kopfClip"><use href="#kopfForm"/></clipPath><clipPath id="koerperClip"><use href="#koerperForm"/></clipPath>
+<clipPath id="hals1Clip"><use href="#hals1Form"/><circle cx="80" cy="-172" r="17"/></clipPath><clipPath id="hals2Clip"><use href="#hals2Form"/><circle cx="80" cy="-172" r="16.5"/></clipPath>
 </defs>
 <ellipse id="schatten" cx="-4" cy="1" rx="${r1(104 * m.bx)}" ry="10" class="schatten2d"/>
 <g id="koerper">
@@ -189,15 +197,15 @@ function bild(P, sp, opt = {}) {
   ${bein('hn', hinterbein, 0)}${bein('vn', vorderbein, 0)}
   <g transform="translate(0 ${r1(-100 * m.ls)}) scale(${m.bx} ${m.by}) translate(0 100)">
    <path id="koerperForm" class="kK" d="${KOERPER}"/>
-   <g clip-path="url(#koerperClip)" class="fleck">${flecken(sp.fs | 0)}</g>
+   <g clip-path="url(#koerperClip)" class="fleck">${fleckSvg(fl)}</g>
    <ellipse class="glanz" cx="-64" cy="-138" rx="25" ry="15" transform="rotate(-18 -64 -138)"/><ellipse class="glanz" cx="56" cy="-142" rx="15" ry="10"/>
    <path class="aal" d="M38 -158C18 -152 -8 -153 -36 -157C-52 -159 -66 -159 -80 -153"/>
    ${linie('M42 -152C52 -140 64 -127 74 -117')}${linie('M-36 -148C-46 -132 -48 -114 -42 -97', .1)}${linie('M-30 -89C-6 -85 16 -85 32 -89', .06, 3)}
   </g>
   <g transform="translate(${nx} ${ny}) scale(${r1(m.ns * 100) / 100}) translate(-62 132)">
-   <g id="hals1"><path class="kN" d="${HALS1}"/><circle class="kN" cx="80" cy="-172" r="17"/>
+   <g id="hals1"><path id="hals1Form" class="kN" d="${HALS1}"/><circle class="kN" cx="80" cy="-172" r="17"/><g clip-path="url(#hals1Clip)" class="fleck">${fleckSvg(flHals)}</g>
     ${maehne([38, -156], [43, -177], [64, -185], 6, t => (26 + t * 8) * mf, 10, 1, art)}
-    <g id="hals2"><path class="kN2" d="${HALS2}"/><circle class="kN2" cx="80" cy="-172" r="16.5"/>${linie('M86 -158C91 -170 96 -184 100 -196', .08, 1.4)}
+    <g id="hals2"><path id="hals2Form" class="kN2" d="${HALS2}"/><circle class="kN2" cx="80" cy="-172" r="16.5"/><g clip-path="url(#hals2Clip)" class="fleck">${fleckSvg(flHals)}</g>${linie('M86 -158C91 -170 96 -184 100 -196', .08, 1.4)}
      ${gelenkMaehne(art, 34 * mf)}
      ${maehne([64, -185], [67, -211], [92, -219], 7, t => (38 - t * 12) * mf, 30, 2, art)}
      <g transform="translate(98 -210) scale(${r1(m.hs / m.ns * 100) / 100}) translate(-98 210)"><g id="kopf">${idle ? SMIL('98 -210', 3, 4.6) : ''}
