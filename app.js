@@ -55,7 +55,9 @@ function clean(d){
   if(o.kids.some(z=>z.id==c.id))c.id=Date.now()+o.kids.length;
   if(Array.isArray(k.b))c.b=k.b.filter(x=>BD.some(b=>b[0]==x));
   if(k.t&&typeof k.t==='object')for(const key of Object.keys(k.t)){const s=k.t[key];if(s&&typeof s==='object'&&/^[a-z0-9]{1,12}$/.test(key))c.t[key]={d:nn(s.d,1,5),n:nn(s.n),r:nn(s.r),run:Math.max(-9,Math.min(9,Math.trunc(+s.run)||0))}}
-  if(Array.isArray(k.mist))for(const m of k.mist.slice(0,30)){if(m&&typeof m.key==='string'&&Array.isArray(m.q)&&typeof m.q[0]==='string'&&Number.isFinite(+m.q[1]))c.mist.push({key:ct(m.key,12),q:[ct(m.q[0],400),+m.q[1],ct(m.q[2],200),ct(m.q[3],800),...(zCheck(m.q[4])?[zCheck(m.q[4])]:[])]})}
+  // Altes Thema "Geometrie & Zählen" (bis 2026-10-18): Fortschritt geht an "Winkel & Vielecke"
+  if(c.t.geo){if(!c.t.winkel)c.t.winkel=c.t.geo;delete c.t.geo}
+  if(Array.isArray(k.mist))for(const m of k.mist.slice(0,30)){if(m&&typeof m.key==='string'&&Array.isArray(m.q)&&typeof m.q[0]==='string'&&Number.isFinite(+m.q[1]))c.mist.push({key:m.key==='geo'?(m.q[4]&&(m.q[4].t=='gitter'||m.q[4].diag||/Diagonale|Weg führt/.test(m.q[0]))?'wege':'winkel'):ct(m.key,12),q:[ct(m.q[0],400),+m.q[1],ct(m.q[2],200),ct(m.q[3],800),...(zCheck(m.q[4])?[zCheck(m.q[4])]:[])]})}
   if(k.h&&typeof k.h==='object'){const h=k.h,co=COATS[h.coat]?h.coat:'fuchs',own=h.own&&typeof h.own==='object'?h.own:{};
    c.h={coat:co,coats:Array.isArray(h.coats)?[...new Set([co,...h.coats.filter(x=>COATS[x])])]:[co],name:ct(h.name,16)||'Fohlen',own:{},bl:h.bl?1:0,so:h.so?1:0,br:BR[h.br]?h.br:'std',brs:['std'],sk:{},it:{}};
    const it=h.it&&typeof h.it==='object'?h.it:{};for(const [id] of ITEMS)if(it[id])c.h.it[id]=1;
@@ -124,7 +126,7 @@ function ui(){let h='';PZ=0;
  <div class="bar" style="margin:6px 0"><b style="width:${pr}%"></b></div><p class="small">${nx?`Tag ${se} von ${TAGE[st]} bis „${nx.n}“ · ${heute(k)?'heute schon gerechnet':'rechne heute eine Runde, damit der Tag zählt'}`:'Dein Pferd ist ausgewachsen!'}</p>
  <p class="small">Noch ${rest} Minute${rest>1?'n':''} für heute · ${k.xp} Erfahrung · Serie ${k.s} · Rekord ${k.best}${mcount(k)?` · Fehlerheft: ${mcount(k)} zum Wiederholen`:''}</p>
  ${st<D3AB?'':`${d3Fenster('')}<p class="small" style="margin-top:0">Wische über das Bild, um ${esc(k.h.name)} von allen Seiten zu sehen.</p>`}
- <h2 id="themen">Thema wählen</h2>`+T[k.g].map(t=>{let s=ts(k,t[0]);return`<button class="big" onclick="start('${t[0]}')"><span>${t[1]}</span>${dots(s.d)}</button>`}).join('')+
+ <h2 id="themen">Thema wählen</h2>`+themen(k)+
  `<h2>Wunschbaum</h2>${k.hl?`<p class="small">Der Wunschbaum öffnet sich wieder, wenn du eine Runde mit mindestens ${FREI} von 10 richtig geschafft hast.</p>`:`<button class="big" onclick="v='wish';note='';ui()"><span>Farbe, Mähne und Abzeichen für ${esc(k.h.name)}</span><span class="ap">${AP}</span></button>`}<h2>Abzeichen</h2>`+BD.map(b=>`<span class="badge ${k.b.includes(b[0])?'':'off'}">${b[1]}</span>`).join('')}
  if(v=='wish'){let k=kid(),H=hh(k),st=stg(k);
  h=`<button class="alt" onclick="v='kid';ui()">Zurück</button><div class="row sp"><h1>Wunschbaum</h1><span class="ap">${k.ap||0} ${AP}</span></div><p class="no">${note}</p>
@@ -135,7 +137,7 @@ function ui(){let h='';PZ=0;
  <p class="small">Die Mähnenlänge kostet nichts. Zöpfe gibt es nur bei langer Mähne: Wenn du Zöpfe einschaltest, wird die Mähne lang.</p>`}
  <h2>Fellfarbe</h2><div class="grid">${Object.keys(COATS).map(c=>`<button class="pick ${H.coat==c?'on':''}" onclick="wish('coat','${c}')"><svg viewBox="${PFVB}">${pfBild({...pfSpec(H,st),coat:c,bl:0,so:0})}</svg>${COATS[c][0]}<br>${H.coat==c?'gewählt':H.coats.includes(c)?'freigeschaltet':'25 '+AP}</button>`).join('')}</div>
  <h2>Abzeichen im Fell</h2><div class="row"><button class="${H.bl?'go':'alt'}" onclick="wish('bl')">Blesse ${H.own.bl?(H.bl?'an':'aus'):'· 15 '+AP}</button><button class="${H.so?'go':'alt'}" onclick="wish('so')">Weiße Socken ${H.own.so?(H.so?'an':'aus'):'· 15 '+AP}</button></div><h2>Rasse</h2><div class="grid">${Object.keys(BR).map(b=>`<button class="pick ${H.br==b?'on':''}" onclick="wish('br','${b}')"><svg viewBox="${PFVB}">${pfBild({...pfSpec(H,3),br:b})}</svg>${BR[b].n}<br>${H.br==b?'gewählt':H.brs.includes(b)?'freigeschaltet':'40 '+AP}</button>`).join('')}</div><h2>Lieblingspferde aus dem Stall</h2><div class="grid">${LIEB.map(([id,n,b,sp])=>{const hat=H.lp.includes(id);return`<button class="pick ${hat?'on':''}" onclick="wish('lp','${id}')" aria-pressed="${hat}"><svg viewBox="${PFVB}">${pfBild({...sp,bl:0,so:0})}</svg><b>${n}</b><br><span class="small">${b}</span><br>${hat?'auf dem Hof':PREIS.lieb+' '+AP}</button>`}).join('')}</div><p class="small">Lieblingspferde leben als Freunde auf deinem Hof. Tippe oben auf ein Pferd, dann siehst du seinen Namen.</p><h2>Hof ausbauen</h2><div class="grid">${ITEMS.map(([id,n,p])=>`<button class="pick ${H.it[id]?'on':''}" onclick="wish('it','${id}')">${n}<br>${H.it[id]?'gebaut':p+' '+AP}</button>`).join('')}</div><p class="small">Gebaute Gegenstände siehst du oben auf deinem Hof und im Rundflug. Für jede gekaufte Rasse kommt außerdem ein Pferdefreund dazu.</p><h2>Fähigkeiten</h2>${SK.map(([id,n])=>{let l=H.sk[id]||0;return`<div class="card row sp"><span>${n} ${dots(l)}</span>${l<5?`<button class="alt" onclick="wish('sk','${id}')">Training · ${10*(l+1)} ${AP}</button>`:'<span class="small">Meister</span>'}</div>`}).join('')}<p class="small">Fähigkeiten zeigen sich als Bewegung, wenn dein Pferd sich über eine richtige Antwort freut.</p><p class="small">Äpfel gibt es für richtige Antworten, bei schwereren Aufgaben mehr. Ausgeben kostet keine Erfahrung.</p>`}
- if(v=='quiz'){let k=kid(),s=ts(k,Q.key),t=T[k.g].find(x=>x[0]==Q.key),q=Q.q,[ft,fe]=frageTeile(q[0]);
+ if(v=='quiz'){let k=kid(),s=ts(k,Q.key),t=THEMA[Q.key],q=Q.q,[ft,fe]=frageTeile(q[0]);
  h=`<div class="row sp"><button class="alt" onclick="v='kid';ui()">Beenden</button><span>${t[1]} ${dots(s.d)}</span></div><div class="bar" style="margin:12px 0"><b style="width:${Q.i*10}%"></b></div><p class="small">Aufgabe ${Q.i+1} von 10${Q.rp?' · <b>Nochmal versuchen:</b> Die kennst du schon aus dem Fehlerheft':''}</p>${zeichnung(q[4])}<div class="q">${esc(ft)}</div>`+
  (Q.hint&&q[2]?`<p class="small">Tipp: ${esc(de(q[2]))}</p>`:'')+
  (Q.fb?`${Q.fb.ok&&k.h?`<div style="max-width:300px">${scene(k,Q.fb.an)}</div>`:''}<p class="${Q.fb.ok?'ok':'no'}"><b>${Q.fb.ok?'Richtig! +'+Q.fb.g+' Erfahrung, +'+Q.fb.a+' Äpfel':'Leider falsch. Richtig ist '+mitEinheit(q[1],fe)+'.'}</b>${Q.fb.m?' '+Q.fb.m:''}</p>${!Q.fb.ok&&q[3]?`<div class="card" style="white-space:pre-line;font-size:16px"><b>So geht’s:</b>\n${esc(de(q[3]))}</div>`:''}<button class="go" onclick="nx()">${Q.i==9?'Fertig':'Weiter'} (Enter)</button>`:
@@ -151,7 +153,7 @@ function ui(){let h='';PZ=0;
  if(S.pin&&!open)h+=`<div class="card"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p></div>`;
  else{h+=S.kids.map(k=>`<div class="card"><div class="row sp"><b>${esc(k.name)}</b><span>Klasse <select onchange="gr(${k.id},this.value)" aria-label="Klasse">${[5,6,7,8].map(c=>`<option ${k.g==c?'selected':''}>${c}</option>`).join('')}</select></span></div>
  <p class="small">${k.h?esc(k.h.name)+' · '+GS[stg(k)].n+' · ':''}${k.h&&stg(k)<3?`Tag ${serie(k)} von ${TAGE[stg(k)]} bis „${GS[stg(k)+1].n}“ · `:''}heute ${Math.min(LIMIN,Math.floor(zeit(k)/60))} von ${LIMIN} Minuten · ${k.xp} Erfahrung · ${k.ap||0} Äpfel · ${k.r} von ${k.total} Aufgaben richtig (${k.total?Math.round(k.r/k.total*100):0} %) · Rekordserie ${k.best} · Fehlerheft ${mcount(k)} offen</p>
- <table><tr><th>Thema</th><th>Stufe</th><th>Aufgaben</th><th>Richtig</th></tr>${T[k.g].map(t=>{let s=ts(k,t[0]);return`<tr><td>${t[1]}</td><td>${s.d}</td><td>${s.n}</td><td>${s.n?Math.round(s.r/s.n*100)+' %':'–'}</td></tr>`}).join('')}</table>
+ <table><tr><th>Thema</th><th>Stufe</th><th>Aufgaben</th><th>Richtig</th></tr>${elternThemen(k).map(t=>{let s=ts(k,t[0]);return`<tr><td>${t[1]}</td><td>${s.d}</td><td>${s.n}</td><td>${s.n?Math.round(s.r/s.n*100)+' %':'–'}</td></tr>`}).join('')}</table>
  <p class="small">Ein Thema wechselt hoch nach 3 richtigen Antworten in Folge und runter nach 2 falschen.</p><div class="row"><button class="alt" onclick="rst(${k.id})">Fortschritt zurücksetzen</button><button class="alt" onclick="del(${k.id})">Kind löschen</button></div></div>`).join('')||'<p>Noch keine Kinder angelegt.</p>';
  h+=`<div class="card"><b>Spielzeit und Wachstum</b><p class="small">Jedes Kind kann höchstens ${LIMIN} Minuten pro Tag auf den Hof (fest eingestellt). Eine laufende Runde wird nicht unterbrochen. Das Pferd wächst mit Tagen, an denen mindestens eine Runde gerechnet wurde (einmal pro Tag): Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten.</p></div><div class="card"><b>Anzeige</b><p class="small">Der animierte Hintergrund kann ruhig gestellt werden, zum Beispiel bei älteren Geräten oder um den Akku zu schonen. Dann stehen die Pferde still.</p><button class="alt" onclick="S.calm=S.calm?0:1;save();ui()">Ruhiger Hintergrund: ${S.calm?'an':'aus'}</button></div><div class="card"><b>Sicherung</b><p class="small">Der Stand liegt nur in diesem Browser. Exportiere ihn regelmäßig als Datei, besonders vor dem Löschen von Browserdaten oder bei einem Gerätewechsel.</p><div class="row"><button onclick="exp()">Exportieren</button><input type="file" accept=".json" onchange="imp(this)" aria-label="Sicherung importieren"></div><p class="no">${warn}</p></div>
  <div class="card"><b>PIN-Schutz</b>${S.pin?`<p class="small">Diese Ansicht ist mit einer PIN geschützt. Ohne PIN heißt sie „Einstellungen“ und ist für alle offen, zum Beispiel auf dem eigenen Handy eines Kindes.</p><button class="alt" onclick="npin()">PIN entfernen</button>`:`<p class="small">Ohne PIN kann jeder hier die Klasse ändern, Fortschritt zurücksetzen und Kinder löschen. Mit einer PIN (mindestens 4 Zeichen) wird daraus die geschützte Eltern-Ansicht.</p><input id="pin1" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp('pin1')"> <button onclick="sp('pin1')">PIN festlegen</button>`}<p class="no">${pw}</p></div>`+(S.pin?`<button class="alt" onclick="lock()">Sperren</button>`:'')}}
@@ -194,8 +196,16 @@ function frageTeile(t){t=String(t);let e='',m=t.match(EINH);if(m){e=m[1]||m[2];t
  return[de(t).replace(/([.?!])[ \t]+(?=[A-ZÄÖÜ„(0-9]|[a-z]\s*=)/g,'$1\n'),e]}
 // Antwort mit Einheit: 60° (ohne Leerzeichen), sonst 12 cm, 40 €
 const mitEinheit=(v,e)=>(e=='€'&&!Number.isInteger(+v)?de((+v).toFixed(2)):de(v))+(e?(e=='°'?'°':' '+e):'');// Geld immer mit zwei Nachkommastellen
-// Themenliste einer Klasse als Knöpfe
-const themen=k=>T[k.g].map(t=>{let s=ts(k,t[0]);return`<button class="big" onclick="start('${t[0]}')"><span>${t[1]}</span>${dots(s.d)}</button>`}).join('');
+// Themen als Knöpfe, geordnet nach Kategorien (KAT in aufgaben.js): Schulstoff der eigenen Klasse, Mathe-Olympiade & Knobeln,
+// aufklappbar der Schulstoff früherer Klassen zum Wiederholen
+const themaKnopf=(k,key)=>`<button class="big" onclick="start('${key}')"><span>${THEMA[key][1]}</span>${dots(ts(k,key).d)}</button>`;
+const undListe=a=>a.length>1?a.slice(0,-1).join(', ')+' und '+a[a.length-1]:String(a[0]);
+const frueher=k=>[5,6,7,8].filter(g=>g<k.g);
+function themen(k){const K=KAT[k.g],fr=frueher(k);
+ return`<h3 class="kat">Schulstoff Klasse ${k.g}</h3>${K.schul.map(x=>themaKnopf(k,x)).join('')}<h3 class="kat">Mathe-Olympiade & Knobeln</h3>${K.oly.map(x=>themaKnopf(k,x)).join('')}`+
+  (fr.length?`<details class="wdh"><summary>Wiederholen: Klasse ${undListe(fr)}</summary>${fr.map(g=>`<h3 class="kat">Schulstoff Klasse ${g}</h3>${KAT[g].schul.map(x=>themaKnopf(k,x)).join('')}`).join('')}</details>`:'')}
+// Themen für die Eltern-Ansicht: eigene Klasse und wiederholte Themen früherer Klassen, die schon geübt wurden
+const elternThemen=k=>[...new Set([...T[k.g].map(t=>t[0]),...frueher(k).flatMap(g=>KAT[g].schul).filter(x=>k.t[x]&&k.t[x].n)])].map(x=>THEMA[x]);
 // Tageslimit erreicht: Rundflug beenden und verabschieden
 function bye(){if(HF.mode=='fly')flyOff();v='bye';ui();scrollTo(0,0)}
 // Spielzeit messen: nur, solange ein Kind auf seinem Hof ist und die App sichtbar ist (auch im Rundflug, der läuft über der Kind-Ansicht)
@@ -233,10 +243,10 @@ function wish(t,c){let k=kid(),H=hh(k),no=()=>{note='Dafür fehlen noch Äpfel.'
  save();ui()}
 // Fehlerheft: falsch beantwortete Aufgaben (max. 30 pro Kind). Pro Runde kommen bis zu 3 davon aus dem gewählten Thema erneut dran.
 const ms=k=>k.mist||(k.mist=[]);
-const mcount=k=>(k.mist||[]).filter(x=>T[k.g].some(t=>t[0]==x.key)).length;
+const mcount=k=>(k.mist||[]).filter(x=>THEMA[x.key]).length;
 function start(key){if(ausZeit(kid()))return bye();let k=kid(),rep=ms(k).filter(x=>x.key==key).map(x=>x.q).sort(()=>Math.random()-.5).slice(0,3),pool=[1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-.5);
  Q={key,i:0,right:0,hint:0,gain:0,ap:0,grow:'',newb:[],fb:null,seen:[],rep,slots:pool.slice(0,rep.length),rp:0,mast:0};Q.q=gen();v='quiz';ui()}
-const gen=()=>{let k=kid(),t=T[k.g].find(x=>x[0]==Q.key),q,n=0;Q.rp=0;
+const gen=()=>{let k=kid(),t=THEMA[Q.key],q,n=0;Q.rp=0;
  if(Q.rep.length&&Q.slots.includes(Q.i)){Q.rp=1;q=Q.rep.shift();Q.seen.push(q[0]);return q}
  do{q=t[2](ts(k,Q.key).d)}while((Q.seen.includes(q[0])||Q.rep.some(r=>r[0]==q[0]))&&++n<20);
  Q.seen.push(q[0]);return q};

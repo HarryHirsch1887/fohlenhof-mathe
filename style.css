@@ -32,6 +32,10 @@ input,select{background:var(--card);border:1px solid var(--line);border-radius:1
 .bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar b{display:block;height:100%;background:var(--hay)}
 .scene{width:100%;border-radius:14px;display:block}.q{font-size:22px;white-space:pre-line;margin:12px 0}
 #ans{font-size:24px;width:100%;max-width:240px}
+/* Themen-Kategorien: Schulstoff, Mathe-Olympiade & Knobeln, aufklappbar Wiederholen */
+.kat{font-size:15px;margin:14px 0 6px;color:var(--gr);text-transform:none}
+details.wdh{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:6px 10px;background:var(--card)}
+details.wdh summary{cursor:pointer;font-weight:bold;padding:6px 0}
 /* Zeichnungen zu Geometrie-Aufgaben (zeichnung.js), Farben passen sich an Hell und Dunkel an */
 .zeich{display:block;width:100%;max-width:340px;margin:10px 0 0;background:var(--card);border:1px solid var(--line);border-radius:12px}
 .zeich .zf{fill:var(--bg);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}

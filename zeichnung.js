@@ -1,13 +1,13 @@
 // Pferdehof Mathe: kleine Zeichnungen zu Geometrie-Aufgaben (nur Code, SVG), maßstabsgetreu zu den Zahlen der Aufgabe.
 // Eine Aufgabe bringt die Zeichnung als 5. Eintrag mit: [Text, Antwort, Tipp, Lösungsweg, Zeichnung].
-// Zeichnung = {t: Art, ...Werte}. Arten: rechteck, ausschnitt, dreieck, rechtwinklig, leiter, gleichschenklig, vieleck, gitter.
+// Zeichnung = {t: Art, ...Werte}. Arten: rechteck, ausschnitt, dreieck, rechtwinklig, leiter, gleichschenklig, vieleck, gitter, nebenwinkel.
 // Gesuchte Größen werden mit "?" in Rot beschriftet. Farben kommen aus den CSS-Variablen (hell und dunkel).
 // Bildgröße; px/py: Rand links/rechts bzw. oben/unten für Beschriftungen (seitliche Beschriftungen brauchen mehr Platz)
 const ZB={w:300,h:200,px:52,py:32};
 // Prüft eine gespeicherte Zeichnungsangabe (Fehlerheft, Import): nur bekannte Arten, Zahlen und kurze Texte. Liefert eine saubere Kopie oder null.
-const ZARTEN=['rechteck','ausschnitt','dreieck','rechtwinklig','leiter','gleichschenklig','vieleck','gitter'];
+const ZARTEN=['rechteck','ausschnitt','dreieck','rechtwinklig','leiter','gleichschenklig','vieleck','gitter','nebenwinkel'];
 function zCheck(z){if(!z||typeof z!=='object'||!ZARTEN.includes(z.t))return null;const o={t:z.t};
- for(const k of ['a','b','c','d','A','B','al','be','n','zerlegt','einzeln','diag','la','lb','lc','innen']){const v=z[k];
+ for(const k of ['a','b','c','d','A','B','al','be','n','zerlegt','einzeln','diag','la','lb','lc','innen','w','lal','lbe','lga','nn','gleich']){const v=z[k];
   if(typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=1000)o[k]=v;else if(typeof v==='string'&&v.length<=24)o[k]=v}
  if(o.t=='vieleck'&&!(o.n>=3&&o.n<=30))return null;return o}
 const zf=v=>Math.round(v*10)/10,zE=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -44,9 +44,18 @@ function zeichnung(z){if(!z||typeof z!=='object')return'';try{
  if(z.t=='ausschnitt'){const{A,B,c,d}=z,m=zAbb([[0,0],[A,0],[A,B],[0,B]]),P=[[0,0],[A,0],[A,B-d],[A-c,B-d],[A-c,B],[0,B]].map(m),Q=[[A-c,B-d],[A,B-d],[A,B],[A-c,B]].map(m),C=zMitte([m([0,0]),m([A,B])]);
   return zSvg(`<path d="${zPfad(P)}Z" class="zf"/><path d="${zPfad(Q)}Z" class="zl zd"/>`+zSeite(P[0],P[1],C,`${A} cm`)+zSeite(P[5],P[0],C,`${B} cm`)+
    zSeite(Q[3],Q[2],C,`${c} cm`)+zSeite(Q[1],Q[2],C,`${d} cm`)+(Math.abs(Q[1][0]-Q[0][0])>34&&Math.abs(Q[0][1]-Q[2][1])>20?zText((Q[0][0]+Q[2][0])/2,(Q[0][1]+Q[2][1])/2,'weg'):''),'Rechteck mit Ausschnitt')}
- // Dreieck mit den Winkeln al (links unten) und be (rechts unten), gesucht ist gamma oben
- if(z.t=='dreieck'){const al=z.al*Math.PI/180,be=z.be*Math.PI/180,ac=Math.sin(be)/Math.sin(al+be),pts=[[0,0],[1,0],[ac*Math.cos(al),ac*Math.sin(al)]],m=zAbb(pts),[A,B,C]=pts.map(m);
-  return zSvg(`<path d="${zPfad([A,B,C])}Z" class="zf"/>`+zWinkel(A,B,C,`${z.al}°`,0,'α')+zWinkel(B,C,A,`${z.be}°`,0,'β')+zWinkel(C,A,B,'?',0,'γ'),'Dreieck')}
+ // Dreieck mit den Winkeln al (links unten) und be (rechts unten), gesucht ist gamma oben.
+ // lal/lbe/lga: andere Beschriftungen der Winkel ("" = nur Bogen), nn: ohne Namen α β γ,
+ // gleich: Striche an den gleich langen Seiten (im unteren Drittel, oben steht der Winkel der Spitze)
+ if(z.t=='dreieck'){const al=z.al*Math.PI/180,be=z.be*Math.PI/180,ac=Math.sin(be)/Math.sin(al+be),pts=[[0,0],[1,0],[ac*Math.cos(al),ac*Math.sin(al)]],m=zAbb(pts),[A,B,C]=pts.map(m),
+   lab=(v,s)=>v==null?s:v,strich=(P,Q)=>{const mx=P[0]+(Q[0]-P[0])*.35,my=P[1]+(Q[1]-P[1])*.35,dx=Q[0]-P[0],dy=Q[1]-P[1],l=Math.hypot(dx,dy)||1;return`<path d="M${zf(mx-dy/l*6)} ${zf(my+dx/l*6)}L${zf(mx+dy/l*6)} ${zf(my-dx/l*6)}" class="zl zdick"/>`};
+  return zSvg(`<path d="${zPfad([A,B,C])}Z" class="zf"/>`+(z.gleich?strich(A,C)+strich(B,C):'')+zWinkel(A,B,C,lab(z.lal,`${z.al}°`),0,z.nn?'':'α')+zWinkel(B,C,A,lab(z.lbe,`${z.be}°`),0,z.nn?'':'β')+zWinkel(C,A,B,lab(z.lga,'?'),0,z.nn?'':'γ'),'Dreieck')}
+ // Nebenwinkel: gerade Linie mit einem Strahl, rechts der bekannte Winkel w, links der gesuchte
+ if(z.t=='nebenwinkel'){const w=z.w*Math.PI/180,pts=[[-1,0],[1,0],[0,0],[.85*Math.cos(w),.85*Math.sin(w)]],m=zAbb([...pts,[0,.85],[0,-.05]]),[L,Rr,O,S]=pts.map(m);
+  // Beschriftung in festem Abstand (46 Pixel) auf der Winkelhalbierenden, damit sie auch bei 30° frei steht
+  const lab=(P,Q,t)=>{const u=[P[0]-O[0],P[1]-O[1]],w=[Q[0]-O[0],Q[1]-O[1]],lu=Math.hypot(...u),lw=Math.hypot(...w),bx=u[0]/lu+w[0]/lw,by=u[1]/lu+w[1]/lw,lb=Math.hypot(bx,by)||1;return zText(O[0]+bx/lb*46,O[1]+by/lb*46,t)};
+  return zSvg(`<path d="${zPfad([L,Rr])}" class="zl zdick"/><path d="${zPfad([O,S])}" class="zl zdick"/><circle cx="${zf(O[0])}" cy="${zf(O[1])}" r="2.6" class="zp"/>`+
+   zWinkel(O,Rr,S,'',26)+zWinkel(O,S,L,'',26).replace('class="zb"','class="zbr"')+lab(Rr,S,`${z.w}°`)+lab(S,L,'?'),'Zwei Winkel an einer geraden Linie')}
  // Rechtwinkliges Dreieck: Kathete a waagerecht, Kathete b senkrecht, Hypotenuse dazwischen
  if(z.t=='rechtwinklig'){const m=zAbb([[0,0],[z.a,0],[0,z.b]]),[R0,A,B]=[[0,0],[z.a,0],[0,z.b]].map(m),C=zMitte([R0,A,B]);
   return zSvg(`<path d="${zPfad([R0,A,B])}Z" class="zf"/>`+zRecht(R0,A,B)+zSeite(R0,A,C,z.la)+zSeite(B,R0,C,z.lb)+zSeite(A,B,C,z.lc),'Rechtwinkliges Dreieck')}
