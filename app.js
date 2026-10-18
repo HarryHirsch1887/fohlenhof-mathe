@@ -24,7 +24,8 @@ const SK=[['jump','Springen'],['gal','Galopp'],['aus','Ausdauer'],['ges','Geschi
 const MA={kurz:'Kurz',mittel:'Mittel',lang:'Lang'};
 const GUMMI={rosa:['Rosa','#e8508f'],lila:['Lila','#9b59b6'],blau:['Hellblau','#4aa3df'],gelb:['Gelb','#f4c430'],weiss:['Weiß','#f2f2f2']};
 // lieb: Preis eines Lieblingspferds. VORLÄUFIG, der Preis wird noch festgelegt.
-const PREIS={zopf:10,gummi:3,lieb:50};
+// leg/shirt: je weitere Farbe für Reitleggings bzw. Reitshirt der Figur (vorläufig)
+const PREIS={zopf:10,gummi:3,lieb:50,leg:10,shirt:10};
 // Lieblingspferde aus dem Stall (nach Fotos gezeichnet, die Fotos selbst bleiben lokal): im Wunschbaum kaufbar,
 // danach leben sie als Freunde auf dem Hof. [id, Name, Beschreibung, Aussehen für pferd.js (mh = eigene Mähnenfarbe)]
 const LIEB=[['roxeanne','Roxeanne','Rappe mit langer Mähne',{coat:'rappe',br:'fries',st:3,ma:'lang'}],
@@ -47,7 +48,8 @@ function clean(d){
   // st = Wachstumsstufe, sd = gesammelte Tage für die nächste Stufe, ld = letzter gezählter Tag, zd/zt = Spielzeit (Sekunden) an diesem Tag
   c.st=k.st==null?GS.reduce((a,g,i)=>c.xp>=g.x?i:a,0):nn(k.st,0,3);c.sd=nn(k.sd,0,999);c.zt=nn(k.zt,0,86400);
   c.hz=nn(k.hz,0,HOFZEIT);if(k.hl)c.hl=1;
-  if(k.f&&typeof k.f==='object')c.f={g:k.f.g==='j'?'j':'m',hf:HAUT[k.f.hf]?k.f.hf:'hell',ha:HAAR[k.f.ha]?k.f.ha:'braun',lg:LEG[k.f.lg]?k.f.lg:'schwarz'};
+  if(k.f&&typeof k.f==='object'){const f=k.f,lgs=['schwarz',...new Set((Array.isArray(f.lgs)?f.lgs:[]).filter(x=>LEG[x]&&x!=='schwarz'))],shs=['blau',...new Set((Array.isArray(f.shs)?f.shs:[]).filter(x=>SHIRT[x]&&x!=='blau'))];
+   c.f={g:f.g==='j'?'j':'m',hf:HAUT[f.hf]?f.hf:'hell',ha:HAAR[f.ha]?f.ha:'braun',lg:lgs.includes(f.lg)?f.lg:'schwarz',sh:shs.includes(f.sh)?f.sh:'blau',lgs,shs}}
   if(/^\d{4}-\d\d-\d\d$/.test(k.ld))c.ld=k.ld;if(/^\d{4}-\d\d-\d\d$/.test(k.zd))c.zd=k.zd;
   if(o.kids.some(z=>z.id==c.id))c.id=Date.now()+o.kids.length;
   if(Array.isArray(k.b))c.b=k.b.filter(x=>BD.some(b=>b[0]==x));
@@ -96,16 +98,18 @@ function ui(){let h='';PZ=0;
  else if(v=='home'){h=`<h1>Pferdehof Mathe</h1><p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[stg(k)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
  `<div class="card"><b>Neues Kind</b><div class="row"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name"><select id="gr" aria-label="Klasse"><option value="5">Klasse 5</option><option value="6">Klasse 6</option><option value="7">Klasse 7</option><option value="8">Klasse 8</option></select><button onclick="add()">Hinzufügen</button></div></div><p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button></p>`}
  // Figur erstellen oder ändern (FE: Entwurf, wird erst mit "Fertig" bzw. "Speichern" übernommen)
- if(v=='figur'){let k=kid(),neu=!k.f,opt=(t,id,lab,sw)=>`<button class="${FE[t]==id?'go':'alt'}" onclick="FE.${t}='${id}';ui()" aria-pressed="${FE[t]==id}">${sw?`<span class="gummi" style="background:${sw}"></span> `:''}${lab}</button>`;
- h=`<button class="alt" onclick="v='${k.f||k.h?'kid':'home'}';ui()">Zurück</button><h1>${neu?'Deine Figur':'Figur ändern'}</h1>`+
+ // Leggings- und Shirtfarben: anprobieren kostenlos, beim Speichern werden neue Farben gekauft
+ if(v=='figur'){let k=kid(),neu=!k.f,ko=figurKosten(k),opt=(t,id,lab,sw,preis)=>`<button class="${FE[t]==id?'go':'alt'}" onclick="FE.${t}='${id}';note='';ui()" aria-pressed="${FE[t]==id}">${sw?`<span class="gummi" style="background:${sw}"></span> `:''}${lab}${preis&&!hatFarbe(k,t,id)?` · ${preis} ${AP}`:''}</button>`;
+ h=`<div class="row sp"><button class="alt" onclick="v='${k.f||k.h?'kid':'home'}';ui()">Zurück</button><span class="ap">${k.ap||0} ${AP}</span></div><h1>${neu?'Deine Figur':'Figur ändern'}</h1>`+
  (neu?`<p>${k.h?`<b>Neu!</b> Wie siehst du auf dem Hof aus? Deine Figur steht dann bei ${esc(k.h.name)}.`:`Wie siehst du auf dem Hof aus? Danach rechnest du deine ersten Aufgaben. Nach 5 richtigen darfst du dir dein Fohlen aussuchen.`}</p>`:'')+
  `<div class="card" style="text-align:center;padding:8px">${figurMini(FE,190)}</div>
  <h2>Mädchen oder Junge</h2><div class="row">${opt('g','m','Mädchen')}${opt('g','j','Junge')}</div>
  <h2>Hautfarbe</h2><div class="row">${Object.entries(HAUT).map(([id,[n,c]])=>opt('hf',id,n,c)).join('')}</div>
  <h2>Haare</h2><div class="row">${Object.entries(HAAR).map(([id,[n,c]])=>opt('ha',id,n,c)).join('')}</div>
- <h2>Reitleggings</h2><div class="row">${Object.entries(LEG).map(([id,[n,c]])=>opt('lg',id,n,c)).join('')}</div>
- <p class="small">Weitere Farben für die Reitleggings kannst du später mit Äpfeln freischalten. Schwarzer Reithelm und Reitstiefel sind immer dabei.</p>
- <button class="go" onclick="figurOk()">${neu?'Fertig':'Speichern'}</button>`}
+ <h2>Reitshirt</h2><div class="row">${Object.entries(SHIRT).map(([id,[n,c]])=>opt('sh',id,n,c,PREIS.shirt)).join('')}</div>
+ <h2>Reitleggings</h2><div class="row">${Object.entries(LEG).map(([id,[n,c]])=>opt('lg',id,n,c,PREIS.leg)).join('')}</div>
+ <p class="small">Neue Farben kannst du kostenlos anprobieren. Erst beim Speichern werden die Äpfel abgezogen, danach gehört dir die Farbe. Schwarzer Reithelm und Reitstiefel sind immer dabei.</p>
+ <p class="no">${note}</p><button class="go" onclick="figurOk()">${neu?'Fertig':'Speichern'}${ko?` · ${ko} ${AP}`:''}</button>`}
  if(v=='choose'){h=`<button class="alt" onclick="v='kid';ui()">Zurück</button><h1>Dein Fohlen</h1><p>Welche Fellfarbe soll es haben? Später kannst du mit Äpfeln weitere Farben und Abzeichen freischalten.</p><div class="grid">${Object.keys(COATS).map(pick).join('')}</div><p><label>Name des Fohlens<br><input id="hn" maxlength="16" placeholder="z. B. Luna" onkeydown="if(event.key=='Enter')mk()"></label></p><button class="go" onclick="mk()">Los geht’s</button>`}
  // Kind ohne Pferd: erst 5 Aufgaben richtig, dann Fohlenwahl
  if(v=='kid'&&!kid().h){let k=kid(),n=Math.max(0,FOHLEN-k.r);
@@ -166,8 +170,15 @@ function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellunge
 function sel(id){cur=id;const k=kid();if(!k)return;if(!k.h&&!k.f)FE={...FIGUR0};v=ausZeit(k)?'bye':!k.h&&!k.f?'figur':'kid';ui();scrollTo(0,0)}
 // Figur: Entwurf FE bearbeiten und übernehmen
 let FE={...FIGUR0};
-function figurEdit(){FE={...FIGUR0,...(kid().f||{})};v='figur';ui();scrollTo(0,0)}
-function figurOk(){const k=kid();k.f={g:FE.g,hf:FE.hf,ha:FE.ha,lg:FE.lg};save();v='kid';ui();scrollTo(0,0)}
+function figurEdit(){FE={...FIGUR0,...(kid().f||{})};note='';v='figur';ui();scrollTo(0,0)}
+// Besitzt das Kind diese Leggings- (t = 'lg') bzw. Shirtfarbe (t = 'sh')? Schwarz und Blau hat jeder.
+const hatFarbe=(k,t,id)=>((k.f&&k.f[t+'s'])||[t=='lg'?'schwarz':'blau']).includes(id);
+const figurKosten=k=>(hatFarbe(k,'lg',FE.lg)?0:PREIS.leg)+(hatFarbe(k,'sh',FE.sh)?0:PREIS.shirt);
+function figurOk(){const k=kid(),ko=figurKosten(k);
+ if((k.ap||0)<ko){note='Dafür fehlen noch Äpfel. Probier eine andere Farbe oder rechne noch eine Runde.';ui();return}
+ const alt=k.f||{};k.ap=(k.ap||0)-ko;
+ k.f={g:FE.g,hf:FE.hf,ha:FE.ha,lg:FE.lg,sh:FE.sh,lgs:[...new Set([...(alt.lgs||['schwarz']),FE.lg])],shs:[...new Set([...(alt.shs||['blau']),FE.sh])]};
+ note='';save();v='kid';ui();scrollTo(0,0)}
 // Kleine Figur als eigenes Bild (Höhe h in Pixeln)
 const figurMini=(f,h)=>`<svg class="figmini" viewBox="-21 -114 42 118" width="${Math.round(h*42/118)}" height="${h}" role="img" aria-label="Figur">${figurBild(f)}</svg>`;
 // Themenliste einer Klasse als Knöpfe

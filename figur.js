@@ -1,16 +1,19 @@
 // Pferdehof Mathe: gezeichnete Figur (Reiterin oder Reiter) im Bilderbuch-Stil, Ansicht von vorn.
 // Füße auf y = 0, Kopf mit Helm oben bei etwa y = -110, Mitte x = 0. Nur Code (SVG), keine Bilddateien.
-// Gespeichert am Kind als k.f = {g: 'm' (Mädchen) oder 'j' (Junge), hf: Hautfarbe, ha: Haarfarbe, lg: Farbe der Reitleggings}
-// Immer dabei: schwarzer Reithelm und Reitstiefel. Weitere Leggings-Farben kommen später gegen Äpfel dazu.
+// Gespeichert am Kind als k.f = {g: 'm' (Mädchen) oder 'j' (Junge), hf: Hautfarbe, ha: Haarfarbe, lg: Farbe der Reitleggings,
+// sh: Farbe des Reitshirts, lgs/shs: gekaufte Farben}. Immer dabei: schwarzer Reithelm und Reitstiefel.
+// Schwarze Leggings und blaues Shirt hat jeder, weitere Farben gibt es gegen Äpfel (Preise in app.js, PREIS).
 const HAUT={hell:['Hell','#f5d5bf','#dcae94'],mittel:['Hellbraun','#d6a07a','#b9825d'],dunkel:['Dunkel','#8a5737','#6c4229']};
 const HAAR={blond:['Blond','#ecc96c','#c9a145'],braun:['Braun','#7b4b2b','#5a341c'],schwarz:['Schwarz','#2b2321','#151010'],rot:['Rot','#c4562c','#9a3e1c']};
-const LEG={schwarz:['Schwarz','#27272c']};
-const FIGUR0={g:'m',hf:'hell',ha:'braun',lg:'schwarz'};
+const LEG={schwarz:['Schwarz','#27272c'],blau:['Dunkelblau','#2c3f68'],grau:['Grau','#80868f'],beige:['Beige','#cdb68f'],rosa:['Rosa','#e48fb1'],lila:['Lila','#7b5aa6']};
+const SHIRT={blau:['Blau','#5b8fc7'],weiss:['Weiß','#f3f3ef'],rosa:['Rosa','#ec95b6'],lila:['Lila','#9b7cc8'],gruen:['Grün','#5fa86a'],tuerkis:['Türkis','#3db3ae'],gelb:['Gelb','#f0c64a'],rot:['Rot','#d25a4c']};
+const FIGUR0={g:'m',hf:'hell',ha:'braun',lg:'schwarz',sh:'blau'};
 
 function figurBild(f){
  f={...FIGUR0,...(f||{})};
  const hc=(HAUT[f.hf]||HAUT.hell)[1],hs=(HAUT[f.hf]||HAUT.hell)[2],ac=(HAAR[f.ha]||HAAR.braun)[1],as=(HAAR[f.ha]||HAAR.braun)[2],
-  lc=(LEG[f.lg]||LEG.schwarz)[1],m=f.g!=='j',sh='#5b8fc7',ul='#2b1d12',
+  lc=(LEG[f.lg]||LEG.schwarz)[1],m=f.g!=='j',sh=(SHIRT[f.sh]||SHIRT.blau)[1],ul='#2b1d12',
+  kr=f.sh==='weiss'?'#bcd3e8':'#f4f6f8',// Kragen und Knöpfe: hellblau beim weißen Shirt, sonst weiß
   st=`stroke="${ul}" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"`;
  // Arm von der Schulter zur Hand: dunkler Umriss, Haut, darüber der kurze Ärmel
  const arm=d=>`<path d="${d}" fill="none" stroke="${ul}" stroke-width="6.8" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${hc}" stroke-width="4.6" stroke-linecap="round"/>`;
@@ -27,7 +30,7 @@ function figurBild(f){
   `<path d="M-12.6 -78.5Q0 -81.5 12.6 -78.5L13 -74Q11 -62 10.2 -49H-10.2Q-11 -62 -13 -74Z" fill="${sh}" ${st}/>`+
   `<path d="M-12.4 -78Q-13.2 -72 -12.2 -67" stroke="#fff" stroke-width="1" opacity=".25" fill="none"/>`+
   `<rect x="-10.4" y="-52.4" width="20.8" height="3.4" fill="#6b4a2b" ${st}/><rect x="-1.8" y="-52.8" width="3.6" height="4.2" rx=".6" fill="#d9b25a" stroke="${ul}" stroke-width=".6"/>`+
-  `<path d="M-5.4 -80L0 -73.6L5.4 -80Q0 -78.6 -5.4 -80Z" fill="#f4f6f8" ${st}/><circle cy="-70.5" r=".7" fill="#f4f6f8"/><circle cy="-66.5" r=".7" fill="#f4f6f8"/>`;
+  `<path d="M-5.4 -80L0 -73.6L5.4 -80Q0 -78.6 -5.4 -80Z" fill="${kr}" ${st}/><circle cy="-70.5" r=".7" fill="${kr}"/><circle cy="-66.5" r=".7" fill="${kr}"/>`;
  // Arme mit Händen
  s+=arm(armL)+arm(armR)+`<path d="M-11.6 -75Q-14.6 -70 -15 -66.5M11.6 -75Q14.6 -70 15 -66.5" fill="none" stroke="${sh}" stroke-width="5.4" stroke-linecap="round"/>`+
   `<circle cx="-15.2" cy="-51.6" r="2.9" fill="${hc}" ${st}/><circle cx="15.2" cy="-51.6" r="2.9" fill="${hc}" ${st}/>`;
