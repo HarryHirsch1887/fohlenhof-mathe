@@ -20,6 +20,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 - **Persönlicher Hof:** Nach der Anmeldung zeigt der Hintergrund das Pferd des Kindes. Mit Äpfeln lassen sich Gegenstände bauen (Apfelbaum, Eiche, Blumenwiese, Heuballen, Wassertrog, Stall, Teich, Windrad, Regenbogen). Jede gekaufte Rasse bringt einen Pferdefreund mit.
 - **Rundflug:** Eine ruhige Fahrt über den ganzen Hof. Wischen zum Umschauen, Tippen auf ein Pferd zeigt den Namen.
 - Die Animation lässt sich in der Eltern-Ansicht ruhigstellen und stoppt bei "Bewegung reduzieren". Bei langsamen Geräten schaltet sie selbst um: zuerst ohne Umriss, dann auf die halbe Bildrate.
+- **Abzeichen individuell:** Blesse in 5 Formen (Stern, Flocke, Strich, Blesse, breite Blesse), weiße Socken in 4 Höhen je Bein und eigene Schecken-Flecken. Der Knopf „Neu anordnen“ im Wunschbaum würfelt sie kostenlos neu aus.
 - **Mähne und Zöpfe:** Ab der Stufe „Jährling“ lässt sich die Mähne kostenlos auf Kurz, Mittel oder Lang stellen. Zöpfe kosten 10 Äpfel (mit rosa Haargummi), weitere Gummifarben je 3 Äpfel.
 - **Wachstum über Tage mit Mathe:** Ein Tag zählt, wenn mindestens eine Runde fertig gerechnet wurde (höchstens einmal pro Tag). Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten. Die Erfahrung schaltet künftig Extras frei.
 - **Tageslimit:** Höchstens 30 Minuten pro Kind und Tag, fest eingestellt. Eine laufende Runde wird nicht unterbrochen. Danach verabschiedet sich die App bis zum nächsten Tag.

@@ -1,6 +1,7 @@
 // Pferdehof Mathe: das gezeichnete 2D-Pferd im Bilderbuch-Look (SVG).
 // PF.bild(P, spec, opt) liefert ein Pferd als SVG-Text. P ist ein Präfix für alle Kennungen, damit mehrere Pferde nebeneinander gehen.
-// spec: coat (Fellfarbe), st (Wachstumsstufe 0-3), br (Rasse), bl (Blesse), so (Socken), ma (Mähne kurz/mittel/lang), zo (Zöpfe), gu (Gummifarbe)
+// spec: coat (Fellfarbe), st (Wachstumsstufe 0-3), br (Rasse), bl (Blesse), so (Socken), ma (Mähne kurz/mittel/lang), zo (Zöpfe), gu (Gummifarbe),
+//       bf (Form des Kopfabzeichens 0-4), sm (Socken je Bein, z. B. "3120"), fs (Zahl für die Anordnung der Schecken-Flecken), mh (eigene Mähnenfarbe)
 // new PF.Rig(P) bewegt ein Pferd, das schon im Dokument steht (Gangarten, Grasen, Hüpfer, Schweif, Mähne, Blinzeln).
 // Umriss: Die Teile werden zweimal gezeichnet, zuerst mit Rand, darüber ohne. "Umriss leicht": Haare und Details bekommen keinen Rand.
 // Greift zur Laufzeit auf BR (Rassen) aus app.js zu.
@@ -100,19 +101,42 @@ function schweif(tl, fohlen) {
 const stirnschopf = f => [0, 1, 2].map(i => straehne(96 + i * 2.2, -214 + i * .8, .52 + i * .06, .85, (13 + i * 2.5) * f, 7, 2 - i * 2, i === 1 ? 'ha2' : 'ha1')).join('');
 
 // ---------- Beine (Drehpunkt oben bei 0,0; Boden bei 100 bzw. 104) ----------
-function vorderbein(id, fern) {
-  const o = fern ? 'bOf' : 'bO', u = fern ? 'bUf' : 'bU', h = fern ? 'hf' : 'hu';
+// so: weiße Socke an diesem Bein, 0 keine, 1 Fessel, 2 Halbsocke, 3 Strumpf (bis zum Knie). Wird als weiße Fläche über das Bein gelegt.
+function vorderbein(id, fern, so = 0) {
+  const o = fern ? 'bOf' : 'bO', u = fern ? 'bUf' : 'bU', h = fern ? 'hf' : 'hu', w = fern ? 'sockF' : 'sock';
   return `<g id="${id}1"><path class="${o}" d="M-11 -16C-12 8 -8 28 -5.6 40L5.6 40C8 26 13 6 13 -16Z"/><circle class="${o}" cx="0" cy="42" r="6"/>` +
     `<g id="${id}2"><path class="${u}" d="M-5.4 42L-4.6 76L4.4 76L5.4 42Z"/><circle class="${u}" cx="-.2" cy="76" r="5.5"/>` +
+    (so >= 3 ? `<path class="${w}" d="M-5.4 42L-4.6 76L4.4 76L5.4 42Z"/>` : so == 2 ? `<path class="${w}" d="M-5 59L-4.6 76L4.4 76L4.9 59Z"/>` : '') +
+    (so >= 2 ? `<circle class="${w}" cx="-.2" cy="76" r="5.5"/>` : '') +
     `<g id="${id}3"><path class="beh" d="M-4 75C-7.5 82 -7 90 -2.5 96L.5 90C-1 86 -1.5 81 0 76Z"/>` +
-    `<path class="${u}" d="M-4.4 76L-.5 88.5L8 88.5L4.6 75Z"/><path class="${h}" d="M-1 88L9.5 88L12.5 100L-3 100Z"/></g></g></g>`;
+    `<path class="${u}" d="M-4.4 76L-.5 88.5L8 88.5L4.6 75Z"/>${so >= 1 ? `<path class="${w}" d="M-4.4 76L-.5 88.5L8 88.5L4.6 75Z"/>` : ''}<path class="${h}" d="M-1 88L9.5 88L12.5 100L-3 100Z"/></g></g></g>`;
 }
-function hinterbein(id, fern) {
-  const o = fern ? 'bOf' : 'bO', u = fern ? 'bUf' : 'bU', h = fern ? 'hf' : 'hu';
+function hinterbein(id, fern, so = 0) {
+  const o = fern ? 'bOf' : 'bO', u = fern ? 'bUf' : 'bU', h = fern ? 'hf' : 'hu', w = fern ? 'sockF' : 'sock';
   return `<g id="${id}1"><path class="${o}" d="M-18 -18C-25 8 -19 32 -16 46L-4 49C-2 30 6 10 17 -14Z"/><circle class="${o}" cx="-10" cy="48" r="6.4"/><circle class="${o}" cx="-15.5" cy="45.5" r="4"/>` +
     `<g id="${id}2"><path class="${u}" d="M-15.2 48L-12.8 80L-3.6 80L-4.8 48Z"/><circle class="${u}" cx="-8.2" cy="80" r="5.5"/>` +
+    (so >= 3 ? `<path class="${w}" d="M-15.2 48L-12.8 80L-3.6 80L-4.8 48Z"/>` : so == 2 ? `<path class="${w}" d="M-14 64L-12.8 80L-3.6 80L-4.2 64Z"/>` : '') +
+    (so >= 2 ? `<circle class="${w}" cx="-8.2" cy="80" r="5.5"/>` : '') +
     `<g id="${id}3"><path class="beh" d="M-12 79C-15.5 86 -15 94 -10.5 100L-7.5 94C-9 90 -9.5 85 -8 80Z"/>` +
-    `<path class="${u}" d="M-12.4 80L-8.5 92.5L0 92.5L-3.4 79Z"/><path class="${h}" d="M-9 92L1.5 92L4.5 104L-11 104Z"/></g></g></g>`;
+    `<path class="${u}" d="M-12.4 80L-8.5 92.5L0 92.5L-3.4 79Z"/>${so >= 1 ? `<path class="${w}" d="M-12.4 80L-8.5 92.5L0 92.5L-3.4 79Z"/>` : ''}<path class="${h}" d="M-9 92L1.5 92L4.5 104L-11 104Z"/></g></g></g>`;
+}
+// Socken je Bein als Text aus 4 Ziffern (Reihenfolge vorn nah, vorn fern, hinten nah, hinten fern). Ohne Angabe: alle hoch (wie früher).
+const SOCKBEIN = { vn: 0, vf: 1, hn: 2, hf: 3 };
+const sockenMuster = sp => !sp.so ? '0000' : /^[0-3]{4}$/.test(sp.sm || '') ? sp.sm : '3333';
+// Kopfabzeichen: 0 Stern, 1 Flocke, 2 Strich, 3 Blesse (Standard), 4 breite Blesse (Kopfkoordinaten, wird auf die Kopfform zugeschnitten)
+const BLESSE = ['M102 -206.5L108.5 -214L115 -205.5L108.5 -197.5Z',
+  'M124.5 -169.5a3.8 2.7 35 1 0 7.6 0a3.8 2.7 35 1 0 -7.6 0Z',
+  'M110 -201C116 -194 123 -184 129.5 -174.5L127.2 -173C121 -182 114 -192 107.8 -199Z',
+  'M107 -204C113 -200 123 -187 131 -173C134 -168 136 -163 135.5 -159L131.5 -161C127 -171 118 -185 105 -199Z',
+  'M103 -207C112 -204 124 -190 133 -175C136 -169 138.5 -163 138 -157L128.5 -160C124.5 -170 115 -184 100 -199Z'];
+// Schecken-Flecken: ohne Zahl die bekannten vier Flecken, mit Zahl (fs) zufällig, aber bei gleicher Zahl immer gleich
+function flecken(fs) {
+  if (!fs) return '<ellipse cx="6" cy="-108" rx="30" ry="24"/><ellipse cx="-62" cy="-140" rx="21" ry="15"/><ellipse cx="44" cy="-150" rx="15" ry="10"/><ellipse cx="-26" cy="-160" rx="12" ry="8"/>';
+  let s = fs % 2147483646 + 1; const z = () => (s = s * 16807 % 2147483647) / 2147483647; let o = '';
+  const n = 3 + Math.floor(z() * 3);
+  for (let i = 0; i < n; i++) { const rx = 11 + z() * 22, cx = r1(-82 + z() * 155), cy = r1(-152 + z() * 56), ry = r1(rx * (.55 + z() * .3)), w = r1(-35 + z() * 70);
+    o += `<ellipse cx="${cx}" cy="${cy}" rx="${r1(rx)}" ry="${ry}" transform="rotate(${w} ${cx} ${cy})"/>`; }
+  return o;
 }
 // Lage der Beine (Drehpunkt) je nach Maßen
 const beinLage = m => ({ vn: [50 * m.bx, -100 * m.ls], vf: [42 * m.bx, -100 * m.ls - 2], hn: [-58 * m.bx, -104 * m.ls], hf: [-66 * m.bx, -104 * m.ls - 2] });
@@ -131,7 +155,7 @@ function stil(P, sp, m) {
   if (m.mc && (sp.coat === 'fuchs' || sp.coat === 'braun')) { c.h1 = m.mc; c.h2 = '#f8efd6'; }
   // Eigene Mähnenfarbe [dunkel, hell], z. B. für Lieblingspferde wie Jacko (Falbe mit heller Mähne)
   if (Array.isArray(sp.mh)) { c.h1 = sp.mh[0]; c.h2 = sp.mh[1]; }
-  if (sp.so) c.u = '#f1eee6';
+  // Weiße Socken liegen seit 2026-10-18 als eigene Flächen über den Beinen (je Bein eigene Höhe), siehe vorderbein/hinterbein
   let s = '';
   for (const k of ['k1', 'k2', 'k3', 'u', 'maul', 'h1', 'h2', 'huf']) s += `--${k}:${c[k]};--f${k}:${mische(c[k], '#1a2418', .2)};`;
   s += `--aal:${f.aal ? .5 : 0};--beh:${f.beh || m.fe ? 1 : 0};--bl:${sp.bl ? 1 : 0};--sch:${f.sch ? 1 : 0};--gu:${sp.gu || '#e8508f'};`;
@@ -142,7 +166,8 @@ function stil(P, sp, m) {
 function bild(P, sp, opt = {}) {
   const m = masse(sp), L = beinLage(m), idle = !!opt.idle;
   const art = m.fohlen ? 'fohlen' : (sp.zo && sp.ma === 'lang' ? 'zoepfe' : 'offen'), mf = m.ml * (m.fohlen ? 1 : (MAEHNE[sp.ma] || 1));
-  const bein = (id, fn, fern) => `<g transform="translate(${r1(L[id][0])} ${r1(L[id][1])}) scale(${m.lw} ${m.ls})">${fn(id, fern)}</g>`;
+  const sm = sockenMuster(sp);
+  const bein = (id, fn, fern) => `<g transform="translate(${r1(L[id][0])} ${r1(L[id][1])}) scale(${m.lw} ${m.ls})">${fn(id, fern, +sm[SOCKBEIN[id]])}</g>`;
   const T = (x, y) => [r1(x * m.bx), r1(m.by * (y + 100) - 100 * m.ls)];
   const [nx, ny] = T(62, -132), [tx, ty] = T(-85, -150), ks = (m.bx + m.by) / 2;
   const roh = `<g id="pferd"><defs>
@@ -164,7 +189,7 @@ function bild(P, sp, opt = {}) {
   ${bein('hn', hinterbein, 0)}${bein('vn', vorderbein, 0)}
   <g transform="translate(0 ${r1(-100 * m.ls)}) scale(${m.bx} ${m.by}) translate(0 100)">
    <path id="koerperForm" class="kK" d="${KOERPER}"/>
-   <g clip-path="url(#koerperClip)" class="fleck"><ellipse cx="6" cy="-108" rx="30" ry="24"/><ellipse cx="-62" cy="-140" rx="21" ry="15"/><ellipse cx="44" cy="-150" rx="15" ry="10"/><ellipse cx="-26" cy="-160" rx="12" ry="8"/></g>
+   <g clip-path="url(#koerperClip)" class="fleck">${flecken(sp.fs | 0)}</g>
    <ellipse class="glanz" cx="-64" cy="-138" rx="25" ry="15" transform="rotate(-18 -64 -138)"/><ellipse class="glanz" cx="56" cy="-142" rx="15" ry="10"/>
    <path class="aal" d="M38 -158C18 -152 -8 -153 -36 -157C-52 -159 -66 -159 -80 -153"/>
    ${linie('M42 -152C52 -140 64 -127 74 -117')}${linie('M-36 -148C-46 -132 -48 -114 -42 -97', .1)}${linie('M-30 -89C-6 -85 16 -85 32 -89', .06, 3)}
@@ -178,7 +203,7 @@ function bild(P, sp, opt = {}) {
      <g transform="translate(98 -210) scale(${r1(m.hs / m.ns * 100) / 100}) translate(-98 210)"><g id="kopf">${idle ? SMIL('98 -210', 3, 4.6) : ''}
       <path class="kKf" d="M91 -211C88 -218 87 -225 88.5 -231C93 -225 96 -219 96.5 -211Z"/><path id="kopfForm" class="kH" d="${KOPF}"/>
       <g clip-path="url(#kopfClip)"><ellipse class="maul" cx="134" cy="-158" rx="11.5" ry="10.5"/><ellipse class="glanz" cx="103" cy="-186" rx="10" ry="8"/>
-       <path class="blesse" d="M107 -204C113 -200 123 -187 131 -173C134 -168 136 -163 135.5 -159L131.5 -161C127 -171 118 -185 105 -199Z"/></g>
+       <path class="blesse" d="${BLESSE[sp.bf == null ? 3 : Math.max(0, Math.min(4, sp.bf | 0))]}"/></g>
       ${linie('M96 -177C104 -169 113 -161 121 -156', .2, 1.4)}${linie('M133 -164C136 -166 138.5 -163 136.5 -159.5', .5)}${linie('M137.5 -153.5C134 -152.4 130 -152.8 126.5 -154.2', .35, 1.2)}
       <g id="auge" class="det"><path d="M105.5 -196.5Q111 -201.5 116.5 -195.5Q111 -192.2 105.5 -196.5Z" fill="#1c1410"/><circle cx="113" cy="-197.3" r="1.25" fill="#fff"/></g>
       ${linie('M104.5 -199.2Q111 -204.6 117.5 -197.6', .3, 1.2)}

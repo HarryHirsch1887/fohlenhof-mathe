@@ -32,6 +32,8 @@ input,select{background:var(--card);border:1px solid var(--line);border-radius:1
 .bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar b{display:block;height:100%;background:var(--hay)}
 .scene{width:100%;border-radius:14px;display:block}.q{font-size:22px;white-space:pre-line;margin:12px 0}
 #ans{font-size:24px;width:100%;max-width:240px}
+/* Wunschbaum: Bild des eigenen Pferds bei den Abzeichen */
+.abz{text-align:center;padding:4px}.abz svg{width:100%;max-width:200px}
 /* Themen-Kategorien: Schulstoff, Mathe-Olympiade & Knobeln, aufklappbar Wiederholen */
 .kat{font-size:15px;margin:14px 0 6px;color:var(--gr);text-transform:none}
 details.wdh{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:6px 10px;background:var(--card)}
@@ -63,6 +65,8 @@ details.wdh summary{cursor:pointer;font-weight:bold;padding:6px 0}
 /* Gezeichnetes Pferd (pferd.js): Farben kommen als CSS-Variablen vom jeweiligen Pferd.
    Umriss leicht (fest): Haare, Glanz und Details bekommen keinen Rand, hintere Pferde gar keinen. Sparmodus: Klasse ohneUmriss. */
 .kK{fill:var(--gK)}.kN{fill:var(--gN)}.kN2{fill:var(--gN2)}.kH{fill:var(--gH)}.kKf{fill:var(--fk3)}.bO{fill:var(--gB)}.bOf{fill:var(--gBf)}.bU{fill:var(--u)}.bUf{fill:var(--fu)}
+/* Weiße Socken je Bein (pferd.js), fernes Bein etwas dunkler */
+.sock{fill:#f1eee6}.sockF{fill:#d4d1c8}
 .hu{fill:var(--huf)}.hf{fill:var(--fhuf)}.ha1{fill:var(--h1);stroke:#000;stroke-opacity:.22;stroke-width:.8}.ha2{fill:var(--h2);stroke:#000;stroke-opacity:.18;stroke-width:.8}
 .glanz{fill:var(--k1);opacity:.55}.maul{fill:var(--maul);opacity:.8}.beh{fill:var(--h1);opacity:calc(var(--beh) * .85)}.aal{fill:none;stroke:var(--u);stroke-width:3.4;stroke-linecap:round;opacity:var(--aal)}
 .fleck{fill:#f4f1ea;opacity:var(--sch)}.blesse{fill:#f4f1ea;opacity:var(--bl)}.gummi2d{fill:var(--gu);stroke:#0004;stroke-width:.6}.schatten2d{fill:#2d4a1f;opacity:.22}
