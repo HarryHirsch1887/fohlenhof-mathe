@@ -32,6 +32,9 @@ input,select{background:var(--card);border:1px solid var(--line);border-radius:1
 .bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar b{display:block;height:100%;background:var(--hay)}
 .scene{width:100%;border-radius:14px;display:block}.q{font-size:22px;white-space:pre-line;margin:12px 0}
 #ans{font-size:24px;width:100%;max-width:240px}
+/* Eingabefeld mit Einheit dahinter (z. B. °, cm, €) */
+.antw{display:flex;align-items:center;gap:10px;max-width:300px}
+.einheit{font-size:24px;font-weight:bold;white-space:nowrap}
 .ok{color:var(--gr)}.no{color:var(--bar)}.small{font-size:14px;opacity:.85}
 .badge{display:inline-block;background:var(--hay);color:#26331f;border-radius:14px;padding:2px 12px;margin:3px;font-size:14px}
 .badge.off{background:var(--line);color:var(--ink);opacity:.6}

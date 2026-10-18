@@ -8,6 +8,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 
 ## Was die App kann
 
+- Jeder Satz einer Aufgabe steht in einer eigenen Zeile. Die Einheit (°, cm, €, …) steht direkt neben dem Eingabefeld.
 - 10 Aufgaben pro Runde, 5 Schwierigkeitsstufen pro Thema. Die Stufe steigt nach 3 richtigen Antworten in Folge und sinkt nach 2 falschen.
 - Tipps (kosten halbe Punkte) und bei falschen Antworten ein **Lösungsweg** zum Nachvollziehen.
 - **Fehlerheft:** Falsch beantwortete Aufgaben kommen in späteren Runden desselben Themas erneut dran.
@@ -22,7 +23,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 - **Tageslimit:** Höchstens 20 Minuten pro Kind und Tag, fest eingestellt. Eine laufende Runde wird nicht unterbrochen. Danach verabschiedet sich die App bis zum nächsten Tag.
 - **Lieblingspferde aus dem Stall:** Roxeanne (Rappe), Roy (Falbe mit Behang), Bonnie (Schimmel-Pony), Frodo (windfarbenes Pony-Fohlen) und Jacko (falbfarbenes Pony-Fohlen) lassen sich im Wunschbaum mit Äpfeln kaufen und leben dann als Freunde auf dem Hof. Antippen zeigt ihren Namen. Auf dem Hof laufen höchstens 5 Freunde mit, Lieblingspferde zuerst.
 - **Hof-Interaktionen** auf dem eigenen Hof: Tippen auf den Apfelbaum lässt einen Apfel fallen, die Pferde rennen hin und naschen. Das Windrad dreht kurz schneller, die Wetterfahne auf dem Stall wirbelt mit. Am Teich springt manchmal (25 %) ein Frosch heraus und quakt. Ab und zu liegt ein Pferdeapfel herum: Wegtippen bringt keine Äpfel, aber die Pferde lassen Herzen aufsteigen.
-- **Hof-Pause:** Nach 3 Minuten auf dem Hof (auch im Wunschbaum und im Rundflug) zählt ein Countdown 10 Sekunden herunter. Danach muss erst eine Runde mit mindestens 8 von 10 richtig geschafft werden, dann ist der Hof wieder offen.
+- **Hof-Pause:** Nach 3 Minuten auf dem Hof (auch im Wunschbaum und im Rundflug) zählt ein Countdown 10 Sekunden herunter. Danach muss erst eine Runde mit mindestens 7 von 10 richtig geschafft werden, dann ist der Hof wieder offen.
 - **3D-Ansicht:** Ab der Stufe „Jungpferd“ zeigen Kind-Ansicht und Wunschbaum es in einem kleinen 3D-Fenster, drehbar mit dem Finger. Fellfarbe, Abzeichen, Mähne und Zöpfe erscheinen dort sofort. Die 3D-Dateien (etwa 3,3 MB) werden erst beim ersten Öffnen geladen und danach offline gespeichert.
 - **Eltern-Ansicht** mit Statistik, Einstellungen und Sicherung (Export und Import). Beim ersten Start wählbar: mit PIN geschützt oder ohne PIN als offene „Einstellungen“, zum Beispiel auf dem eigenen Handy eines Kindes. Lässt sich später im Kasten „PIN-Schutz“ umstellen.
 - Funktioniert ohne Konto und ohne Internetverbindung, sobald die App geladen und als App installiert ist.
