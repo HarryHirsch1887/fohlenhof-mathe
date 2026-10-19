@@ -50,6 +50,7 @@ details.wdh summary{cursor:pointer;font-weight:bold;padding:6px 0}
 .zeich .zb{fill:none;stroke:var(--gr);stroke-width:1.6}.zeich .zbr{fill:none;stroke:var(--bar);stroke-width:2.2}
 .zeich .zp{fill:var(--ink)}.zeich .zpa{fill:var(--hay);stroke:var(--ink);stroke-width:1.2}
 .zeich text{font-size:14px;text-anchor:middle;dominant-baseline:middle;fill:var(--ink)}
+.zeich .zh{paint-order:stroke;stroke:var(--bg);stroke-width:5px;stroke-linejoin:round}
 .zeich .zr{fill:var(--bar);font-weight:bold;font-size:15px}.zeich .zn{font-size:15px;font-style:italic;font-weight:bold}
 /* Eingabefeld mit Einheit dahinter (z. B. °, cm, €) */
 .antw{display:flex;align-items:center;gap:10px;max-width:300px}

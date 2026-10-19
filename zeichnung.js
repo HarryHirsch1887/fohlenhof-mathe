@@ -7,7 +7,7 @@ const ZB={w:300,h:200,px:52,py:32};
 // Prüft eine gespeicherte Zeichnungsangabe (Fehlerheft, Import): nur bekannte Arten, Zahlen und kurze Texte. Liefert eine saubere Kopie oder null.
 const ZARTEN=['rechteck','ausschnitt','dreieck','rechtwinklig','leiter','gleichschenklig','vieleck','gitter','nebenwinkel'];
 function zCheck(z){if(!z||typeof z!=='object'||!ZARTEN.includes(z.t))return null;const o={t:z.t};
- for(const k of ['a','b','c','d','A','B','al','be','n','zerlegt','einzeln','diag','la','lb','lc','innen','w','lal','lbe','lga','nn','gleich']){const v=z[k];
+ for(const k of ['a','b','c','d','A','B','al','be','n','zerlegt','einzeln','diag','la','lb','lc','lh','innen','w','lal','lbe','lga','nn','gleich']){const v=z[k];
   if(typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=1000)o[k]=v;else if(typeof v==='string'&&v.length<=24)o[k]=v}
  if(o.t=='vieleck'&&!(o.n>=3&&o.n<=30))return null;return o}
 const zf=v=>Math.round(v*10)/10,zE=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -37,8 +37,8 @@ const zSvg=(inhalt,titel)=>`<svg class="zeich" viewBox="0 0 ${ZB.w} ${ZB.h}" rol
 function zeichnung(z){if(!z||typeof z!=='object')return'';try{
  // Rechteck: a lang, b breit. la/lb: Beschriftung (Standard "a cm"), innen: Text in der Mitte, diag: Diagonale mit Beschriftung
  if(z.t=='rechteck'){const m=zAbb([[0,0],[z.a,0],[z.a,z.b],[0,z.b]]),P=[[0,0],[z.a,0],[z.a,z.b],[0,z.b]].map(m),C=zMitte(P);
-  return zSvg(`<path d="${zPfad(P)}Z" class="zf"/>`+(z.diag?`<path d="${zPfad([P[0],P[2]])}" class="zl zd"/>`+(()=>{// Beschriftung der Diagonale: 13 Pixel neben der Linie
-   const dx=P[2][0]-P[0][0],dy=P[2][1]-P[0][1],l=Math.hypot(dx,dy)||1;return zText((P[0][0]+P[2][0])/2-dy/l*13,(P[0][1]+P[2][1])/2+dx/l*13,z.diag)})():'')+
+  return zSvg(`<path d="${zPfad(P)}Z" class="zf"/>`+(z.diag?`<path d="${zPfad([P[0],P[2]])}" class="zl zd"/>`+(()=>{// Beschriftung der Diagonale: 13 Pixel neben der Linie (längere Texte wie "40 cm" dürfen die Linie berühren, der Rand .zh in Flächenfarbe hält sie lesbar)
+   const dx=P[2][0]-P[0][0],dy=P[2][1]-P[0][1],l=Math.hypot(dx,dy)||1;return zText((P[0][0]+P[2][0])/2-dy/l*13,(P[0][1]+P[2][1])/2+dx/l*13,z.diag).replace('class="','class="zh ')})():'')+
    zSeite(P[0],P[1],C,z.la||`${z.a} cm`)+zSeite(P[3],P[0],C,z.lb||`${z.b} cm`)+(z.innen?zText(C[0],C[1]+(z.diag?16:0),z.innen):''),'Rechteck')}
  // Rechteck A × B, aus der Ecke oben rechts ist ein Rechteck c × d herausgeschnitten (gestrichelt)
  if(z.t=='ausschnitt'){const{A,B,c,d}=z,m=zAbb([[0,0],[A,0],[A,B],[0,B]]),P=[[0,0],[A,0],[A,B-d],[A-c,B-d],[A-c,B],[0,B]].map(m),Q=[[A-c,B-d],[A,B-d],[A,B],[A-c,B]].map(m),C=zMitte([m([0,0]),m([A,B])]);
@@ -64,10 +64,10 @@ function zeichnung(z){if(!z||typeof z!=='object')return'';try{
   let spr='';for(let i=1;i<8;i++){const s=i/8,x=F[0]+(W[0]-F[0])*s,y=F[1]+(W[1]-F[1])*s;spr+=`<path d="M${zf(x-4)} ${zf(y-2)}L${zf(x+4)} ${zf(y+2)}" class="zl"/>`}
   return zSvg(`<path d="${zPfad([g0,g1])}" class="zl zdick"/><path d="${zPfad([O,top])}" class="zl zdick"/><path d="${zPfad([F,W])}" class="zleiter"/>${spr}`+zRecht(O,F,W)+
    zSeite(O,F,C,`${z.a} m`)+zSeite(F,W,C,`${z.c} m`)+zSeite(W,O,C,'?'),'Leiter an einer Wand')}
- // Gleichschenkliges Dreieck: Basis 2a, Schenkel c, Höhe b (gesucht, gestrichelt)
- if(z.t=='gleichschenklig'){const m=zAbb([[-z.a,0],[z.a,0],[0,z.b]]),[L,Rr,S,F]=[[-z.a,0],[z.a,0],[0,z.b],[0,0]].map(m),C=zMitte([L,Rr,S]);
-  return zSvg(`<path d="${zPfad([L,Rr,S])}Z" class="zf"/><path d="${zPfad([S,F])}" class="zl zd"/>`+zRecht(F,Rr,S,9)+zSeite(L,Rr,C,`${2*z.a} cm`)+zSeite(Rr,S,C,`${z.c} cm`)+zSeite(S,L,C,`${z.c} cm`)+
-   zText(F[0]+12,(F[1]+S[1])/2,'?'),'Gleichschenkliges Dreieck')}
+ // Gleichschenkliges Dreieck: Basis 2a, Schenkel c, Höhe b (gestrichelt). lc/lh: andere Beschriftung der Schenkel bzw. der Höhe (Standard: "c cm" und "?")
+ if(z.t=='gleichschenklig'){const m=zAbb([[-z.a,0],[z.a,0],[0,z.b]]),[L,Rr,S,F]=[[-z.a,0],[z.a,0],[0,z.b],[0,0]].map(m),C=zMitte([L,Rr,S]),lc=z.lc||`${z.c} cm`,lh=z.lh||'?';
+  return zSvg(`<path d="${zPfad([L,Rr,S])}Z" class="zf"/><path d="${zPfad([S,F])}" class="zl zd"/>`+zRecht(F,Rr,S,9)+zSeite(L,Rr,C,`${2*z.a} cm`)+zSeite(Rr,S,C,lc)+zSeite(S,L,C,lc)+
+   zText(F[0]+8+String(lh).length*3.4,(F[1]+S[1])/2,lh),'Gleichschenkliges Dreieck')}
  // Regelmäßiges Vieleck mit n Ecken. zerlegt: von einer Ecke in Dreiecke zerlegt, einzeln: ein Winkel gesucht, diag: Diagonalen von einer Ecke
  if(z.t=='vieleck'){const n=z.n,o=-Math.PI/2-Math.PI/n,pts=[...Array(n)].map((_,i)=>[Math.cos(o+2*Math.PI*i/n),Math.sin(o+2*Math.PI*i/n)]),m=zAbb(pts),P=pts.map(m),C=zMitte(P);
   let s=`<path d="${zPfad(P)}Z" class="zf"/>`;
