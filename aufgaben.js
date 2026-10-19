@@ -235,13 +235,59 @@ TY=['pyth','Pythagoras',d=>{let k,a,b,c,t;
  // Schenkel gesucht: nur breite Dreiecke (Höhe höchstens 1,4-mal die halbe Basis), sonst überdecken sich die Beschriftungen
  if(R(0,1)){do{[a,b,c]=dr(TRIK.filter(t=>t[2]<=30),3)}while(b>1.4*a);return[`Ein gleichschenkliges Dreieck hat die Basis ${2*a} cm und die Höhe ${b} cm. Wie lang ist einer der beiden gleichen Schenkel in cm?`,c,'Die Höhe halbiert die Basis.',`Die Höhe halbiert die Basis: ${2*a} : 2 = ${a} cm.\nEs entsteht ein rechtwinkliges Dreieck mit den Katheten ${a} cm und ${b} cm. Der Schenkel ist die Hypotenuse.\ns² = ${a}² + ${b}² = ${a*a} + ${b*b} = ${c*c}\ns = √${c*c} = ${c} cm`,{t:'gleichschenklig',a,b,c,lc:'?',lh:`${b} cm`}]}
  return[`Ein gleichschenkliges Dreieck hat die Basis ${2*a} cm und Schenkel von je ${c} cm. Wie hoch ist das Dreieck (Höhe auf die Basis) in cm?`,b,'Die Höhe halbiert die Basis.',`Die Höhe halbiert die Basis: ${2*a} : 2 = ${a} cm.\nEs entsteht ein rechtwinkliges Dreieck mit Hypotenuse ${c} cm und Kathete ${a} cm.\nh² = ${c}² − ${a}² = ${c*c} − ${a*a} = ${b*b}\nh = √${b*b} = ${b} cm`,{t:'gleichschenklig',a,b,c}]}];
+// ---------- Sudoku (seit 2026-10-19) ----------
+// Je Aufgabe ein Sudoku mit einem markierten Feld ("Welche Zahl gehört hierhin?"). Beim Erzeugen wird geprüft, dass sich das Feld
+// mit der Denkweise der Stufe sicher lösen lässt (das ganze Sudoku muss dafür nicht eindeutig sein). Denkweisen:
+//  a = eine Zeile, Spalte oder der Kasten ist bis auf das Feld voll
+//  b = Zeile, Spalte und Kasten zusammen lassen nur eine Zahl übrig
+//  c = versteckte Zahl: Im Kasten kann eine Zahl nur noch in das Feld, das Feld selbst hätte mehrere Möglichkeiten (c2: weniger Zahlen vorgegeben)
+// Stufen je Klasse [Größe, Denkweise]: Klasse 5 bis 6×6, Klasse 6 bis 9×9 leicht, Klasse 7 und 8 bis 9×9 mit versteckten Zahlen
+const SUDST={5:[[4,'a'],[4,'b'],[6,'a'],[6,'b'],[6,'c']],6:[[4,'b'],[6,'a'],[6,'b'],[9,'a'],[9,'b']],78:[[6,'b'],[9,'a'],[9,'b'],[9,'c'],[9,'c2']]};
+const sudBox=n=>n==6?[2,3]:n==4?[2,2]:[3,3];// [Kastenhöhe, Kastenbreite]
+// Vollständige Lösung: Grundmuster, dann Zeilen im Band, Bänder, Spalten im Stapel, Stapel und Ziffern zufällig vertauschen
+function sudLoesung(n){const [br,bc]=sudBox(n),mix=a=>{for(let i=a.length-1;i>0;i--){const j=R(0,i);[a[i],a[j]]=[a[j],a[i]]}return a},nr=k=>[...Array(k).keys()];
+ const rows=mix(nr(n/br)).flatMap(b=>mix(nr(br)).map(i=>b*br+i)),cols=mix(nr(n/bc)).flatMap(s=>mix(nr(bc)).map(i=>s*bc+i)),dig=mix(nr(n));
+ return rows.map(r=>cols.map(c=>dig[(bc*(r%br)+Math.floor(r/br)+c)%n]+1))}
+function sudAufgabe(n,art){const [br,bc]=sudBox(n),nr=[...Array(n).keys()],zl=a=>a.length>1?a.slice(0,-1).join(', ')+' und '+a[a.length-1]:String(a[0]);
+ for(let ver=0;ver<300;ver++){
+  const L=sudLoesung(n),tr=R(0,n-1),tc=R(0,n-1),v=L[tr][tc],G=L.map(r=>r.map(()=>Math.random()<{a:.35,b:.3,c:.32,c2:.2}[art]?1:0));G[tr][tc]=0;
+  const zeile=r=>nr.map(c=>[r,c]),spalte=c=>nr.map(r=>[r,c]),kasten=(r,c)=>{const r0=r-r%br,c0=c-c%bc,o=[];for(let i=0;i<br;i++)for(let j=0;j<bc;j++)o.push([r0+i,c0+j]);return o};
+  const sicht=cs=>cs.filter(([r,c])=>G[r][c]).map(([r,c])=>L[r][c]).sort((x,y)=>x-y),
+   kand=(r,c)=>{const s=new Set([...sicht(zeile(r)),...sicht(spalte(c)),...sicht(kasten(r,c))]);return nr.map(i=>i+1).filter(d=>!s.has(d))},
+   voll=cs=>cs.every(([r,c])=>(r==tr&&c==tc)||G[r][c]),U=[[`In Zeile ${tr+1}`,zeile(tr)],[`In Spalte ${tc+1}`,spalte(tc)],['Im Kasten mit dem Fragezeichen',kasten(tr,tc)]];
+  let weg,tipp;
+  if(art=='a'){const [nm,cs]=P(U);cs.forEach(([r,c])=>{if(r!=tr||c!=tc)G[r][c]=1});
+   weg=`${nm} fehlt nur noch eine Zahl.\nDort stehen schon: ${zl(sicht(cs))}.\nEs fehlt die ${v}.`;tipp='Suche eine Zeile, Spalte oder einen Kasten, in dem nur noch ein Feld frei ist.'}
+  else if(art=='b'){
+   // Für jede andere Zahl ein passendes Feld in Zeile, Spalte oder Kasten aufdecken, bis nur noch v übrig bleibt
+   for(const w of kand(tr,tc).filter(d=>d!=v)){const f=P([...zeile(tr),...spalte(tc),...kasten(tr,tc)].filter(([r,c])=>L[r][c]==w));G[f[0]][f[1]]=1}
+   if(U.some(([,cs])=>voll(cs)))continue;// das wäre Denkweise a
+   // Nur Einheiten nennen, in denen schon Zahlen stehen
+   weg=U.filter(([,cs])=>sicht(cs).length).map(([nm,cs])=>`${nm} stehen schon: ${zl(sicht(cs))}.`).join('\n')+`\nZusammen sind das alle Zahlen außer der ${v}. Also gehört die ${v} in das Feld.`;
+   tipp='Welche Zahlen stehen schon in der Zeile, in der Spalte und im Kasten des Felds?'}
+  else{
+   // Versteckte Zahl: Jedes andere freie Feld im Kasten wird für v gesperrt (v steht schon in seiner Zeile oder Spalte) oder aufgedeckt
+   const andere=kasten(tr,tc).filter(([r,c])=>r!=tr||c!=tc);
+   for(const [r,c] of andere){if(G[r][c]||sicht(zeile(r)).includes(v)||sicht(spalte(c)).includes(v))continue;
+    const wege=[...(r!=tr?zeile(r):[]),...(c!=tc?spalte(c):[])].filter(([a,b])=>L[a][b]==v);
+    if(Math.random()<.3||!wege.length)G[r][c]=1;else{const f=P(wege);G[f[0]][f[1]]=1}}
+   const frei=andere.filter(([r,c])=>!G[r][c]),k=kand(tr,tc);
+   if(frei.length<2||k.length<2)continue;// sonst wäre es Denkweise a oder b
+   weg=`Das Feld selbst könnte noch ${k.slice(0,-1).join(', ')} oder ${k[k.length-1]} sein. Schau deshalb, wo im Kasten die ${v} hin kann:\n`+
+    frei.map(([r,c])=>`Zeile ${r+1}, Spalte ${c+1}: geht nicht, ${sicht(zeile(r)).includes(v)?`in Zeile ${r+1}`:`in Spalte ${c+1}`} steht schon eine ${v}.`).join('\n')+`\nIm Kasten bleibt für die ${v} nur das Feld mit dem Fragezeichen.`;
+   tipp='Nimm eine Zahl, die im Kasten noch fehlt, und prüfe, in welche freien Felder sie überhaupt passt.'}
+  const g=L.map((row,r)=>row.map((d,c)=>G[r][c]?d:0).join('')).join(''),nrS=1000+[...g].reduce((h,ch)=>(h*31+ +ch)%8999,tr*n+tc);
+  return[`Sudoku ${nrS}: In jeder Zeile, jeder Spalte und jedem dicken Kasten steht jede Zahl von 1 bis ${n} genau einmal. Welche Zahl gehört in das Feld mit dem Fragezeichen?`,v,tipp,weg,{t:'sudoku',n,g,z:tr*n+tc}]}
+ return sudAufgabe(n,'a')}
+// Drei Themen "Sudoku" (Klasse 5, Klasse 6, Klasse 7 und 8), je Stufe Größe und Denkweise aus SUDST
+const SUDOKU=[['sud5',5],['sud6',6],['sud78',78]].map(([k,g])=>[k,'Sudoku',d=>sudAufgabe(...SUDST[g][d-1])]);
 T[6]=[TB,TD,TS,...T[5].filter(t=>t[0]=='trick'||t[0]=='knob')];
 T[8]=[TL,TG,TP,TY,...T[7].filter(t=>t[0]=='zt')];
 // Alle Themen nach Schlüssel und Kategorien je Klasse (seit 2026-10-18; Schulstoff vorläufig, wird an die Mathebücher angepasst).
 // T[g] bleibt die Liste der Themen einer Klasse (Schulstoff und Olympiade), frühere Klassen kommen in app.js als "Wiederholen" dazu.
-const THEMA={};for(const g of [5,6,7,8])for(const t of T[g])THEMA[t[0]]=t;
-const KAT={5:{schul:['rechnen','groessen','umfl','teil'],oly:['folgen','trick','knob']},
- 6:{schul:['bruch','dez','dreisatz'],oly:['trick','knob']},
- 7:{schul:['gl','term','pz','rat','winkel'],oly:['zt','wege']},
- 8:{schul:['lf','gls','pot','pyth'],oly:['zt']}};
+const THEMA={};for(const g of [5,6,7,8])for(const t of T[g])THEMA[t[0]]=t;for(const t of SUDOKU)THEMA[t[0]]=t;
+const KAT={5:{schul:['rechnen','groessen','umfl','teil'],oly:['folgen','trick','knob','sud5']},
+ 6:{schul:['bruch','dez','dreisatz'],oly:['trick','knob','sud6']},
+ 7:{schul:['gl','term','pz','rat','winkel'],oly:['zt','wege','sud78']},
+ 8:{schul:['lf','gls','pot','pyth'],oly:['zt','sud78']}};
 for(const g of [5,6,7,8])T[g]=[...KAT[g].schul,...KAT[g].oly].map(k=>THEMA[k]);

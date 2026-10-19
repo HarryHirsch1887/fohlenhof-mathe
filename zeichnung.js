@@ -5,8 +5,10 @@
 // Bildgröße; px/py: Rand links/rechts bzw. oben/unten für Beschriftungen (seitliche Beschriftungen brauchen mehr Platz)
 const ZB={w:300,h:200,px:52,py:32};
 // Prüft eine gespeicherte Zeichnungsangabe (Fehlerheft, Import): nur bekannte Arten, Zahlen und kurze Texte. Liefert eine saubere Kopie oder null.
-const ZARTEN=['rechteck','ausschnitt','dreieck','rechtwinklig','leiter','gleichschenklig','vieleck','gitter','nebenwinkel'];
+const ZARTEN=['rechteck','ausschnitt','dreieck','rechtwinklig','leiter','gleichschenklig','vieleck','gitter','nebenwinkel','sudoku'];
 function zCheck(z){if(!z||typeof z!=='object'||!ZARTEN.includes(z.t))return null;const o={t:z.t};
+ // Sudoku (seit 2026-10-19): n Größe (4, 6 oder 9), g Ziffern zeilenweise (0 = leer), z markiertes Feld
+ if(z.t=='sudoku')return[4,6,9].includes(z.n)&&typeof z.g=='string'&&new RegExp(`^[0-${z.n}]{${z.n*z.n}}$`).test(z.g)&&Number.isInteger(z.z)&&z.z>=0&&z.z<z.n*z.n&&z.g[z.z]=='0'?{t:'sudoku',n:z.n,g:z.g,z:z.z}:null;
  for(const k of ['a','b','c','d','A','B','al','be','n','zerlegt','einzeln','diag','la','lb','lc','lh','innen','w','lal','lbe','lga','nn','gleich']){const v=z[k];
   if(typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=1000)o[k]=v;else if(typeof v==='string'&&v.length<=24)o[k]=v}
  if(o.t=='vieleck'&&!(o.n>=3&&o.n<=30))return null;return o}
@@ -82,4 +84,11 @@ function zeichnung(z){if(!z||typeof z!=='object')return'';try{
   const A=m([0,0]),B=m([z.a,z.b]);
   return zSvg(s+`<circle cx="${zf(A[0])}" cy="${zf(A[1])}" r="4.5" class="zpa"/><circle cx="${zf(B[0])}" cy="${zf(B[1])}" r="4.5" class="zpa"/>`+zText(A[0]-12,A[1]+10,'A')+zText(B[0]+12,B[1]-10,'B')+
    zText(ZB.w/2,ZB.h-8,'nur nach rechts → oder oben ↑'),'Gitter von A nach B')}
+ // Sudoku: n × n Felder, dicke Linien um die Kästen (4×4: 2×2, 6×6: 2 hoch × 3 breit, 9×9: 3×3), markiertes Feld gelb mit "?"
+ if(z.t=='sudoku'){const n=z.n,[br,bc]=n==6?[2,3]:n==4?[2,2]:[3,3],s=Math.floor((ZB.h-14)/n),x0=(ZB.w-n*s)/2,y0=(ZB.h-n*s)/2,zr=Math.floor(z.z/n),zc=z.z%n,fs=Math.round(s*(n==9?.62:.55));
+  let o=`<rect x="${x0}" y="${y0}" width="${n*s}" height="${n*s}" class="zsf"/><rect x="${x0+zc*s}" y="${y0+zr*s}" width="${s}" height="${s}" class="zsm"/>`;
+  for(let i=1;i<n;i++)o+=`<path d="M${x0+i*s} ${y0}v${n*s}" class="${i%bc?'zsd':'zsk'}"/><path d="M${x0} ${y0+i*s}h${n*s}" class="${i%br?'zsd':'zsk'}"/>`;
+  o+=`<rect x="${x0}" y="${y0}" width="${n*s}" height="${n*s}" class="zsk" fill="none"/>`;
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++){const d=z.g[r*n+c],mark=r==zr&&c==zc;if(d!='0'||mark)o+=`<text x="${x0+c*s+s/2}" y="${y0+r*s+s/2+1}" class="${mark?'zr':'zst'}" style="font-size:${fs}px">${mark?'?':d}</text>`}
+  return zSvg(o,`Sudoku ${n} mal ${n}`)}
  }catch(e){}return''}

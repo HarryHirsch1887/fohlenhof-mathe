@@ -6,7 +6,8 @@
 const PFS=.5;
 const WH=200,GY=124,sr=n=>{let x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x)};
 // Gegenstände für den Hof: [id, Name, Preis in Äpfeln, Lage auf der Weide (Anteil der Weltbreite)]
-const ITEMS=[['baum1','Apfelbaum',12,.33],['baum2','Eiche',15,.80],['blumen','Blumenwiese',10,.46],['heu','Heuballen',10,.555],['troge','Wassertrog',12,.40],['stall','Stall',30,.64],['teich','Teich',25,.24],['windrad','Windrad',20,.725],['regenbogen','Regenbogen',35,.50]];
+// Drei Blumenwiesen (seit 2026-10-19): bunt (Mitte), Mohn (links neben dem Teich), Lavendel (rechts hinter der Eiche)
+const ITEMS=[['baum1','Apfelbaum',12,.33],['baum2','Eiche',15,.80],['blumen','Blumenwiese bunt',10,.46],['mohn','Blumenwiese Mohn',10,.10],['lavendel','Blumenwiese Lavendel',10,.89],['heu','Heuballen',10,.555],['troge','Wassertrog',12,.40],['stall','Stall',30,.64],['teich','Teich',25,.24],['windrad','Windrad',20,.725],['regenbogen','Regenbogen',35,.50]];
 // ---------- Zeichnungen im Bilderbuch-Stil (Weltkoordinaten: Höhe 200, Bodenlinie GY) ----------
 const r1=n=>Math.round(n*10)/10;
 const busch=(x,y,r,c)=>`<g fill="${c}"><circle cx="${r1(x)}" cy="${r1(y-r*.7)}" r="${r1(r)}"/><circle cx="${r1(x-r*.8)}" cy="${r1(y-r*.35)}" r="${r1(r*.72)}"/><circle cx="${r1(x+r*.85)}" cy="${r1(y-r*.4)}" r="${r1(r*.68)}"/></g>`;
@@ -24,6 +25,14 @@ const DR={
  baum1:x=>baum(x,GY+6,1,'#4f9a47','#7cc06a',1),
  baum2:x=>baum(x,GY+4,1.35,'#3b7d3a','#5c9e4f',0),
  blumen:x=>[...Array(22)].map((_,i)=>{const fx=r1(x+sr(i+1)*140-70),fy=r1(GY+10+sr(i+40)*30),c=['#f4d03f','#ffffff','#e78ac3','#f19a3e','#b18cf0'][i%5];return`<path d="M${fx} ${fy}V${r1(fy-4)}" stroke="#5f9245" stroke-width=".7"/><circle cx="${fx}" cy="${r1(fy-4.5)}" r="1.9" fill="${c}"/><circle cx="${fx}" cy="${r1(fy-4.5)}" r=".7" fill="#e2a72e"/>`}).join(''),
+ // Mohnwiese: rote Mohnblüten (vier Blütenblätter, schwarze Mitte) auf langen Stielen, dazwischen Knospen
+ mohn:x=>[...Array(18)].map((_,i)=>{const fx=r1(x+sr(i+201)*110-55),fy=r1(GY+12+sr(i+240)*28),h=r1(5+sr(i+260)*3),t=r1(fy-h),kn=i%6==5;
+  return`<path d="M${fx} ${fy}q${r1(sr(i+280)*2-1)} ${-h/2} 0 ${-h}" stroke="#5f9245" stroke-width=".7" fill="none"/>`+(kn?`<ellipse cx="${fx}" cy="${t}" rx=".9" ry="1.4" fill="#6f9a4c"/>`:
+   `<g transform="translate(${fx} ${t})"><ellipse cx="-1.3" cy="-.2" rx="1.6" ry="1.3" fill="#d6302a"/><ellipse cx="1.3" cy="-.2" rx="1.6" ry="1.3" fill="#d6302a"/><ellipse cy="-1.1" rx="1.5" ry="1.2" fill="#e8463b"/><ellipse cy=".7" rx="1.4" ry="1" fill="#c42a24"/><circle r=".65" fill="#2b2321"/></g>`)}).join(''),
+ // Lavendelwiese: Büschel aus schmalen, lila Ähren (kleine Blüten an der Spitze), in lockeren Reihen
+ lavendel:x=>[...Array(10)].map((_,i)=>{const bx=r1(x+(i%5)*22-44+sr(i+301)*6),by=r1(GY+15+Math.floor(i/5)*14+sr(i+320)*4);
+  return[...Array(6)].map((_,j)=>{const dx=r1((j-2.5)*1.4+sr(i*7+j)*1),hh=r1(7+sr(i*5+j+340)*3),tx=r1(bx+dx*1.8),ty=r1(by-hh);
+   return`<path d="M${bx} ${by}L${tx} ${ty}" stroke="#6a8f52" stroke-width=".6"/>`+[0,1,2,3].map(k=>`<ellipse cx="${r1(tx+(bx-tx)*k*.09)}" cy="${r1(ty+(by-ty)*k*.09)}" rx=".75" ry="1.1" fill="${k%2?'#8a6cc0':'#a58ad6'}"/>`).join('')}).join('')}).join(''),
  // Heuballen: Quader mit Ober- und Seitenfläche, Strohstruktur und Bindeschnüren
  heu:x=>{const ballen=(bx,by)=>`<rect x="${bx}" y="${by}" width="16" height="10" rx="1.2" fill="#e2b24a"/><path d="M${bx} ${by}l3 -3h16l-3 3Z" fill="#f2cf74"/><path d="M${bx+16} ${by}l3 -3v10l-3 3Z" fill="#c9972f"/>`+
   `<path d="${[...Array(8)].map((_,i)=>`M${r1(bx+1.5+sr(bx+i*1.7)*12)} ${r1(by+1.5+sr(by+i*3.1)*7)}l${r1(1.4+sr(i+bx)*1.6)} ${r1((sr(i*5+by)-.5)*1.2)}`).join('')}" stroke="#c4902f" stroke-width=".5" fill="none"/>`+
@@ -401,11 +410,13 @@ function flyOff(){HF.mode='bg';document.body.classList.remove('fly');$('#fly').h
  const svg=document.getElementById('hof');if(!svg)return;
  svg.addEventListener('pointerdown',e=>{
   const g=e.target.closest&&e.target.closest('.hs'),h=g?HF.horses[+g.dataset.i]:null,a=!h&&e.target.closest?e.target.closest('[data-act]'):null;
-  if(HF.mode=='fly'){HF.drag={x:e.clientX,cam:HF.cam,moved:0,h,a};try{svg.setPointerCapture(e.pointerId)}catch(_){}}
-  else if(h)hofTap(h);else if(a)hofAkt(a.dataset.act,a)});
+  // Figuren winken beim Antippen (eigene und die der anderen Kinder am Zaun)
+  const fg=!h&&!a&&e.target.closest?e.target.closest('.fig'):null;
+  if(HF.mode=='fly'){HF.drag={x:e.clientX,cam:HF.cam,moved:0,h,a,fg};try{svg.setPointerCapture(e.pointerId)}catch(_){}}
+  else if(h)hofTap(h);else if(a)hofAkt(a.dataset.act,a);else if(fg)winken(fg)});
  svg.addEventListener('pointermove',e=>{const d=HF.drag;if(!d)return;const r=svg.getBoundingClientRect(),k=Math.min(r.width/HF.W,r.height/WH),dx=e.clientX-d.x;d.moved=Math.max(d.moved,Math.abs(dx));
   HF.cam=Math.min(HF.WW-HF.W,Math.max(0,d.cam-dx/k));if(!HF.raf)hofDraw(0)});
- svg.addEventListener('pointerup',()=>{const d=HF.drag;if(!d)return;HF.drag=null;HF.idle=3;if(d.moved<6){if(d.h)hofTap(d.h);else if(d.a)hofAkt(d.a.dataset.act,d.a)}});
+ svg.addEventListener('pointerup',()=>{const d=HF.drag;if(!d)return;HF.drag=null;HF.idle=3;if(d.moved<6){if(d.h)hofTap(d.h);else if(d.a)hofAkt(d.a.dataset.act,d.a);else if(d.fg)winken(d.fg)}});
  svg.addEventListener('pointercancel',()=>{HF.drag=null});
  let rt=0;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>hofSync(true),200)});
  addEventListener('keydown',e=>{if(e.key=='Escape'&&HF.mode=='fly')flyOff()});

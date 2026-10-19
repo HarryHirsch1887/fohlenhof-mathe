@@ -31,9 +31,11 @@ function figurBild(f){
   `<path d="M-12.4 -78Q-13.2 -72 -12.2 -67" stroke="#fff" stroke-width="1" opacity=".25" fill="none"/>`+
   `<rect x="-10.4" y="-52.4" width="20.8" height="3.4" fill="#6b4a2b" ${st}/><rect x="-1.8" y="-52.8" width="3.6" height="4.2" rx=".6" fill="#d9b25a" stroke="${ul}" stroke-width=".6"/>`+
   `<path d="M-5.4 -80L0 -73.6L5.4 -80Q0 -78.6 -5.4 -80Z" fill="${kr}" ${st}/><circle cy="-70.5" r=".7" fill="${kr}"/><circle cy="-66.5" r=".7" fill="${kr}"/>`;
- // Arme mit Händen
- s+=arm(armL)+arm(armR)+`<path d="M-11.6 -75Q-14.6 -70 -15 -66.5M11.6 -75Q14.6 -70 15 -66.5" fill="none" stroke="${sh}" stroke-width="5.4" stroke-linecap="round"/>`+
-  `<circle cx="-15.2" cy="-51.6" r="2.9" fill="${hc}" ${st}/><circle cx="15.2" cy="-51.6" r="2.9" fill="${hc}" ${st}/>`;
+ // Arme mit Händen. Der rechte Arm (Ärmel und Hand) ist eine eigene Gruppe: Beim Antippen dreht er sich um die Schulter (11.6, -75)
+ // nach oben und winkt (seit 2026-10-19, siehe winken() unten). Ohne Winken sieht die Figur aus wie vorher.
+ const aermel=d=>`<path d="${d}" fill="none" stroke="${sh}" stroke-width="5.4" stroke-linecap="round"/>`,hand=x=>`<circle cx="${x}" cy="-51.6" r="2.9" fill="${hc}" ${st}/>`;
+ s+=arm(armL)+aermel('M-11.6 -75Q-14.6 -70 -15 -66.5')+hand(-15.2)+
+  `<g class="winkarm">${arm(armR)+aermel('M11.6 -75Q14.6 -70 15 -66.5')+hand(15.2)}<animateTransform attributeName="transform" type="rotate" values="0 11.6 -75;-145 11.6 -75;-118 11.6 -75;-150 11.6 -75;-120 11.6 -75;-148 11.6 -75;-125 11.6 -75;0 11.6 -75" keyTimes="0;.16;.3;.44;.58;.72;.84;1" dur="2s" begin="indefinite" fill="remove"/></g>`;
  // Kurze Haare im Nacken, hinter Kopf und Ohren (Junge)
  if(!m)s+=`<path d="M-13.6 -97Q-15.2 -88 -11 -84.6L11 -84.6Q15.2 -88 13.6 -97Z" fill="${ac}" ${st}/>`;
  // Kopf mit Ohren
@@ -60,3 +62,6 @@ function figurBild(f){
   `<path d="M-7.4 -105.6Q-1 -108.6 5.6 -106.2" stroke="#fff" stroke-width="1.5" opacity=".3" fill="none" stroke-linecap="round"/><path d="M-3 -101.5v-4M0 -101v-5M3 -101.5v-4" stroke="#3a3a42" stroke-width=".8"/>`+
   `<path d="M-13.2 -93.2Q-11.4 -82.2 0 -80.6Q11.4 -82.2 13.2 -93.2" stroke="#1d1d22" stroke-width=".9" fill="none"/><rect x="-1.2" y="-81.6" width="2.4" height="1.8" rx=".4" fill="#4a4a52"/>`;
  return s}
+// Winken (seit 2026-10-19): Figur auf dem Hof oder kleine Figur antippen, dann hebt sie den rechten Arm und winkt.
+// Nicht bei "Bewegung reduzieren" (RM aus app.js).
+function winken(el){if(typeof RM!='undefined'&&RM)return;const a=el&&el.querySelector('.winkarm animateTransform');if(a&&a.beginElement)try{a.beginElement()}catch(e){}}

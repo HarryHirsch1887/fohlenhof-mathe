@@ -50,10 +50,23 @@ details.wdh summary{cursor:pointer;font-weight:bold;padding:6px 0}
 .zeich .zb{fill:none;stroke:var(--gr);stroke-width:1.6}.zeich .zbr{fill:none;stroke:var(--bar);stroke-width:2.2}
 .zeich .zp{fill:var(--ink)}.zeich .zpa{fill:var(--hay);stroke:var(--ink);stroke-width:1.2}
 .zeich text{font-size:14px;text-anchor:middle;dominant-baseline:middle;fill:var(--ink)}
+/* Sudoku (seit 2026-10-19): Feld, markiertes Feld, dünne Linien, dicke Kastenlinien, vorgegebene Zahlen */
+.zeich .zsf{fill:var(--card)}.zeich .zsm{fill:var(--hay);opacity:.45}.zeich .zsd{stroke:var(--ink);stroke-width:.6;opacity:.45}
+.zeich .zsk{stroke:var(--ink);stroke-width:2.2}.zeich .zst{font-weight:600}
 .zeich .zh{paint-order:stroke;stroke:var(--bg);stroke-width:5px;stroke-linejoin:round}
 .zeich .zr{fill:var(--bar);font-weight:bold;font-size:15px}.zeich .zn{font-size:15px;font-style:italic;font-weight:bold}
 /* Eingabefeld mit Einheit dahinter (z. B. °, cm, €) */
 .antw{display:flex;align-items:center;gap:10px;max-width:300px}
+/* Figuren winken beim Antippen (seit 2026-10-19) */
+#hof .fig,.figmini{cursor:pointer}
+/* Kopf der Aufgabe: Themenname darf umbrechen, der Apfelzähler bleibt oben rechts */
+.qthema{flex:1;min-width:0;text-align:center}#apz{flex:none}.qthema .dots{white-space:nowrap}
+.row.qkopf{flex-wrap:nowrap}
+/* Antwortzeile (seit 2026-10-19): Eingabefeld mit Einheit und "Prüfen" nebeneinander, gleich hoch; Tipp als Link darunter */
+.antwort{display:flex;gap:10px;align-items:stretch;max-width:440px;margin:8px 0 2px}
+.antwort .antw{flex:1;min-width:0;max-width:none}.antwort #ans{max-width:none;min-width:0;margin:0}
+button.pruefen{padding:0 22px;font-size:18px;flex:none}
+button.tipp{background:none;color:var(--ink);border:0;padding:8px 2px;font-size:15px;opacity:.75;text-decoration:underline;text-underline-offset:3px}
 .einheit{font-size:24px;font-weight:bold;white-space:nowrap}
 .ok{color:var(--gr)}.no{color:var(--bar)}.small{font-size:14px;opacity:.85}
 .badge{display:inline-block;background:var(--hay);color:#26331f;border-radius:14px;padding:2px 12px;margin:3px;font-size:14px}
