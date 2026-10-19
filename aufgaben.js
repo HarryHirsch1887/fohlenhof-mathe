@@ -95,13 +95,53 @@ const T={5:[
  // Stufe 4: Winkelsumme im Vieleck, Stufe 5: ein Winkel im regelmäßigen Vieleck
  if(d==4){n=R(5,10);return[`Eine Figur hat ${n} Ecken. An jeder Ecke ist innen ein Winkel. Wie groß sind alle ${n} Winkel zusammen (in °)?`,(n-2)*180,'Zerlege das Vieleck in Dreiecke.',`Zerlege das ${n}-Eck von einer Ecke aus in Dreiecke. Es sind ${n} − 2 = ${n-2} Dreiecke.\nJedes Dreieck hat 180°: ${n-2} · 180° = ${(n-2)*180}°.`,{t:'vieleck',n,zerlegt:1}]}
  n=P([5,6,8,9,10]);return[`Eine Figur hat ${n} Ecken. Alle Seiten sind gleich lang und alle Winkel gleich groß. Wie groß ist ein Winkel (in °)?`,(n-2)*180/n,'',`Summe aller Innenwinkel: (${n} − 2) · 180° = ${(n-2)*180}°.\nBeim regelmäßigen ${n}-Eck sind alle ${n} Winkel gleich groß.\n${(n-2)*180}° : ${n} = ${(n-2)*180/n}°.`,{t:'vieleck',n,einzeln:1}]}],
-['wege','Zählen & Wege',d=>{let a,b,n;
- // Stufe 1 und 2: Diagonalen (kleine, dann größere Figuren)
- if(d<=2){n=d==1?R(4,6):R(7,12);return[`Eine Figur hat ${n} Ecken. Eine Diagonale verbindet zwei Ecken, die nicht nebeneinander liegen. Wie viele Diagonalen hat die Figur?`,n*(n-3)/2,'Von jeder Ecke gehen n−3 Diagonalen aus. Jede wird doppelt gezählt.',`Von jeder Ecke gehen ${n-3} Diagonalen aus (nicht zu sich selbst und nicht zu den 2 Nachbarn).\nBei ${n} Ecken sind das ${n} · ${n-3} = ${n*(n-3)}.\nJede Diagonale wurde von beiden Enden gezählt: ${n*(n-3)} : 2 = ${n*(n-3)/2}.`,{t:'vieleck',n,diag:1}]}
- // Stufe 3 und 4: Wege im Gitter (klein, dann größer)
- if(d<=4){a=d==3?R(1,2):R(2,4);b=d==3?R(2,3):R(3,5);return[`Ein Weg führt von A nach B und besteht aus ${a} Schritten nach rechts und ${b} Schritten nach oben, in beliebiger Reihenfolge. Wie viele verschiedene Wege gibt es?`,fa(a+b)/fa(a)/fa(b),'Wähle, welche der Schritte „rechts“ sind.',`Der Weg hat ${a+b} Schritte. Gesucht ist, bei welchen davon man nach rechts geht (${a} von ${a+b}).\nRechne: ${a+b}! : (${a}! · ${b}!) = ${fa(a+b)} : (${fa(a)} · ${fa(b)}) = ${fa(a+b)/fa(a)/fa(b)}.\n(Mit n! ist 1 · 2 · … · n gemeint.)`,{t:'gitter',a,b}]}
- // Stufe 5: Reihenfolgen
- n=R(3,5);return[`${n} Kinder stellen sich nebeneinander in eine Reihe. Auf wie viele verschiedene Arten geht das?`,fa(n),'Wie viele Kinder können auf den ersten Platz? Wie viele dann auf den zweiten?',`Auf den ersten Platz können ${n} Kinder, auf den zweiten noch ${n-1}, dann ${n-2} und so weiter.\n${[...Array(n)].map((_,i)=>n-i).join(' · ')} = ${fa(n)}.`]}],
+// Seit 2026-10-19: je Stufe vier Aufgabentypen (vorher nur einer mit 3 bis 9 Varianten, dadurch Wiederholungen in einer Runde).
+// Zeichnungen gibt es nur bei Figuren (Diagonalen, Gitterwege).
+['wege','Zählen & Wege',d=>{
+ const kette=n=>[...Array(n)].map((_,i)=>n-i).join(' · '),zl=a=>a.slice(0,-1).join(', ')+' und '+a[a.length-1],nm=P(['Mia','Lena','Emma','Lea']);
+ // Diagonalen (Stufe 1 kleine, Stufe 2 größere Figuren)
+ const diag=n=>[`Eine Figur hat ${n} Ecken. Eine Diagonale verbindet zwei Ecken, die nicht nebeneinander liegen. Wie viele Diagonalen hat die Figur?`,n*(n-3)/2,'Von jeder Ecke gehen n−3 Diagonalen aus. Jede wird doppelt gezählt.',`Von jeder Ecke ${n==4?"geht 1 Diagonale":`gehen ${n-3} Diagonalen`} aus (nicht zu sich selbst und nicht zu den 2 Nachbarn).\nBei ${n} Ecken sind das ${n} · ${n-3} = ${n*(n-3)}.\nJede Diagonale wurde von beiden Enden gezählt: ${n*(n-3)} : 2 = ${n*(n-3)/2}.`,{t:'vieleck',n,diag:1}];
+ // Wege im Gitter (Stufe 3 klein, Stufe 4 größer)
+ const gitter=(a,b)=>[`Ein Weg führt von A nach B und besteht aus ${a} Schritten nach rechts und ${b} Schritten nach oben, in beliebiger Reihenfolge. Wie viele verschiedene Wege gibt es?`,fa(a+b)/fa(a)/fa(b),'Wähle, welche der Schritte „rechts“ sind.',`Der Weg hat ${a+b} Schritte. Gesucht ist, bei welchen davon man nach rechts geht (${a} von ${a+b}).\nRechne: ${a+b}! : (${a}! · ${b}!) = ${fa(a+b)} : (${fa(a)} · ${fa(b)}) = ${fa(a+b)/fa(a)/fa(b)}.\n(Mit n! ist 1 · 2 · … · n gemeint.)`,{t:'gitter',a,b}];
+ // jeder mit jedem: Handschläge (Stufe 1) und Turnierspiele (Stufe 2)
+ const paare=(n,wer,was)=>[`${n} ${wer}. Wie viele ${was} gibt es?`,n*(n-1)/2,'Jeder hat n−1 Partner. Dabei wird jedes Paar doppelt gezählt.',`Jeder hat ${n-1} Partner. Das sind ${n} · ${n-1} = ${n*(n-1)}.\nDabei ist jedes Paar doppelt gezählt (von beiden Seiten aus): ${n*(n-1)} : 2 = ${n*(n-1)/2}.`];
+ // Zaun: gerade (Pfähle = Abstände + 1) oder rund um die Koppel (Pfähle = Abstände)
+ const zaun=rund=>{const k=R(2,5),m=rund?R(6,20):R(3,10),L=k*m;return rund
+  ?[`Um eine runde Koppel geht ein Zaun von ${L} m Länge. Alle ${k} m steht ein Pfahl. Wie viele Pfähle sind es?`,m,'Ein runder Zaun hat keinen Anfang und kein Ende.',`${L} m : ${k} m = ${m} Abstände.\nDer Zaun ist geschlossen. Der letzte Pfahl ist zugleich der erste.\nDeshalb gibt es genauso viele Pfähle wie Abstände: ${m}.`]
+  :[`Ein gerader Zaun ist ${L} m lang. Alle ${k} m steht ein Pfahl, auch ganz am Anfang und ganz am Ende. Wie viele Pfähle sind es?`,m+1,'Zeichne einen kurzen Zaun und zähle nach.',`${L} m : ${k} m = ${m} Abstände.\nBeim geraden Zaun gibt es immer einen Pfahl mehr als Abstände: ${m} + 1 = ${m+1}.`]};
+ // Zahlen aus Ziffern ohne doppelte Ziffer
+ const ziff=(k,st)=>{const z=[...Array(k)].map((_,i)=>i+1),n=st==2?k*(k-1):k*(k-1)*(k-2);
+  return[`Aus den Ziffern ${zl(z)} sollen ${st==2?'zweistellige':'dreistellige'} Zahlen gebildet werden. Keine Ziffer darf doppelt vorkommen. Wie viele Zahlen sind möglich?`,n,'Wie viele Ziffern passen an die erste Stelle? Wie viele dann an die zweite?',
+  `Für die erste Stelle gibt es ${k} Möglichkeiten.\nFür die zweite bleiben ${k-1}, weil die erste Ziffer schon vergeben ist.`+(st==2?`\n${k} · ${k-1} = ${n}.`:`\nFür die dritte bleiben ${k-2}.\n${k} · ${k-1} · ${k-2} = ${n}.`)]};
+ const W=[
+  // Stufe 1
+  ()=>diag(R(4,7)),
+  ()=>paare(R(3,8),'Kinder treffen sich im Stall. Jedes Kind gibt jedem anderen Kind genau einmal die Hand','Handschläge'),
+  ()=>{const a=R(2,5),b=R(2,5);return[`${nm} hat ${a} Reithelme und ${b} Reitjacken. Sie zieht immer einen Helm und eine Jacke an. Wie viele verschiedene Kombinationen gibt es?`,a*b,'Zu jedem Helm passt jede Jacke.',`Zu jedem der ${a} Helme passen alle ${b} Jacken.\n${a} · ${b} = ${a*b}.`]},
+  ()=>zaun(0),
+  // Stufe 2
+  ()=>diag(R(7,12)),
+  ()=>paare(R(5,12),'Mannschaften spielen ein Turnier. Jede Mannschaft spielt genau einmal gegen jede andere','Spiele'),
+  ()=>{const a=R(2,4),b=R(2,4),c=R(2,4);return[`Im Stall gibt es ${a} Sättel, ${b} Satteldecken und ${c} Halfter. Für einen Ausritt nimmt man von jedem genau eins. Wie viele verschiedene Zusammenstellungen gibt es?`,a*b*c,'Rechne erst Sättel mit Decken, dann mit den Halftern.',`Zu jedem Sattel passt jede Decke: ${a} · ${b} = ${a*b}.\nZu jeder dieser Möglichkeiten passt jedes Halfter: ${a*b} · ${c} = ${a*b*c}.`]},
+  ()=>ziff(R(3,6),2),
+  // Stufe 3
+  ()=>gitter(R(1,2),R(2,4)),
+  ()=>{const n=R(4,9);return[`${n} Pferde laufen ein Rennen. Wie viele Möglichkeiten gibt es für die Plätze 1, 2 und 3?`,n*(n-1)*(n-2),'Wie viele Pferde können Erster werden? Wie viele dann Zweiter?',`Platz 1 kann jedes der ${n} Pferde bekommen.\nFür Platz 2 bleiben ${n-1} Pferde, für Platz 3 noch ${n-2}.\n${n} · ${n-1} · ${n-2} = ${n*(n-1)*(n-2)}.`]},
+  ()=>ziff(R(4,7),3),
+  ()=>zaun(1),
+  // Stufe 4
+  ()=>gitter(R(2,4),R(3,5)),
+  ()=>{const n=R(5,9),k=R(2,3),p=k==2?n*(n-1):n*(n-1)*(n-2),c=p/fa(k);return[`Aus ${n} Kindern sollen ${k} für einen Ausritt ausgewählt werden. Die Reihenfolge ist egal. Wie viele Möglichkeiten gibt es?`,c,'Zähle erst mit Reihenfolge und teile dann.',`Mit Reihenfolge wären es ${kette(n).split(' · ').slice(0,k).join(' · ')} = ${p}.\nDieselben ${k} Kinder kommen dabei in ${kette(k)} = ${fa(k)} Reihenfolgen vor.\n${p} : ${fa(k)} = ${c}.`]},
+  ()=>{const k=R(4,7),z=[...Array(k)].map((_,i)=>i),n=(k-1)*(k-1)*(k-2);return[`Aus den Ziffern ${zl(z)} werden dreistellige Zahlen gebildet. Keine Ziffer darf doppelt vorkommen. Vorne darf keine 0 stehen. Wie viele Zahlen sind möglich?`,n,'Fang vorne an. Dort ist die 0 verboten.',`Vorne geht jede Ziffer außer der 0: ${k-1} Möglichkeiten.\nIn der Mitte geht wieder die 0, aber nicht die Ziffer von vorne: ${k-1} Möglichkeiten.\nHinten bleiben ${k-2}.\n${k-1} · ${k-1} · ${k-2} = ${n}.`]},
+  ()=>{const n=R(5,12),h=n*(n-1)/2;return[`Bei einem Reitturnier gibt jeder Teilnehmer jedem anderen genau einmal die Hand. Das sind ${h} Handschläge. Wie viele Teilnehmer sind es?`,n,'Bei n Personen gibt es n · (n−1) : 2 Handschläge. Probiere aus.',`Bei n Personen gibt es n · (n − 1) : 2 Handschläge.\nAlso muss n · (n − 1) = ${2*h} sein.\nProbieren: ${n} · ${n-1} = ${2*h}. Es sind ${n} Teilnehmer.`]},
+  // Stufe 5
+  ()=>{const n=R(3,6);return[`${n} Kinder stellen sich nebeneinander in eine Reihe. Auf wie viele verschiedene Arten geht das?`,fa(n),'Wie viele Kinder können auf den ersten Platz? Wie viele dann auf den zweiten?',`Auf den ersten Platz können ${n} Kinder, auf den zweiten noch ${n-1}, dann ${n-2} und so weiter.\n${kette(n)} = ${fa(n)}.`]},
+  ()=>{const n=R(4,6);return[`${n} Kinder stellen sich in eine Reihe. Mia und Ben wollen unbedingt nebeneinander stehen. Wie viele Möglichkeiten gibt es?`,2*fa(n-1),'Pack die beiden zu einem Paket zusammen.',`Stell dir Mia und Ben als ein Paket vor. Dann gibt es ${n-1} Teile, die sich anordnen: ${kette(n-1)} = ${fa(n-1)}.\nIm Paket können Mia und Ben die Plätze tauschen, also mal 2.\n${fa(n-1)} · 2 = ${2*fa(n-1)}.`]},
+  ()=>{const [w,x]=P([['PONY'],['PFERD'],['APFEL'],['HAFER'],['FOHLEN'],['STALL','L'],['KOPPEL','P'],['SATTEL','T'],['REITEN','E']]),L=w.length,n=fa(L)/(x?2:1);
+   return[`Wie viele verschiedene „Wörter“ kann man aus den Buchstaben von ${w} legen? Jeder Buchstabe wird genau einmal benutzt. Die Wörter müssen keinen Sinn ergeben.`,n,'Wie viele Buchstaben sind es? Kommt einer doppelt vor?',
+   x?`${L} Buchstaben lassen sich auf ${kette(L)} = ${fa(L)} Arten anordnen.\nDas ${x} kommt zweimal vor. Tauscht man die beiden ${x}, entsteht dasselbe Wort. Jedes Wort ist also doppelt gezählt.\n${fa(L)} : 2 = ${n}.`:`Alle ${L} Buchstaben sind verschieden.\nFür den ersten Platz gibt es ${L} Buchstaben, dann ${L-1} und so weiter.\n${kette(L)} = ${n}.`]},
+  ()=>{const n=R(4,7);return[`${n} Kinder setzen sich an einen runden Tisch. Sitzordnungen, die durch Drehen gleich aussehen, zählen nur einmal. Wie viele verschiedene Sitzordnungen gibt es?`,fa(n-1),'Setze ein Kind fest auf einen Platz.',`Setze ein Kind fest auf einen Platz. Drehen ändert dann nichts mehr.\nDie anderen ${n-1} Kinder verteilen sich auf die übrigen Plätze: ${kette(n-1)} = ${fa(n-1)}.`]}];
+ return W[(d-1)*4+R(0,3)]()}],
 ['rat','Negative Zahlen',d=>{let a,b,c,e;
  if(d==1){a=R(2,20);b=a+R(1,20);return[`${a} − ${b} = ?`,a-b,'Der Zahlenstrahl hilft.',`Die zweite Zahl ist größer. Der Abstand ist ${b} − ${a} = ${b-a}.\nDas Ergebnis ist negativ: −${b-a}`]}
  if(d==2){a=R(2,25);b=R(2,25);return[`(−${a}) + (−${b}) = ?`,-(a+b),'',`Zwei negative Zahlen addieren: Beträge addieren, das Minus bleibt.\n${a} + ${b} = ${a+b}, also −${a+b}`]}
