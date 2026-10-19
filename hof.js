@@ -99,6 +99,24 @@ function pal(h){
  if(h<8)return{n:'morgen',t:'#7f8fc6',m:'#c9a9b8',b:'#f7c690',far:'#a6b5c8',mid:'#86b28c',g1:'#9cc683',g2:'#7fae68',w1:'#fff3e6',w2:'#f2c9b0',bu:'#6c9c62',tint:'#ffb070',ta:.06,sy:70,glow:'#ffd9a0'};
  if(h<18)return{n:'tag',t:'#4a9ee0',m:'#8cc6ec',b:'#e3f2f6',far:'#b5d2cb',mid:'#9fcb9e',g1:'#9fd07f',g2:'#7cb35c',w1:'#ffffff',w2:'#dce8f0',bu:'#74a86a',tint:'#000',ta:0,sy:30,glow:'#fff3c4'};
  return{n:'abend',t:'#51609a',m:'#b07d92',b:'#f4a76e',far:'#8d93ad',mid:'#789e85',g1:'#88b46f',g2:'#6b9a58',w1:'#ffe3d1',w2:'#e7a58f',bu:'#5e8a5a',tint:'#ff8f50',ta:.08,sy:70,glow:'#ffc48a'}}
+// ---------- Wetter und Tiere (seit 2026-10-19) ----------
+// Wetter nach echtem Datum: je 3-Stunden-Block fest ausgewürfelt (auf allen Geräten gleich, springt nicht beim Neuladen).
+// Dezember bis Februar: 30 % Schnee, sonst 15 % Regen. Tagsüber (7 bis 19 Uhr) nach einem Regen-Block: Regenbogen.
+// Zum Ausprobieren: Adresse mit ?wetter=regen, schnee, regenbogen oder klar. Für Tests: HF.wTest (Wetter), HF.hTest (Stunde), HF.mTest (Monat 0-11)
+const WETTER=['klar','regen','schnee','regenbogen'];
+function wetter(d){d=d||new Date();const q=typeof location!='undefined'?new URLSearchParams(location.search).get('wetter'):null;if(WETTER.includes(HF.wTest))return HF.wTest;if(WETTER.includes(q))return q;
+ const blk=ms=>{const t=new Date(ms),tag=Math.floor((t-new Date(t.getFullYear(),0,1))/864e5),z=sr(t.getFullYear()*.37+tag*8+Math.floor(t.getHours()/3)+.5),m=t.getMonth();return m==11||m<2?(z<.3?'schnee':'klar'):(z<.15?'regen':'klar')};
+ const jetzt=blk(d.getTime());if(jetzt!='klar')return jetzt;const h=d.getHours();return h>=7&&h<19&&blk(d.getTime()-3*36e5)=='regen'?'regenbogen':'klar'}
+// Schmetterling (von oben, Flügel schlagen über die Breite) und Vogel (Flügelschlag über den Pfad)
+const falterSvg=(c,i)=>`<g class="falter" id="sf${i}"><g class="fl"><ellipse cx="-2.3" cy="-1.2" rx="2.4" ry="2.9" fill="${c}"/><ellipse cx="2.3" cy="-1.2" rx="2.4" ry="2.9" fill="${c}"/><ellipse cx="-1.6" cy="1.7" rx="1.5" ry="1.8" fill="${c}" opacity=".8"/><ellipse cx="1.6" cy="1.7" rx="1.5" ry="1.8" fill="${c}" opacity=".8"/></g><rect x="-.35" y="-2.6" width=".7" height="5.4" rx=".35" fill="#3a2a1a"/></g>`;
+const VOGEL='<path class="vogel" d="M-4 0Q-2 -2 0 0Q2 -2 4 0" fill="none" stroke="#3a3f4a" stroke-width=".9" stroke-linecap="round"/>';
+// Regen bzw. Schnee: eine Ebene enthält ihre Tropfen zweimal übereinander und wird nur verschoben (schont langsame Geräte)
+// Je Ebene: [Anzahl, Startwert für den Zufall, Strichstärke bzw. Radius, Deckkraft bzw. Radius-Streuung, Fallgeschwindigkeit, Seitwärts-Pendeln]
+function niederschlag(W,art){const pkt=(n,s)=>[...Array(n)].map((_,i)=>[sr(i+s)*(W+20)-10,sr(i+s+500)*WH,sr(i+s+900)]),zweimal=f=>[0,-WH].map(f).join('');
+ if(art=='regen')return[[45,300,1.1,.75,210],[55,700,.7,.5,150]].map(([n,s,b,o,vv])=>{const P=pkt(n,s);
+  return`<g class="wl" data-v="${vv}"><path d="${zweimal(o2=>P.map(([x,y])=>`M${r1(x)} ${r1(y+o2)}l-1.6 6.5`).join(''))}" fill="none" stroke="#d6e6f4" stroke-width="${b}" opacity="${o}" stroke-linecap="round"/></g>`}).join('');
+ return[[30,900,1.2,.8,24,6],[42,1300,.6,.5,13,4]].map(([n,s,r,rr,vv,sw])=>{const P=pkt(n,s);
+  return`<g class="wl" data-v="${vv}" data-s="${sw}" fill="#fff" opacity=".9">${zweimal(o2=>P.map(([x,y,z])=>`<circle cx="${r1(x)}" cy="${r1(y+o2)}" r="${r1(r+z*rr)}"/>`).join(''))}</g>`}).join('')}
 // Gangarten: [Ausschlag der Beine in Grad, Schritte pro Sekunde]; Phasen der Beine: hinten fern, vorne fern, hinten nah, vorne nah
 const G={walk:[16,1.1],trot:[24,2.1],gallop:[36,3.2]},OFF={walk:[.5,.75,0,.25],trot:[.5,0,0,.5],gallop:[.1,.6,0,.5]},SPEED={walk:16,trot:42,gallop:105};
 const HF={mode:'bg',horses:[],ord:[],key:'',t:0,last:0,raf:0,run:false,cam:0,cv:24,idle:0,fill:null,tag:null,W:288,WW:720,drag:null,clouds:[],pal:null,
@@ -118,7 +136,8 @@ function hofSpecs(kind){
  if(kind=='kid'){const k=kid(),H=hh(k),b=belegung(H);A.push({...km(k),ko:0});
   // Freunde stehen auf der Koppel, auf der sie einen Platz haben (belegung in app.js). Ohne Platz sind sie nicht auf dem Hof.
   b.p.forEach((L,i)=>L.forEach(f=>{if(f!='eigen')A.push({...freundInfo(k,f),ko:i})}))}
- else{S.kids.filter(k=>k.h).slice(0,5).forEach(k=>A.push(km(k)));const f=fillers();for(let i=0;A.length<5;i++)A.push(f[i])}
+ // Startseite: Pferde der Kinder (auch zweite Pferde), höchstens 5, aufgefüllt mit fremden Pferden
+ else{S.kids.filter(k=>k.h).forEach(k=>{A.push(km(k));if(k.h2)A.push({id:'e'+k.id,c:k.h2.coat,st:k.h2.st||0,m:pfSpec(k.h2,k.h2.st||0),name:k.h2.name,own:0})});A.splice(5);const f=fillers();for(let i=0;A.length<5;i++)A.push(f[i])}
  return A}
 
 function hofBuild(kind){
@@ -131,7 +150,7 @@ function hofBuild(kind){
  HF.cam=Math.min(Math.max(HF.cam?HF.cam+dOX:OX+(WK-W)/2,0),WW-W);
  if(dOX){HF.horses.forEach(h=>{h.x+=dOX;if(h.ziel!=null)h.ziel+=dOX});HF.mist.forEach(m=>m.x+=dOX);if(HF.apfel)HF.apfel.x+=dOX;if(HF.frosch)HF.frosch.x+=dOX}
  svg.setAttribute('viewBox',`0 0 ${W} ${WH}`);svg.setAttribute('preserveAspectRatio','xMidYMid meet');
- const now=new Date(),P=pal(now.getHours()+now.getMinutes()/60),items=kind=='kid'?Object.keys(hh(kid()).it):ITEMS.map(i=>i[0]);
+ const now=new Date(),P=pal(HF.hTest!=null?HF.hTest:now.getHours()+now.getMinutes()/60),items=kind=='kid'?Object.keys(hh(kid()).it):ITEMS.map(i=>i[0]);
  HF.pal=P;HF.kind=kind;
  // Interaktionen: laufende Animationen gehen beim Neuaufbau verloren, Pferdeäpfel bleiben (nur beim selben Kind)
  const kidId=kind=='kid'?kid().id:null;
@@ -147,26 +166,37 @@ function hofBuild(kind){
  // Figuren: auf dem Hof eines Kindes die eigene vorn, alle anderen (höchstens 5) hinter dem Zaun
  const mitF=S.kids.filter(x=>x.f),eig=kind=='kid'?mitF.find(x=>x.id==kidId):null,figs={eigen:eig,zaun:mitF.filter(x=>x!==eig).slice(0,5)};
  const nacht=P.n=='nacht',gras=nacht?['#2f5a38','#376640','#28503a']:['#6d9f4c','#7fb258','#5f9245','#86b960'];
+ // Wetter: bei Regen und Schnee trüber Himmel ohne Sonne, Mond und Sterne. Schmetterlinge nur tagsüber von April bis Oktober bei gutem Wetter, Vögel nicht nachts und nicht bei Regen oder Schnee.
+ const WT=wetter(now),trueb=WT=='regen'||WT=='schnee',mo=HF.mTest!=null?HF.mTest:now.getMonth(),falterOk=P.n=='tag'&&!trueb&&mo>=3&&mo<=9,voegelOk=!nacht&&!trueb;HF.wetter=WT;
  // Farbverläufe: Himmel, Sonnen- bzw. Mondschein, Wolken, Wiese, Teich, Schatten an der Stallwand
- let s=`<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.t}"/><stop offset=".55" stop-color="${P.m}"/><stop offset="1" stop-color="${P.b}"/></linearGradient>`+
+ // Himmel: bei Regen und Schnee grau (nachts dunkelgrau)
+ const sky=trueb?(nacht?['#141b2b','#222b3d','#323c52']:['#7f8c99','#a7b2bc','#ccd3d9']):[P.t,P.m,P.b];
+ let s=`<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset=".55" stop-color="${sky[1]}"/><stop offset="1" stop-color="${sky[2]}"/></linearGradient>`+
   `<radialGradient id="sglow"><stop offset="0" stop-color="${nacht?'#f4f1de':P.glow}" stop-opacity="${nacht?.45:.9}"/><stop offset=".35" stop-color="${nacht?'#f4f1de':P.glow}" stop-opacity="${nacht?.15:.45}"/><stop offset="1" stop-color="${nacht?'#f4f1de':P.glow}" stop-opacity="0"/></radialGradient>`+
-  `<linearGradient id="wolkeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.w1}"/><stop offset="1" stop-color="${P.w2}"/></linearGradient>`+
+  `<linearGradient id="wolkeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${trueb?(nacht?'#59657e':'#e4e8ec'):P.w1}"/><stop offset="1" stop-color="${trueb?(nacht?'#3c465e':'#a3adb8'):P.w2}"/></linearGradient>`+
   `<linearGradient id="bodenG" gradientUnits="userSpaceOnUse" x1="0" y1="${GY-8}" x2="0" y2="${WH}"><stop offset="0" stop-color="${P.g1}"/><stop offset="1" stop-color="${P.g2}"/></linearGradient>`+
   `<linearGradient id="teichG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc0ea"/><stop offset="1" stop-color="#4a90c2"/></linearGradient>`+
   `<linearGradient id="wandG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient></defs>`+
   `<rect width="${W}" height="${WH}" fill="url(#sk)"/>`;
- if(nacht)s+=[...Array(22)].map((_,i)=>`<circle cx="${(sr(i+3)*W).toFixed(1)}" cy="${(sr(i+90)*80).toFixed(1)}" r="${(.4+sr(i)*.8).toFixed(1)}" fill="#fff" opacity="${(.5+sr(i+7)*.4).toFixed(2)}"/>`).join('')+
+ if(trueb){}// kein Sonnen- oder Mondschein, keine Sterne
+ else if(nacht)s+=[...Array(22)].map((_,i)=>`<circle cx="${(sr(i+3)*W).toFixed(1)}" cy="${(sr(i+90)*80).toFixed(1)}" r="${(.4+sr(i)*.8).toFixed(1)}" fill="#fff" opacity="${(.5+sr(i+7)*.4).toFixed(2)}"/>`).join('')+
   `<circle cx="${W*.22}" cy="34" r="30" fill="url(#sglow)"/><circle cx="${W*.22}" cy="34" r="9" fill="#f4f1de"/><circle cx="${W*.22-2.5}" cy="32" r="1.6" fill="#d9d4bd"/><circle cx="${W*.22+2.5}" cy="37" r="1.1" fill="#d9d4bd"/>`;
  else s+=`<circle cx="${W*.8}" cy="${P.sy}" r="34" fill="url(#sglow)"/><circle cx="${W*.8}" cy="${P.sy}" r="11" fill="${P.n=='tag'?'#fff3c4':P.glow}"/>`;
  // Wolken: gebauschte Formen mit Verlauf, ziehen langsam (data-v)
- s+=`<g id="hc">${[0,1,2,3].map(i=>`<g class="cl" data-x="${(sr(i+11)*(W+160)).toFixed(0)}" data-y="${(14+sr(i+21)*40).toFixed(0)}" data-v="${(2+sr(i+31)*4).toFixed(1)}" fill="url(#wolkeG)" opacity="${nacht?.6:.95}"><ellipse cx="0" cy="0" rx="18" ry="5.5"/><circle cx="-8" cy="-3" r="6.5"/><circle cx="2" cy="-5.5" r="8"/><circle cx="10" cy="-2" r="5.5"/></g>`).join('')}</g>`;
+ // Bei Regen und Schnee doppelt so viele, größere Wolken
+ s+=`<g id="hc">${[...Array(trueb?8:4).keys()].map(i=>`<g class="cl" data-x="${(sr(i+11)*(W+160)).toFixed(0)}" data-y="${(14+sr(i+21)*40).toFixed(0)}" data-v="${(2+sr(i+31)*4).toFixed(1)}" fill="url(#wolkeG)" opacity="${nacht?.6:.95}"><g transform="scale(${trueb?1.5:1})"><ellipse cx="0" cy="0" rx="18" ry="5.5"/><circle cx="-8" cy="-3" r="6.5"/><circle cx="2" cy="-5.5" r="8"/><circle cx="10" cy="-2" r="5.5"/></g></g>`).join('')}</g>`;
+ // Vögel ziehen über den Himmel
+ if(voegelOk)s+=`<g id="hvo">${VOGEL}${VOGEL}${VOGEL}</g>`;
  // Ferne Hügel (dunstig) und nahe Hügel mit Büschen
  s+=`<g id="hl0">${hill(WW,96,9,60,1,P.far)}</g>`;
  const cam0=OX+(WK-W)/2;
  s+=`<g id="hl1">${hill(WW,108,7,45,2,P.mid)}${[...Array(18)].map((_,i)=>{const x=sr(i+7)*WW;return busch(x,hillY(x,108,7,45,2)+3,3.5+sr(i)*3,P.bu)}).join('')}`+
-  (items.includes('regenbogen')?['#e74c3c','#f39c12','#f4d03f','#58b368','#4a90c2','#7d5ba6'].map((c,i)=>`<path d="M${W/2+.5*cam0-80+i*4} 112A${80-i*4} ${80-i*4} 0 0 1 ${W/2+.5*cam0+80-i*4} 112" fill="none" stroke="${c}" stroke-width="4.2" opacity="${nacht?.25:.45}"/>`).join(''):'')+`</g>`;
+  // Regenbogen (gekauft oder nach dem Regen), bei Regen und Schnee ausgeblendet
+  ((items.includes('regenbogen')||WT=='regenbogen')&&!trueb?['#e74c3c','#f39c12','#f4d03f','#58b368','#4a90c2','#7d5ba6'].map((c,i)=>`<path d="M${W/2+.5*cam0-80+i*4} 112A${80-i*4} ${80-i*4} 0 0 1 ${W/2+.5*cam0+80-i*4} 112" fill="none" stroke="${c}" stroke-width="4.2" opacity="${nacht?.25:.45}"/>`).join(''):'')+`</g>`;
  // Wiese mit Verlauf, Büsche am Rand, Holzzaun mit Lichtkante, Gegenstände, Gras hinter den Pferden
  s+=`<g id="hw"><rect x="0" y="${GY-8}" width="${WW}" height="${WH-GY+8}" fill="url(#bodenG)"/>`+
+  // Schnee: helle Decke auf der Wiese, die Halme schauen heraus
+  (WT=='schnee'?`<rect x="0" y="${GY-8}" width="${WW}" height="${WH-GY+8}" fill="#f4f8fb" opacity="${nacht?.3:.6}"/>`:'')+
   [[.12,.06],[.52,.13],[.9,.05]].map(([a,b],i)=>busch(a*WW,GY+1,6+b*40,i%2?P.bu:'#4f8a4a')).join('')+
   // Figuren der anderen Kinder (auf dem Startbild: aller Kinder) stehen hinter dem Zaun und schauen den Pferden zu
   figs.zaun.map((x,i)=>`<g class="fig" data-k="${x.id}" transform="translate(${r1(OX+(H0&&H0.ko.u[0]?[.545,.565,.355,.375,.585][i]:.43+i*.022)*WK)} ${GY-3}) scale(.3)">${figurBild(x.f)}</g>`).join('')+
@@ -182,6 +212,9 @@ function hofBuild(kind){
   HF.horses.map((h,i)=>`<g class="hs" id="hs${i}" data-i="${i}">${PF.bild('h'+i+'_',{...h.m,coat:h.c,st:h.st})}</g>`).join('')+
   // Gras ganz vorn (vor allen Pferden), danach die Herzen beim Antippen
   `<g id="hv">${grasStreifen(WW,Math.round(WW/12),193,201,4,8,900,gras)}</g><g id="hfx"></g></g>`;
+ // Schmetterlinge (vor den Pferden) und Regen bzw. Schnee (ganz vorn), beide fest im Bild, nicht mit der Kamera
+ if(falterOk)s+=`<g id="hfa" pointer-events="none">${['#f4c430','#e8508f','#4aa3df'].map(falterSvg).join('')}</g>`;
+ if(trueb)s+=`<g id="hwet" pointer-events="none">${niederschlag(W,WT)}</g>`;
  s+=`<rect width="${W}" height="${WH}" fill="${P.tint}" opacity="${P.ta}" pointer-events="none"/><g id="htg" opacity="0" pointer-events="none"><rect id="htr" height="12" rx="6" fill="#fff" opacity=".92"/><text id="htt" y="8.6" font-size="7.5" text-anchor="middle" fill="#26331f"></text></g>`;
  svg.innerHTML=s;
  HF.hw=svg.querySelector('#hw');HF.hl0=svg.querySelector('#hl0');HF.hl1=svg.querySelector('#hl1');HF.hfx=svg.querySelector('#hfx');HF.vorne=svg.querySelector('#hv');HF.htg=svg.querySelector('#htg');
@@ -190,6 +223,10 @@ function hofBuild(kind){
  if(HF.apfel){HF.hap.insertAdjacentHTML('beforeend',APFEL);HF.apfel.el=HF.hap.lastElementChild}
  if(HF.frosch){HF.hap.insertAdjacentHTML('beforeend',FROSCH);HF.frosch.el=HF.hap.lastElementChild}
  HF.clouds=[...svg.querySelectorAll('.cl')].map(e=>({el:e,x:+e.dataset.x,y:+e.dataset.y,v:+e.dataset.v}));
+ // Wetter-Ebenen, Schmetterlinge und Vögel (Startwerte fest ausgewürfelt)
+ HF.wl=[...svg.querySelectorAll('.wl')].map(e=>({el:e,v:+e.dataset.v,s:+e.dataset.s||0}));
+ HF.falter=[...svg.querySelectorAll('.falter')].map((e,i)=>({el:e,fl:e.querySelector('.fl'),x:sr(i+40)*W,y:GY+20+sr(i+41)*40,v:(sr(i+42)<.5?-1:1)*(7+sr(i+43)*8),ph:sr(i+44)*6}));
+ HF.voegel=[...svg.querySelectorAll('.vogel')].map((e,i)=>({el:e,x:sr(i+60)*W,y:18+sr(i+61)*30,v:14+sr(i+62)*8,ph:i*1.7}));
  HF.horses.forEach((h,i)=>{h.g_=svg.querySelector('#hs'+i);h.rig=new PF.Rig('h'+i+'_');h.hint=null});
  HF.ord=[];
  svg.style.background=HF.mode=='fly'?`linear-gradient(${P.t} 50%,${P.g2} 50%)`:'';
@@ -204,6 +241,13 @@ function hofDraw(dt){
  const W=HF.W,WW=HF.WW,cam=HF.cam;
  HF.hw.setAttribute('transform',`translate(${(-cam).toFixed(1)} 0)`);HF.hl0.setAttribute('transform',`translate(${(-cam*.25).toFixed(1)} 0)`);HF.hl1.setAttribute('transform',`translate(${(-cam*.5).toFixed(1)} 0)`);
  HF.clouds.forEach(c=>c.el.setAttribute('transform',`translate(${(((c.x+HF.t*c.v)%(W+160))-80).toFixed(1)} ${c.y})`));
+ // Regen und Schnee fallen (Schnee pendelt seitwärts), Schmetterlinge flattern über die Wiese, Vögel ziehen von links nach rechts
+ const t=HF.t,um=(x,n)=>((x%n)+n)%n;
+ (HF.wl||[]).forEach(l=>l.el.setAttribute('transform',`translate(${l.s?(Math.sin(t*.7)*l.s).toFixed(1):0} ${(t*l.v%WH).toFixed(1)})`));
+ (HF.falter||[]).forEach(f=>{const x=um(f.x+t*f.v,W+40)-20,y=f.y+Math.sin(t*1.3+f.ph)*8+Math.sin(t*3.1+f.ph)*2;
+  f.el.setAttribute('transform',`translate(${x.toFixed(1)} ${y.toFixed(1)})`);f.fl.setAttribute('transform',`scale(${(.25+.75*Math.abs(Math.sin(t*11+f.ph))).toFixed(2)} 1)`)});
+ (HF.voegel||[]).forEach((b,i)=>{const x=um(b.x+t*b.v+i*25,W+160)-40,k=(Math.sin(t*7+b.ph)*2.2).toFixed(1);
+  b.el.setAttribute('d',`M-4 0Q-2 ${-k} 0 0Q2 ${-k} 4 0`);b.el.setAttribute('transform',`translate(${x.toFixed(1)} ${(b.y+Math.sin(t*.6+b.ph)*3).toFixed(1)})`)});
  const fly=HF.mode=='fly',kr0=HF.kr||[[0,WW]];
  HF.horses.forEach(h=>{
   // Jedes Pferd bleibt auf seiner Koppel; im Hintergrund zusätzlich in der Nähe des Bildausschnitts
@@ -329,6 +373,8 @@ function hofFrame(ts){
 function hofStop(){if(HF.raf)cancelAnimationFrame(HF.raf);HF.raf=0}
 function hofRun(){
  const still=S.calm||RM;HF.run=!still||(HF.mode=='fly'&&!RM);
+ // Gras im Wind (CSS-Animation) nur, solange der Hintergrund läuft
+ $('#hof').classList.toggle('ruhig',!HF.run);
  if(HF.run){if(!HF.raf){HF.last=performance.now();HF.raf=requestAnimationFrame(hofFrame)}}else{hofStop();hofDraw(0)}}
 // Wird nach jeder Änderung der Ansicht aufgerufen (aus ui()).
 function hofSync(force){
@@ -337,9 +383,9 @@ function hofSync(force){
  if(!show){hofStop();svg.style.display='none';root.setProperty('--wh','0px');return}
  svg.style.display='block';root.setProperty('--wh',(fly?0:Math.max(210,Math.min(360,Math.round(innerHeight*.34))))+'px');
  const k=(v=='kid'||v=='wish'||v=='koppeln'||v=='done')?kid():null,kind=k&&k.h?'kid':'home';
- const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.ma,H.coats.join(),Object.keys(H.it).join(),H.lp.join('+'),JSON.stringify(H.ko)].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.bl,x.h.so,x.h.ma].join():'').join(';');
+ const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.ma,H.coats.join(),Object.keys(H.it).join(),H.lp.join('+'),JSON.stringify(H.ko),k.h2?[k.h2.name,k.h2.coat,k.h2.st,k.h2.bl,k.h2.so,k.h2.ma].join('/'):''].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.bl,x.h.so,x.h.ma,x.h2?x.h2.coat+x.h2.st:''].join():'').join(';');
  const fsig=S.kids.map(x=>x.f?[x.id,x.f.g,x.f.hf,x.f.ha,x.f.lg,x.f.sh].join(''):'').join();
- const key=[kind,sig,fsig,pal(new Date().getHours()).n,fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
+ const key=[kind,sig,fsig,pal(new Date().getHours()).n,wetter(),fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
  if(force||key!=HF.key){HF.key=key;hofBuild(kind)}
  hofRun()}
 function hofTap(h){
