@@ -286,8 +286,11 @@ T[8]=[TL,TG,TP,TY,...T[7].filter(t=>t[0]=='zt')];
 // Alle Themen nach Schlüssel und Kategorien je Klasse (seit 2026-10-18; Schulstoff vorläufig, wird an die Mathebücher angepasst).
 // T[g] bleibt die Liste der Themen einer Klasse (Schulstoff und Olympiade), frühere Klassen kommen in app.js als "Wiederholen" dazu.
 const THEMA={};for(const g of [5,6,7,8])for(const t of T[g])THEMA[t[0]]=t;for(const t of SUDOKU)THEMA[t[0]]=t;
-const KAT={5:{schul:['rechnen','groessen','umfl','teil'],oly:['folgen','trick','knob','sud5']},
- 6:{schul:['bruch','dez','dreisatz'],oly:['trick','knob','sud6']},
- 7:{schul:['gl','term','pz','rat','winkel'],oly:['zt','wege','sud78']},
- 8:{schul:['lf','gls','pot','pyth'],oly:['zt','sud78']}};
-for(const g of [5,6,7,8])T[g]=[...KAT[g].schul,...KAT[g].oly].map(k=>THEMA[k]);
+// sud: Sudoku als eigene Kategorie unter "Mathe-Olympiade & Knobeln" (seit 2026-10-20)
+const KAT={5:{schul:['rechnen','groessen','umfl','teil'],oly:['folgen','trick','knob'],sud:['sud5']},
+ 6:{schul:['bruch','dez','dreisatz'],oly:['trick','knob'],sud:['sud6']},
+ 7:{schul:['gl','term','pz','rat','winkel'],oly:['zt','wege'],sud:['sud78']},
+ 8:{schul:['lf','gls','pot','pyth'],oly:['zt'],sud:['sud78']}};
+for(const g of [5,6,7,8])T[g]=[...KAT[g].schul,...KAT[g].oly,...KAT[g].sud].map(k=>THEMA[k]);
+// Knobel-Themen (Olympiade und Sudoku aller Klassen): höchstens 2 Runden am Stück, dann erst eine Runde Schulstoff mit mindestens 7 von 10
+const KNOBEL=new Set([5,6,7,8].flatMap(g=>[...KAT[g].oly,...KAT[g].sud]));
