@@ -6,7 +6,7 @@
 const PFS=.5;
 // Eigene Figur auf dem Hof: weiter vorn auf der Wiese (Füße bei GY+y) und etwas größer, damit sie nicht an Trog und Gebäude klebt
 // (seit 2026-10-20). geb = Lage (Anteil der Koppel) mit Unterstand oder Stall, frei = ohne Gebäude
-const FIGX={geb:.405,frei:.47,y:36,s:.44};
+const FIGX={geb:.405,frei:.47,y:36,s:.44,besuch:[.535,.59,.355]};// besuch: Plätze der Besuchsfiguren
 const WH=200,GY=124,sr=n=>{let x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x)};
 // Gegenstände für den Hof: [id, Name, Preis in Äpfeln, Lage auf der Weide (Anteil der Weltbreite)]
 // Drei Blumenwiesen (seit 2026-10-19): bunt (Mitte), Mohn (links neben dem Teich), Lavendel (rechts hinter der Eiche)
@@ -148,7 +148,9 @@ function hofSpecs(kind){
  const A=[],km=k=>{const H=hh(k);return{id:'k'+k.id,c:H.coat,st:stg(k),m:pfSpec(H,stg(k)),name:H.name,own:k.id}};
  if(kind=='kid'){const k=kid(),H=hh(k),b=belegung(H);A.push({...km(k),ko:0});
   // Freunde stehen auf der Koppel, auf der sie einen Platz haben (belegung in app.js). Ohne Platz sind sie nicht auf dem Hof.
-  b.p.forEach((L,i)=>L.forEach(f=>{if(f!='eigen')A.push({...freundInfo(k,f),ko:i})}))}
+  b.p.forEach((L,i)=>L.forEach(f=>{if(f!='eigen')A.push({...freundInfo(k,f),ko:i})}));
+  // Besuch (seit 2026-10-20): Pferde der Freundinnen laufen auf der Hauptkoppel mit, ohne Platz zu brauchen
+  besuche(k).forEach((b,i)=>A.push({id:'b'+k.id+'_'+i,c:b.h.coat,st:b.h.st,m:pfSpec(b.h,b.h.st),name:`${b.h.name} (Besuch von ${b.n})`,own:0,ko:0,besuch:1}))}
  // Startseite: Pferde der Kinder (auch zweite Pferde), höchstens 5, aufgefüllt mit fremden Pferden
  else{S.kids.filter(k=>k.h).forEach(k=>{A.push(km(k));if(k.h2)A.push({id:'e'+k.id,c:k.h2.coat,st:k.h2.st||0,m:pfSpec(k.h2,k.h2.st||0),name:k.h2.name,own:0})});A.splice(5);const f=fillers();for(let i=0;A.length<5;i++)A.push(f[i])}
  return A}
@@ -220,6 +222,8 @@ function hofBuild(kind){
   grasStreifen(WW,Math.round(WW/6),GY-2,GY+12,3,5.5,200,gras,frei)+
   // Eigene Figur steht auf dem Hof vor dem Zaun
   (figs.eigen?`<g class="fig eigen" data-k="${figs.eigen.id}" transform="translate(${r1(OX+(H0&&H0.ko.u[0]?FIGX.geb:FIGX.frei)*WK)} ${GY+FIGX.y}) scale(${FIGX.s})">${figurBild(figs.eigen.f)}</g>`:'')+
+  // Figuren der Freundinnen (Besuch) stehen auch vorn auf der Wiese, etwas kleiner
+  (kind=='kid'?besuche(kid()).map((b,i)=>`<g class="fig besuch" data-b="${i}" transform="translate(${r1(OX+FIGX.besuch[i]*WK)} ${GY+FIGX.y-2}) scale(${FIGX.s*.92})">${figurBild(b.f)}</g>`).join(''):'')+
   // Ebene für Apfel, Frosch, Wellen und Pferdeäpfel (hinter den Pferden)
   `<g id="hap">${kind=='kid'?HF.mist.map(mistSvg).join(''):''}</g>`+
   HF.horses.map((h,i)=>`<g class="hs" id="hs${i}" data-i="${i}">${PF.bild('h'+i+'_',{...h.m,coat:h.c,st:h.st})}</g>`).join('')+
@@ -391,12 +395,12 @@ function hofRun(){
  if(HF.run){if(!HF.raf){HF.last=performance.now();HF.raf=requestAnimationFrame(hofFrame)}}else{hofStop();hofDraw(0)}}
 // Wird nach jeder Änderung der Ansicht aufgerufen (aus ui()).
 function hofSync(force){
- const svg=$('#hof'),root=document.documentElement.style,fly=HF.mode=='fly',show=fly||['home','choose','figur','kid','wish','koppeln','done'].includes(v);
+ const svg=$('#hof'),root=document.documentElement.style,fly=HF.mode=='fly',show=fly||['home','choose','figur','kid','wish','koppeln','done','einladen','besuch'].includes(v);
  document.body.classList.toggle('nohof',!show);
  if(!show){hofStop();svg.style.display='none';root.setProperty('--wh','0px');return}
  svg.style.display='block';root.setProperty('--wh',(fly?0:Math.max(210,Math.min(360,Math.round(innerHeight*.34))))+'px');
- const k=(v=='kid'||v=='wish'||v=='koppeln'||v=='done')?kid():null,kind=k&&k.h?'kid':'home';
- const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.ma,H.coats.join(),Object.keys(H.it).join(),H.lp.join('+'),JSON.stringify(H.ko),k.h2?[k.h2.name,k.h2.coat,k.h2.st,k.h2.bl,k.h2.so,k.h2.ma].join('/'):''].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.bl,x.h.so,x.h.ma,x.h2?x.h2.coat+x.h2.st:''].join():'').join(';');
+ const k=(v=='kid'||v=='wish'||v=='koppeln'||v=='done'||v=='einladen')?kid():null,kind=k&&k.h?'kid':'home';
+ const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.ma,H.coats.join(),Object.keys(H.it).join(),H.lp.join('+'),JSON.stringify(H.ko),k.h2?[k.h2.name,k.h2.coat,k.h2.st,k.h2.bl,k.h2.so,k.h2.ma].join('/'):'',JSON.stringify(k.bs||[])].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.bl,x.h.so,x.h.ma,x.h2?x.h2.coat+x.h2.st:''].join():'').join(';');
  const fsig=S.kids.map(x=>x.f?[x.id,x.f.g,x.f.hf,x.f.ha,x.f.lg,x.f.sh].join(''):'').join();
  const key=[kind,sig,fsig,pal(new Date().getHours()).n,wetter(),fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
  if(force||key!=HF.key){HF.key=key;hofBuild(kind)}

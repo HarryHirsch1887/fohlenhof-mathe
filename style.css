@@ -59,6 +59,8 @@ details.wdh summary{cursor:pointer;font-weight:bold;padding:6px 0}
 .antw{display:flex;align-items:center;gap:10px;max-width:300px}
 /* Figuren winken beim Antippen (seit 2026-10-19) */
 #hof .fig,.figmini{cursor:pointer}
+/* Besuch per Code (seit 2026-10-20): QR-Code immer schwarz auf weiß (auch im dunklen Modus), mit Rand zum Scannen */
+.qrbox{display:inline-block;background:#fff;padding:8px;border-radius:12px;line-height:0}.qr{display:block;max-width:100%;height:auto}
 /* Kein blauer Tipp-Kasten und keine Markierung beim Antippen von Hof und Figur (Android-Browser, seit 2026-10-19) */
 #hof,.figmini,.scene{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #hof:focus,#hof *:focus,.figmini:focus{outline:none}

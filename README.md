@@ -28,6 +28,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 - **Hof ausbauen:** Jedes Pferd braucht einen Platz. Ein Unterstand (25 Äpfel) schafft 2 Plätze, auf der Hauptkoppel lässt er sich zum Stall mit 4 Plätzen ausbauen (15 Äpfel, wenn das eigene Pferd ausgewachsen ist). Ab 7500 bzw. 10000 Erfahrung kommen links und rechts zwei weitere Koppeln dazu (je 30 Äpfel), jede mit eigenem Unterstand. In der Ansicht „Koppeln“ verteilt man die Freunde, Pferde ohne Platz warten.
 - **Hof-Interaktionen** auf dem eigenen Hof: Tippen auf den Apfelbaum lässt einen Apfel fallen, die Pferde rennen hin und naschen. Das Windrad dreht kurz schneller, die Wetterfahne auf dem Stall wirbelt mit. Am Teich springt manchmal (25 %) ein Frosch heraus und quakt. Ab und zu liegt ein Pferdeapfel herum: Wegtippen bringt keine Äpfel, aber die Pferde lassen Herzen aufsteigen.
 - **Hof-Pause:** Nach 3 Minuten auf dem Hof (auch im Wunschbaum und im Rundflug) zählt ein Countdown 10 Sekunden herunter. Danach muss erst eine Runde mit mindestens 7 von 10 richtig geschafft werden, dann ist der Hof wieder offen.
+- **Besuch per Code:** Unter „Freundin einladen“ zeigt die App einen QR-Code und einen Link. Wer ihn öffnet, bekommt Pferd und Figur der Freundin als Besuch auf den eigenen Hof (höchstens 3, bis man sie verabschiedet). Im Code stehen nur Vorname, Pferdename und das Aussehen, hinter einem „#“, also nie auf einem Server. Der QR-Code wird in der App selbst erzeugt (`qr.js`), ohne fremde Bibliothek.
 - **3D-Ansicht:** Ab der Stufe „Jungpferd“ zeigen Kind-Ansicht und Wunschbaum es in einem kleinen 3D-Fenster, drehbar mit dem Finger. Fellfarbe, Abzeichen, Mähne und Zöpfe erscheinen dort sofort. Die 3D-Dateien (etwa 3,3 MB) werden erst beim ersten Öffnen geladen und danach offline gespeichert.
 - **Eltern-Ansicht** mit Statistik, Einstellungen und Sicherung (Export und Import). Beim ersten Start wählbar: mit PIN geschützt oder ohne PIN als offene „Einstellungen“, zum Beispiel auf dem eigenen Handy eines Kindes. Lässt sich später im Kasten „PIN-Schutz“ umstellen.
 - Funktioniert ohne Konto und ohne Internetverbindung, sobald die App geladen und als App installiert ist.
@@ -71,7 +72,8 @@ Dann `http://localhost:3000` öffnen. Auf `localhost` lässt sich die App auch a
 | `style.css` | Aussehen |
 | `aufgaben.js` | Aufgaben-Generatoren mit Tipps und Lösungswegen |
 | `pferd.js` | Gezeichnetes Pferd im Bilderbuch-Look: Fellfarben, Rassen, Wachstumsstufen, Mähne, Zöpfe, Bewegung (Schritt, Trab, Galopp, Grasen) |
-| `zeichnung.js` | Zeichnungen zu Geometrie-Aufgaben (Rechtecke, Dreiecke, Vielecke, Leiter, Gitter), passend zu den Zahlen der Aufgabe |
+| `zeichnung.js` | Zeichnungen zu Geometrie-Aufgaben (Rechtecke, Dreiecke, Vielecke, Leiter, Gitter) und Sudoku-Gitter, passend zu den Zahlen der Aufgabe |
+| `qr.js` | QR-Code-Erzeuger nach der QR-Norm (Byte-Modus, Fehlerkorrektur M, Version 1 bis 15), für „Freundin einladen“ |
 | `figur.js` | Gezeichnete Figur (Reiterin oder Reiter) im Bilderbuch-Look: Hautfarben, Haarfarben, Reitleggings, Reithelm, Reitstiefel |
 | `hof.js` | Animierte Weide, Hof-Gegenstände, Herde, Rundflug |
 | `app.js` | Spiellogik, Oberfläche, Speicher, Eltern-Ansicht, Pferd-Zeichnung |

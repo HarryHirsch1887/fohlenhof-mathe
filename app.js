@@ -63,6 +63,8 @@ function clean(d){
   if(k.neu)c.neu=1;
   // kn = Knobelrunden hintereinander (Knobel-Regel, seit 2026-10-20)
   if(k.kn)c.kn=nn(k.kn,0,9);
+  // bs = Besuch von Freundinnen (seit 2026-10-20), höchstens 3, jeder Eintrag wird wie ein Link streng geprüft
+  if(Array.isArray(k.bs)){const bs=k.bs.filter(a=>besuchLesen(a)).slice(0,3);if(bs.length)c.bs=bs}
   if(k.f&&typeof k.f==='object'){const f=k.f,lgs=['schwarz',...new Set((Array.isArray(f.lgs)?f.lgs:[]).filter(x=>LEG[x]&&x!=='schwarz'))],shs=['blau',...new Set((Array.isArray(f.shs)?f.shs:[]).filter(x=>SHIRT[x]&&x!=='blau'))];
    c.f={g:f.g==='j'?'j':'m',hf:HAUT[f.hf]?f.hf:'hell',ha:HAAR[f.ha]?f.ha:'braun',lg:lgs.includes(f.lg)?f.lg:'schwarz',sh:shs.includes(f.sh)?f.sh:'blau',lgs,shs}}
   if(/^\d{4}-\d\d-\d\d$/.test(k.ld))c.ld=k.ld;if(/^\d{4}-\d\d-\d\d$/.test(k.zd))c.zd=k.zd;
@@ -147,6 +149,19 @@ function ui(){let h='';PZ=0;
    return s+`</div>`}).join('')+
   `<h2>Wartet auf einen Platz</h2>`+(b.w.length?b.w.map(f=>`<div class="card pferdzeile"><span>${esc(nm(f))}</span><span class="small">Kein Platz frei</span></div>`).join('')+`<p class="small">Bau einen Unterstand oder eine neue Koppel, dann ist Platz.</p>`:`<p class="small">Alle Pferde haben einen Platz.</p>`)}
  // Leggings- und Shirtfarben: anprobieren kostenlos, beim Speichern werden neue Farben gekauft
+ // Freundin einladen: QR-Code und Link mit dem Aussehen von Pferd und Figur (seit 2026-10-20)
+ if(v=='einladen'){const k=kid(),url=besuchLink(k),web=/^https?:$/.test(location.protocol);
+  h=`<button class="alt" onclick="v='kid';ui()">Zurück</button><h1>Freundin einladen</h1>
+  <div class="card" style="text-align:center"><div class="qrbox">${qrSvg(url,270)}</div><p>Zeig diesen QR-Code deiner Freundin. Sie scannt ihn mit der Kamera ihres Handys oder Tablets. Dann besuchst du mit ${esc(k.h.name)} ihren Hof.</p>${web?'':'<p class="no small">Der Code funktioniert erst, wenn die App über die Internet-Adresse geöffnet wurde.</p>'}</div>
+  <p class="small">Oder schick den Link, zum Beispiel mit dem Handy deiner Eltern:</p><div class="row" style="flex-wrap:nowrap"><input id="blink" readonly value="${esc(url)}" style="flex:1;min-width:0" aria-label="Einladungs-Link"><button onclick="linkKopieren()">Kopieren</button>${navigator.share?'<button onclick="linkTeilen()">Teilen</button>':''}</div><p class="ok small">${note}</p>
+  <div class="card small"><b>So siehst du bei deiner Freundin aus:</b>${besuchBild(besuchLesen(besuchListe(k)))}<p style="margin-bottom:0">Im Code stehen nur dein Vorname, der Name von ${esc(k.h.name)} und wie ihr ausseht. Kein Fortschritt, keine Äpfel, keine PIN. Der Code geht nicht über einen Server.</p></div>`}
+ // Besuch annehmen: Link oder QR-Code einer Freundin wurde geöffnet
+ if(v=='besuch'){const b=BES&&besuchLesen(BES),ks=S.kids.filter(x=>x.h);
+  h=b?`<h1>Besuch!</h1><div class="card" style="text-align:center">${besuchBild(b)}<p><b>${esc(b.n)} besucht dich mit ${esc(b.h.name)}!</b></p></div>`+
+   (ks.length?`<p>Auf wessen Hof sollen sie kommen?</p>${ks.map(x=>`<button class="big" onclick="besuchAnnehmen(${x.id})"><span>${esc(x.name)} <span class="small">mit ${esc(x.h.name)}</span></span><span class="small">${besuche(x).length} von ${BMAX} Besuchen</span></button>`).join('')}`:
+   `<p class="small">Hier gibt es noch kein Kind mit Pferd. Leg zuerst ein Kind an und rechne, bis du dir ein Fohlen aussuchen darfst. Dann öffne den Link noch einmal.</p>`)+
+   `<p class="no">${note}</p><button class="alt" onclick="BES=null;note='';v='home';ui()">Nein danke</button>`:
+   `<h1>Besuch</h1><p class="small">Dieser Besuchs-Code ist leider unvollständig.</p><button class="alt" onclick="v='home';ui()">Zur Startseite</button>`}
  if(v=='figur'){let k=kid(),neu=!k.f,ko=figurKosten(k),opt=(t,id,lab,sw,preis,g)=>{const zu=preis&&gesperrt(k,g,hatFarbe(k,t,id));return`<button class="${FE[t]==id?'go':'alt'}" onclick="FE.${t}='${id}';note='';ui()" aria-pressed="${FE[t]==id}"${zu?' disabled':''}>${sw?`<span class="gummi" style="background:${sw}"></span> `:''}${lab}${zu?` · ${ab(g)}`:preis&&!hatFarbe(k,t,id)?` · ${preis} ${AP}`:''}</button>`};
  h=`<div class="row sp"><button class="alt" onclick="v='${k.f||k.h?'kid':'home'}';ui()">Zurück</button><span class="ap">${k.ap||0} ${AP}</span></div><h1>${neu?'Deine Figur':'Figur ändern'}</h1>`+
  (neu?`<p>${k.h?`<b>Neu!</b> Wie siehst du auf dem Hof aus? Deine Figur steht dann bei ${esc(k.h.name)}.`:`Wie siehst du auf dem Hof aus? Danach rechnest du deine ersten Aufgaben. Nach 5 richtigen darfst du dir dein Fohlen aussuchen.`}</p>`:'')+
@@ -169,7 +184,7 @@ function ui(){let h='';PZ=0;
  <h2 id="themen">Thema wählen</h2>${themen(k)}`}
  if(v=='kid'&&kid().h){let k=kid(),st=stg(k),nx=GS[st+1],se=serie(k),pr=nx?se/TAGE[st]*100:100,rest=Math.max(1,Math.ceil((LIMIT-zeit(k))/60));
  h=`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button><button class="alt" onclick="figurEdit()">Figur</button><button class="alt" onclick="snd()" aria-pressed="${S.snd!==0}">Ton: ${S.snd===0?'aus':'an'}</button></div>
- ${k.f?'':`<div class="card row sp" style="margin-top:8px"><span><b>Neu!</b> Erstelle deine eigene Figur. Sie steht dann auf deinem Hof.</span><button class="go" onclick="figurEdit()">Figur erstellen</button></div>`}${wartetHinweis(k)}<p class="small" style="margin:8px 0 0">${k.hl?'Tippe oben auf dein Pferd, um es zu streicheln.</p>'+SPERRINFO:`Tippe oben auf dein Pferd, um es zu streicheln. Probier auch Apfelbaum, Windrad und Teich aus, wenn du sie gebaut hast.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button></div>`}<div class="row sp"><h1>${esc(k.h.name)} <span class="small">${GS[st].n} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}</span></div>
+ ${k.f?'':`<div class="card row sp" style="margin-top:8px"><span><b>Neu!</b> Erstelle deine eigene Figur. Sie steht dann auf deinem Hof.</span><button class="go" onclick="figurEdit()">Figur erstellen</button></div>`}${wartetHinweis(k)}${besuchKarte(k)}<p class="small" style="margin:8px 0 0">${k.hl?'Tippe oben auf dein Pferd, um es zu streicheln.</p>'+SPERRINFO:`Tippe oben auf dein Pferd, um es zu streicheln. Probier auch Apfelbaum, Windrad und Teich aus, wenn du sie gebaut hast.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button><button class="alt" onclick="v='einladen';note='';ui();scrollTo(0,0)">Freundin einladen</button></div>`}<div class="row sp"><h1>${esc(k.h.name)} <span class="small">${GS[st].n} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}</span></div>
  <div class="bar" style="margin:6px 0"><b style="width:${pr}%"></b></div><p class="small">${nx?`Tag ${se} von ${TAGE[st]} bis „${nx.n}“ · ${heute(k)?'heute schon gerechnet':'rechne heute eine Runde, damit der Tag zählt'}`:'Dein Pferd ist ausgewachsen!'}</p>
  ${k.h2?`<div class="card row sp" style="align-items:center;padding:8px 12px"><span class="small">Dein zweites Pferd: <b>${esc(k.h2.name)}</b> (${GS[k.h2.st||0].n})</span><button class="alt" onclick="wechsel()">Mit ${esc(k.h2.name)} rechnen</button></div>`:''}
  <p class="small">Noch ${rest} Minute${rest>1?'n':''} für heute · ${k.xp} Erfahrung · Serie ${k.s} · Rekord ${k.best}${mcount(k)?` · Fehlerheft: ${mcount(k)} zum Wiederholen`:''}</p>
@@ -217,6 +232,49 @@ function ui(){let h='';PZ=0;
  h+=`<div class="card"><b>Spielzeit und Wachstum</b><p class="small">Jedes Kind kann höchstens ${LIMIN} Minuten pro Tag auf den Hof (fest eingestellt). Eine laufende Runde wird nicht unterbrochen. Das Pferd wächst mit Tagen, an denen mindestens eine Runde gerechnet wurde (einmal pro Tag): Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten.</p><p class="small">Knobeln (Mathe-Olympiade und Sudoku) geht höchstens ${KNMAX} Runden am Stück. Danach muss erst eine Runde Schulstoff mit mindestens ${FREI} von 10 geschafft werden.</p></div><div class="card"><b>Anzeige</b><p class="small">Der animierte Hintergrund kann ruhig gestellt werden, zum Beispiel bei älteren Geräten oder um den Akku zu schonen. Dann stehen die Pferde still.</p><button class="alt" onclick="S.calm=S.calm?0:1;save();ui()">Ruhiger Hintergrund: ${S.calm?'an':'aus'}</button></div><div class="card"><b>Sicherung</b><p class="small">Der Stand liegt nur in diesem Browser. Exportiere ihn regelmäßig als Datei, besonders vor dem Löschen von Browserdaten oder bei einem Gerätewechsel.</p><div class="row"><button onclick="exp()">Exportieren</button><input type="file" accept=".json" onchange="imp(this)" aria-label="Sicherung importieren"></div><p class="no">${warn}</p></div>
  <div class="card"><b>PIN-Schutz</b>${S.pin?`<p class="small">Diese Ansicht ist mit einer PIN geschützt. Ohne PIN heißt sie „Einstellungen“ und ist für alle offen, zum Beispiel auf dem eigenen Handy eines Kindes.</p><button class="alt" onclick="npin()">PIN entfernen</button>`:`<p class="small">Ohne PIN kann jeder hier die Klasse ändern, Fortschritt zurücksetzen und Kinder löschen. Mit einer PIN (mindestens 4 Zeichen) wird daraus die geschützte Eltern-Ansicht.</p><input id="pin1" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp('pin1')"> <button onclick="sp('pin1')">PIN festlegen</button>`}<p class="no">${pw}</p></div>`+(S.pin?`<button class="alt" onclick="lock()">Sperren</button>`:'')}}
  $('#app').innerHTML='<div class="in">'+h+'</div>';if(v!='kid'&&v!='wish')countdown(0);hofSync();d3Sync();nachZeichnen();setTimeout(()=>{let a=$('#ans')||$('#pin')||$('#hn')||$('#pin0');a&&(v!='home'||a.id=='pin0')&&a.focus({preventScroll:a.id=='hn'})})}
+// ---------- Besuch per Code (seit 2026-10-20, siehe Notiz "Ideen Besuch per Code") ----------
+// Ein Kind lädt eine Freundin ein: Link mit QR-Code (qr.js). Hinter "#b=" stehen nur Vorname, Pferdename und das Aussehen von Pferd
+// und Figur (kein Fortschritt, keine Äpfel, keine PIN). Der Teil hinter "#" wird nie an einen Server geschickt, auch nicht an GitHub.
+// Besuch wird am Kind gespeichert (k.bs, höchstens BMAX) und bleibt, bis man ihn verabschiedet.
+const BMAX=3;
+// Code als Liste (Version 1): [1, Vorname, Pferdename, Rasse, Stufe, Blesse, Socken, Kopfform, Socken je Bein, Flecken, Mähne, Zöpfe, Gummi,
+// Junge, Haut, Haare, Leggings, Shirt]. Farben als Nummern der Listen in app.js und figur.js, damit der Code kurz bleibt.
+function besuchListe(k){const H=hh(k),f={...FIGUR0,...(k.f||{})},ix=(o,x)=>Math.max(0,Object.keys(o).indexOf(x));
+ return[1,ct(k.name,20),ct(H.name,16),ix(COATS,H.coat),stg(k),H.bl?1:0,H.so?1:0,H.bf==null?-1:H.bf,H.sm||'',H.fs||0,ix(MA,H.ma||'mittel'),H.zk&&H.zo?1:0,ix(GUMMI,H.gu||'rosa'),f.g=='j'?1:0,ix(HAUT,f.hf),ix(HAAR,f.ha),ix(LEG,f.lg),ix(SHIRT,f.sh)]}
+function b64u(s){return btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function ub64(s){return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0)))}
+function besuchLink(k){return location.origin+location.pathname+'#b='+b64u(JSON.stringify(besuchListe(k)))}
+// Prüft eine Besuchsliste (aus dem Link oder dem Speicher) streng. Liefert {n: Vorname, h: Pferd, f: Figur} oder null.
+function besuchLesen(a){if(!Array.isArray(a)||a[0]!==1||a.length!==18)return null;
+ const L=(o,i)=>{const ks=Object.keys(o);return Number.isInteger(i)&&i>=0&&i<ks.length?ks[i]:null};
+ const n=typeof a[1]=='string'?a[1].slice(0,20).trim():'',p=typeof a[2]=='string'?a[2].slice(0,16).trim():'',coat=L(COATS,a[3]),ma=L(MA,a[10]),gu=L(GUMMI,a[12]),hf=L(HAUT,a[14]),ha=L(HAAR,a[15]),lg=L(LEG,a[16]),sh=L(SHIRT,a[17]);
+ if(!n||!p||!coat||!ma||!gu||!hf||!ha||!lg||!sh||!Number.isInteger(a[4])||a[4]<0||a[4]>3)return null;
+ const h={coat,coats:[coat],name:p,st:a[4],bl:a[5]===1?1:0,so:a[6]===1?1:0,own:{},ma,zk:a[11]===1?1:0,zo:a[11]===1?1:0,gu,gus:[gu],sk:{}};
+ if(Number.isInteger(a[7])&&a[7]>=0&&a[7]<=4)h.bf=a[7];if(typeof a[8]=='string'&&/^[0-3]{4}$/.test(a[8])&&/[1-3]/.test(a[8]))h.sm=a[8];if(Number.isInteger(a[9])&&a[9]>0&&a[9]<=99999)h.fs=a[9];
+ return{n,h,f:{g:a[13]===1?'j':'m',hf,ha,lg,sh}}}
+function besuche(k){return(k&&k.bs||[]).map(besuchLesen).filter(Boolean)}
+const besuchGleich=(a,b)=>a[1]===b[1]&&a[2]===b[2];
+// Besuch aus der Adresse lesen (beim Start und wenn ein Link in der offenen App geöffnet wird), danach die Adresse aufräumen
+let BES=null;
+function besuchAusLink(){const m=location.hash.match(/^#b=([A-Za-z0-9_-]{10,600})$/);if(!m)return false;
+ try{const a=JSON.parse(ub64(m[1]));if(besuchLesen(a))BES=a}catch(e){}
+ try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+ return!!BES}
+function besuchAnnehmen(id){const k=S.kids.find(x=>x.id==id),b=besuchLesen(BES);if(!k||!b)return;k.bs=(k.bs||[]).filter(x=>besuchLesen(x));
+ const i=k.bs.findIndex(x=>besuchGleich(x,BES));
+ if(i>=0)k.bs[i]=BES;// gleicher Besuch: aktualisieren (z. B. Pferd ist gewachsen)
+ else{if(k.bs.length>=BMAX){note=`Auf dem Hof von ${k.name} sind schon ${BMAX} Besuche. Verabschiede erst einen.`;ui();return}k.bs.push(BES)}
+ BES=null;note='';save();sel(id)}
+function besuchWeg(i){const k=kid();if(!k||!k.bs)return;k.bs.splice(i,1);if(!k.bs.length)delete k.bs;save();ui()}
+// Bild eines Besuchs: Pferd und Figur nebeneinander
+const besuchBild=b=>`<div class="row" style="justify-content:center;align-items:flex-end;flex-wrap:nowrap"><svg viewBox="${PFVB}" width="190" role="img" aria-label="${esc(b.h.name)}">${pfBild(pfSpec(b.h,b.h.st))}</svg>${figurMini(b.f,110)}</div>`;
+// Karte in der Kind-Ansicht: wer gerade zu Besuch ist
+const besuchKarte=k=>{const bs=besuche(k);return bs.length?`<div class="card small besuchkarte" style="margin-top:8px"><b>Besuch auf deinem Hof:</b>${bs.map((b,i)=>`<div class="row sp" style="align-items:center;margin-top:4px"><span>${esc(b.n)} mit ${esc(b.h.name)}</span><button class="alt klein" onclick="besuchWeg(${i})">Verabschieden</button></div>`).join('')}</div>`:''};
+// Link kopieren bzw. teilen (ohne Netzwerk, nur Zwischenablage bzw. Teilen-Menü des Geräts)
+function linkKopieren(){const el=$('#blink');if(!el)return;const ok=()=>{note='Link kopiert. Du kannst ihn jetzt in einer Nachricht einfügen.';ui()};
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(el.value).then(ok).catch(()=>{el.select();try{document.execCommand('copy');ok()}catch(e){}});else{el.select();try{document.execCommand('copy');ok()}catch(e){}}}
+function linkTeilen(){const k=kid();if(navigator.share)navigator.share({title:'Pferdehof Mathe',text:`${k.name} besucht dich mit ${k.h.name}!`,url:besuchLink(k)}).catch(()=>{})}
+addEventListener('hashchange',()=>{if(besuchAusLink()){v='besuch';note='';ui();scrollTo(0,0)}});
 // ---------- Animationen nach dem Seitenaufbau (seit 2026-10-19) ----------
 // ANI wird in ui() je Ansicht gesetzt: apfel = Apfel fliegt in den Zähler, konfetti = Konfetti und Hufeisen (10 von 10)
 let ANI={};
@@ -300,14 +358,14 @@ const elternThemen=k=>[...new Set([...T[k.g].map(t=>t[0]),...frueher(k).flatMap(
 // Tageslimit erreicht: Rundflug beenden und verabschieden
 function bye(){if(HF.mode=='fly')flyOff();v='bye';ui();scrollTo(0,0)}
 // Spielzeit messen: nur, solange ein Kind auf seinem Hof ist und die App sichtbar ist (auch im Rundflug, der läuft über der Kind-Ansicht)
-let ZL=Date.now(),ZS=0;const ZV=['choose','kid','wish','koppeln','quiz','done'];
+let ZL=Date.now(),ZS=0;const ZV=['choose','kid','wish','koppeln','quiz','done','einladen'];
 setInterval(()=>{const now=Date.now(),dt=Math.min(5,(now-ZL)/1000);ZL=now;
  // Neues Kind vor der ersten Aufgabe: keine Zeit zählen
  const k=cur&&kid();if(!k||k.neu||document.visibilityState!='visible'||!ZV.includes(v))return;
  const t=tag();if(k.zd!=t){k.zd=t;k.zt=0}const vor=ausZeit(k);k.zt+=dt;
  if(now-ZS>15000){ZS=now;save()}
  // Hofzeit: zählt nur in Kind-Ansicht und Wunschbaum (der Rundflug läuft über der Kind-Ansicht), nicht während einer Runde
- if((v=='kid'||v=='wish'||v=='koppeln')&&k.h&&!k.hl){k.hz=(k.hz||0)+dt;const r=HOFZEIT-k.hz;if(r<=0){sperren(k);return}countdown(r<=10?Math.ceil(r):0)}else countdown(0);
+ if((v=='kid'||v=='wish'||v=='koppeln'||v=='einladen')&&k.h&&!k.hl){k.hz=(k.hz||0)+dt;const r=HOFZEIT-k.hz;if(r<=0){sperren(k);return}countdown(r<=10?Math.ceil(r):0)}else countdown(0);
  if(!vor&&ausZeit(k)){save();if(v=='done')ui();else if(v!='quiz')bye()}},1000);
 // Countdown-Anzeige oben (auch über dem Rundflug). n = 0 blendet sie aus.
 function countdown(n){let el=document.getElementById('sperre');if(!n){if(el)el.hidden=true;return}
@@ -317,7 +375,7 @@ const SPERRINFO=`<div class="card" id="sperrinfo"><b>Zeit zum Rechnen!</b><p>Du 
 // Zu den Themen in der Kind-Ansicht springen
 function andersThema(){v='kid';ui();const e=$('#themen');if(e)e.scrollIntoView();else scrollTo(0,0)}
 // 3 Minuten Hof sind um: Rundflug beenden, zurück zur Kind-Ansicht, Hof sperren
-function sperren(k){k.hl=1;k.hz=0;countdown(0);if(HF.mode=='fly')flyOff();if(v=='wish'||v=='koppeln')v='kid';save();ui();scrollTo(0,0)}
+function sperren(k){k.hl=1;k.hz=0;countdown(0);if(HF.mode=='fly')flyOff();if(v=='wish'||v=='koppeln'||v=='einladen')v='kid';save();ui();scrollTo(0,0)}
 // Beim Verlassen nur speichern, wenn gerade Zeit gezählt wurde (sonst könnte ein frisch gelöschter oder importierter Stand überschrieben werden)
 document.addEventListener('visibilitychange',()=>{ZL=Date.now();if(document.visibilityState=='hidden'&&cur&&kid()&&ZV.includes(v))save()});
 function mk(){let k=kid();if(ZW)return mk2();k.h={coat:CH,coats:[CH],name:($('#hn').value.trim()||'Fohlen'),own:{},bl:0,so:0};save();v='kid';ui()}
@@ -436,4 +494,6 @@ function neigh(st){try{if(Date.now()-lastN<700)return;lastN=Date.now();
  mg.gain.value=.5;lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=4500;out.connect(mg);mg.connect(lp);lp.connect(AC.destination);
  [o,vb,am].forEach(x=>x.start(t));[o,vb,am].forEach(x=>x.stop(t+T+.05))}catch(e){}}
 function snd(){S.snd=S.snd===0?1:0;save();ui()}
+// Start: Wurde die App über einen Besuchs-Link geöffnet, zuerst den Besuch zeigen
+if(besuchAusLink())v='besuch';
 ui();
