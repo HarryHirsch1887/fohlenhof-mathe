@@ -33,9 +33,10 @@ function figurBild(f){
   `<path d="M-5.4 -80L0 -73.6L5.4 -80Q0 -78.6 -5.4 -80Z" fill="${kr}" ${st}/><circle cy="-70.5" r=".7" fill="${kr}"/><circle cy="-66.5" r=".7" fill="${kr}"/>`;
  // Arme mit Händen. Der rechte Arm (Ärmel und Hand) ist eine eigene Gruppe: Beim Antippen dreht er sich um die Schulter (11.6, -75)
  // nach oben und winkt (seit 2026-10-19, siehe winken() unten). Ohne Winken sieht die Figur aus wie vorher.
- const aermel=d=>`<path d="${d}" fill="none" stroke="${sh}" stroke-width="5.4" stroke-linecap="round"/>`,hand=x=>`<circle cx="${x}" cy="-51.6" r="2.9" fill="${hc}" ${st}/>`;
- s+=arm(armL)+aermel('M-11.6 -75Q-14.6 -70 -15 -66.5')+hand(-15.2)+
-  `<g class="winkarm">${arm(armR)+aermel('M11.6 -75Q14.6 -70 15 -66.5')+hand(15.2)}<animateTransform attributeName="transform" type="rotate" values="0 11.6 -75;-145 11.6 -75;-118 11.6 -75;-150 11.6 -75;-120 11.6 -75;-148 11.6 -75;-125 11.6 -75;0 11.6 -75" keyTimes="0;.16;.3;.44;.58;.72;.84;1" dur="2s" begin="indefinite" fill="remove"/></g>`;
+ // Ärmel (seit 2026-10-20 mit Rand): genau das obere Stück der Armkurve (Teilung der Kurve bei 45 %), etwas breiter als der Arm
+ const aermel=d=>`<path d="${d}" fill="none" stroke="${ul}" stroke-width="7.4" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${sh}" stroke-width="5.2" stroke-linecap="round"/>`,hand=x=>`<circle cx="${x}" cy="-51.6" r="2.9" fill="${hc}" ${st}/>`;
+ s+=arm(armL)+aermel('M-11.6 -75Q-13.4 -70.95 -14.31 -66.09')+hand(-15.2)+
+  `<g class="winkarm">${arm(armR)+aermel('M11.6 -75Q13.4 -70.95 14.31 -66.09')+hand(15.2)}<animateTransform attributeName="transform" type="rotate" values="0 11.6 -75;-145 11.6 -75;-118 11.6 -75;-150 11.6 -75;-120 11.6 -75;-148 11.6 -75;-125 11.6 -75;0 11.6 -75" keyTimes="0;.16;.3;.44;.58;.72;.84;1" dur="2s" begin="indefinite" fill="remove"/></g>`;
  // Kurze Haare im Nacken, hinter Kopf und Ohren (Junge)
  if(!m)s+=`<path d="M-13.6 -97Q-15.2 -88 -11 -84.6L11 -84.6Q15.2 -88 13.6 -97Z" fill="${ac}" ${st}/>`;
  // Kopf mit Ohren

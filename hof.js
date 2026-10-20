@@ -4,6 +4,9 @@
 
 // PFS: Größe des gezeichneten Pferds (pferd.js) auf der Weide; Pferd steht mit den Hufen auf y = 0 seines Bildes
 const PFS=.5;
+// Eigene Figur auf dem Hof: weiter vorn auf der Wiese (Füße bei GY+y) und etwas größer, damit sie nicht an Trog und Gebäude klebt
+// (seit 2026-10-20). geb = Lage (Anteil der Koppel) mit Unterstand oder Stall, frei = ohne Gebäude
+const FIGX={geb:.405,frei:.47,y:36,s:.44};
 const WH=200,GY=124,sr=n=>{let x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x)};
 // Gegenstände für den Hof: [id, Name, Preis in Äpfeln, Lage auf der Weide (Anteil der Weltbreite)]
 // Drei Blumenwiesen (seit 2026-10-19): bunt (Mitte), Mohn (links neben dem Teich), Lavendel (rechts hinter der Eiche)
@@ -216,7 +219,7 @@ function hofBuild(kind){
    return kind=='kid'&&AKT[i[0]]?`<g data-act="${i[0]}" style="cursor:pointer">${u}</g>`:u}).join('')+geb.s+
   grasStreifen(WW,Math.round(WW/6),GY-2,GY+12,3,5.5,200,gras,frei)+
   // Eigene Figur steht auf dem Hof vor dem Zaun
-  (figs.eigen?`<g class="fig eigen" data-k="${figs.eigen.id}" transform="translate(${r1(OX+(H0&&H0.ko.u[0]?.42:.47)*WK)} ${GY+15}) scale(.36)">${figurBild(figs.eigen.f)}</g>`:'')+
+  (figs.eigen?`<g class="fig eigen" data-k="${figs.eigen.id}" transform="translate(${r1(OX+(H0&&H0.ko.u[0]?FIGX.geb:FIGX.frei)*WK)} ${GY+FIGX.y}) scale(${FIGX.s})">${figurBild(figs.eigen.f)}</g>`:'')+
   // Ebene für Apfel, Frosch, Wellen und Pferdeäpfel (hinter den Pferden)
   `<g id="hap">${kind=='kid'?HF.mist.map(mistSvg).join(''):''}</g>`+
   HF.horses.map((h,i)=>`<g class="hs" id="hs${i}" data-i="${i}">${PF.bild('h'+i+'_',{...h.m,coat:h.c,st:h.st})}</g>`).join('')+
