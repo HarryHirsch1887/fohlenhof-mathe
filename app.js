@@ -59,6 +59,8 @@ function clean(d){
   // st = Wachstumsstufe, sd = gesammelte Tage für die nächste Stufe, ld = letzter gezählter Tag, zd/zt = Spielzeit (Sekunden) an diesem Tag
   c.st=k.st==null?GS.reduce((a,g,i)=>c.xp>=g.x?i:a,0):nn(k.st,0,3);c.sd=nn(k.sd,0,999);c.zt=nn(k.zt,0,86400);
   c.hz=nn(k.hz,0,HOFZEIT);if(k.hl)c.hl=1;
+  // neu = 1: frisch angelegtes Kind, das noch keine Aufgabe begonnen hat (Tageslimit und Hofzeit zählen noch nicht, seit 2026-10-20)
+  if(k.neu)c.neu=1;
   if(k.f&&typeof k.f==='object'){const f=k.f,lgs=['schwarz',...new Set((Array.isArray(f.lgs)?f.lgs:[]).filter(x=>LEG[x]&&x!=='schwarz'))],shs=['blau',...new Set((Array.isArray(f.shs)?f.shs:[]).filter(x=>SHIRT[x]&&x!=='blau'))];
    c.f={g:f.g==='j'?'j':'m',hf:HAUT[f.hf]?f.hf:'hell',ha:HAAR[f.ha]?f.ha:'braun',lg:lgs.includes(f.lg)?f.lg:'schwarz',sh:shs.includes(f.sh)?f.sh:'blau',lgs,shs}}
   if(/^\d{4}-\d\d-\d\d$/.test(k.ld))c.ld=k.ld;if(/^\d{4}-\d\d-\d\d$/.test(k.zd))c.zd=k.zd;
@@ -244,7 +246,9 @@ function d3Sync(){const el=$('#d3');
  const H=hh(kid()),spec={coat:H.coat,ma:H.ma,zo:H.zk&&H.zo?1:0,gu:GUMMI[H.gu][1],bl:H.bl,so:H.so};
  D3=D3||import('./3d/vorschau.js');
  D3.then(m=>{if($('#d3')===el)m.zeige(el,spec)}).catch(e=>{D3=null;el.classList.add('fehler');console.warn('3D nicht verfügbar',e)})}
-function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{}});save();ui()}
+// Neues Kind: neu = 1, damit es sich beim ersten Mal alles in Ruhe ansehen kann. Die 30 Minuten (und die Hofzeit) laufen erst,
+// wenn es die erste Aufgabe beginnt (start löscht die Markierung).
+function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},neu:1});save();ui()}
 // PIN festlegen: ohne id beim ersten Start (Feld pin0), mit id='pin1' nachträglich in den Einstellungen
 function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=p;delete S.np;if(id)open=true;save();ui()}
 function nopin(){S.np=1;save();ui()}
@@ -291,7 +295,8 @@ function bye(){if(HF.mode=='fly')flyOff();v='bye';ui();scrollTo(0,0)}
 // Spielzeit messen: nur, solange ein Kind auf seinem Hof ist und die App sichtbar ist (auch im Rundflug, der läuft über der Kind-Ansicht)
 let ZL=Date.now(),ZS=0;const ZV=['choose','kid','wish','koppeln','quiz','done'];
 setInterval(()=>{const now=Date.now(),dt=Math.min(5,(now-ZL)/1000);ZL=now;
- const k=cur&&kid();if(!k||document.visibilityState!='visible'||!ZV.includes(v))return;
+ // Neues Kind vor der ersten Aufgabe: keine Zeit zählen
+ const k=cur&&kid();if(!k||k.neu||document.visibilityState!='visible'||!ZV.includes(v))return;
  const t=tag();if(k.zd!=t){k.zd=t;k.zt=0}const vor=ausZeit(k);k.zt+=dt;
  if(now-ZS>15000){ZS=now;save()}
  // Hofzeit: zählt nur in Kind-Ansicht und Wunschbaum (der Rundflug läuft über der Kind-Ansicht), nicht während einer Runde
@@ -374,7 +379,8 @@ function anordnen(){const H=hh(kid());let x;
 // Fehlerheft: falsch beantwortete Aufgaben (max. 30 pro Kind). Pro Runde kommen bis zu 3 davon aus dem gewählten Thema erneut dran.
 const ms=k=>k.mist||(k.mist=[]);
 const mcount=k=>(k.mist||[]).filter(x=>THEMA[x.key]).length;
-function start(key){if(ausZeit(kid()))return bye();let k=kid(),rep=ms(k).filter(x=>x.key==key).map(x=>x.q).sort(()=>Math.random()-.5).slice(0,3),pool=[1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-.5);
+function start(key){if(ausZeit(kid()))return bye();let k=kid();if(k.neu){delete k.neu;save()}// erste Aufgabe: ab jetzt läuft die Zeit
+ let rep=ms(k).filter(x=>x.key==key).map(x=>x.q).sort(()=>Math.random()-.5).slice(0,3),pool=[1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-.5);
  Q={key,i:0,right:0,hint:0,gain:0,ap:0,grow:'',newb:[],fb:null,seen:[],rep,slots:pool.slice(0,rep.length),rp:0,mast:0};Q.q=gen();v='quiz';ui()}
 const gen=()=>{let k=kid(),t=THEMA[Q.key],q,n=0;Q.rp=0;
  if(Q.rep.length&&Q.slots.includes(Q.i)){Q.rp=1;q=Q.rep.shift();Q.seen.push(q[0]);return q}
