@@ -49,11 +49,15 @@ function figurBild(f){
  // Mädchen: große Augen mit Wimpern, rosige Wangen, feines Lächeln
  // Junge: kleinere runde Augen, breites Grinsen mit Zähnen, Sommersprossen, kaum Wangenröte
  const nase=`<path d="M.2 -89.6q.9 1.2 -.2 1.9" stroke="${hs}" stroke-width=".8" fill="none" stroke-linecap="round"/>`;
- s+=m?`<ellipse cx="-4.4" cy="-91.3" rx="1.65" ry="2.1" fill="${ul}"/><ellipse cx="4.4" cy="-91.3" rx="1.65" ry="2.1" fill="${ul}"/><circle cx="-3.9" cy="-92.2" r=".65" fill="#fff"/><circle cx="4.9" cy="-92.2" r=".65" fill="#fff"/>`+
+ // Blinzeln (seit 2026-10-21): Die Augen schließen sich alle 4 bis 6 Sekunden kurz (SMIL, ca. 0,3 Sekunden). Jede Figur hat ihren eigenen Takt,
+ // damit nicht alle gleichzeitig blinzeln. Bei "Bewegung reduzieren" (RM aus app.js) bleiben die Augen offen.
+ const bd=(4+Math.random()*2).toFixed(1),bb=(-Math.random()*5).toFixed(1),
+  zu=(a,v)=>typeof RM!='undefined'&&RM?'':`<animate class="blinzel" attributeName="${a}" values="${v}" keyTimes="0;.94;.97;1" dur="${bd}s" begin="${bb}s" repeatCount="indefinite"/>`;
+ s+=m?`<ellipse cx="-4.4" cy="-91.3" rx="1.65" ry="2.1" fill="${ul}">${zu('ry','2.1;2.1;.2;2.1')}</ellipse><ellipse cx="4.4" cy="-91.3" rx="1.65" ry="2.1" fill="${ul}">${zu('ry','2.1;2.1;.2;2.1')}</ellipse><circle cx="-3.9" cy="-92.2" r=".65" fill="#fff">${zu('opacity','1;1;0;1')}</circle><circle cx="4.9" cy="-92.2" r=".65" fill="#fff">${zu('opacity','1;1;0;1')}</circle>`+
    `<path d="M-6 -92.4l-1.3 -.9M-5.8 -91.4l-1.4 -.2M6 -92.4l1.3 -.9M5.8 -91.4l1.4 -.2" stroke="${ul}" stroke-width=".55" stroke-linecap="round"/>`+
    `<circle cx="-7.2" cy="-87.6" r="2.3" fill="#e8787a" opacity=".38"/><circle cx="7.2" cy="-87.6" r="2.3" fill="#e8787a" opacity=".38"/>`+nase+
    `<path d="M-3 -85.1Q0 -82.6 3 -85.1" stroke="#a8454f" stroke-width=".95" fill="none" stroke-linecap="round"/>`
-  :`<circle cx="-4.6" cy="-91.2" r="1.3" fill="${ul}"/><circle cx="4.6" cy="-91.2" r="1.3" fill="${ul}"/><circle cx="-4.2" cy="-91.7" r=".45" fill="#fff"/><circle cx="5" cy="-91.7" r=".45" fill="#fff"/>`+
+  :`<ellipse cx="-4.6" cy="-91.2" rx="1.3" ry="1.3" fill="${ul}">${zu('ry','1.3;1.3;.15;1.3')}</ellipse><ellipse cx="4.6" cy="-91.2" rx="1.3" ry="1.3" fill="${ul}">${zu('ry','1.3;1.3;.15;1.3')}</ellipse><circle cx="-4.2" cy="-91.7" r=".45" fill="#fff">${zu('opacity','1;1;0;1')}</circle><circle cx="5" cy="-91.7" r=".45" fill="#fff">${zu('opacity','1;1;0;1')}</circle>`+
    `<circle cx="-7.4" cy="-87.4" r="1.9" fill="#e8787a" opacity=".18"/><circle cx="7.4" cy="-87.4" r="1.9" fill="#e8787a" opacity=".18"/>`+
    `<g fill="${hs}" opacity=".9"><circle cx="-7.6" cy="-88.6" r=".42"/><circle cx="-6.2" cy="-87.6" r=".42"/><circle cx="-8.4" cy="-87.2" r=".42"/><circle cx="7.6" cy="-88.6" r=".42"/><circle cx="6.2" cy="-87.6" r=".42"/><circle cx="8.4" cy="-87.2" r=".42"/></g>`+nase+
    `<path d="M-4.2 -85.6Q0 -80.4 4.2 -85.6Z" fill="#7a3b2e" stroke="${ul}" stroke-width=".6" stroke-linejoin="round"/><path d="M-3.6 -85.4Q0 -84.5 3.6 -85.4L3.2 -84.4Q0 -83.7 -3.2 -84.4Z" fill="#fff"/>`;

@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Sicherheit (seit 2026-10-21): Nur Dateien der App selbst, kein Netzwerkzugriff nach außen, keine Fremdquellen, Formulare, Rahmen und Plug-ins gesperrt.
+     'unsafe-inline' bleibt nötig, weil die App onclick-Attribute und style-Attribute nutzt.
+     'file:' steht nur da, damit die App auch per Doppelklick auf die Datei läuft (dort passt 'self' nicht). Eine Webseite darf keine lokalen Dateien laden, im Netz bewirkt es nichts. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' file: 'unsafe-inline'; style-src 'self' file: 'unsafe-inline'; img-src 'self' file: data: blob:; media-src 'self' file: data: blob:; connect-src 'self' file: data: blob:; manifest-src 'self' file:; worker-src 'self' blob:; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
 <title>Pferdehof Mathe</title>
 <meta name="theme-color" content="#4f8a4a">
 <meta name="apple-mobile-web-app-capable" content="yes">
