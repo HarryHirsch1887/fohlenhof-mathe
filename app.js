@@ -55,7 +55,7 @@ const nn=(x,lo=0,hi=1e9)=>{x=+x;return Number.isFinite(x)?Math.min(hi,Math.max(l
 const ct=(x,n)=>String(x==null?'':x).slice(0,n);
 function clean(d){
  if(!d||typeof d!=='object'||!Array.isArray(d.kids))return null;
- const o={pin:ct(d.pin,8),kids:[]};if(d.np&&!o.pin)o.np=1;if(d.snd===0)o.snd=0;if(d.calm)o.calm=1;
+ const o={pin:ct(d.pin,8),kids:[]};if(d.np&&!o.pin)o.np=1;if(d.mo==='e'||d.mo==='k')o.mo=d.mo;// mo: Startabfrage beantwortet (Elternteil/Kind)if(d.snd===0)o.snd=0;if(d.calm)o.calm=1;
  for(const k of d.kids.slice(0,20)){if(!k||typeof k!=='object')continue;
   const c={id:nn(k.id,1,Number.MAX_SAFE_INTEGER),name:ct(k.name,20)||'Kind',g:[5,6,7,8].includes(+k.g)?+k.g:5,xp:nn(k.xp),ap:nn(k.ap),s:nn(k.s),best:nn(k.best),total:nn(k.total),r:nn(k.r),perfect:nn(k.perfect),b:[],t:{},mist:[]};
   // st = Wachstumsstufe, sd = gesammelte Tage für die nächste Stufe, ld = letzter gezählter Tag, zd/zt = Spielzeit (Sekunden) an diesem Tag
@@ -131,7 +131,8 @@ const RM=typeof matchMedia!='undefined'&&matchMedia('(prefers-reduced-motion: re
 const scene=(k,an,idle)=>{let h=k.h,st=stg(k),s=GS[st].s;return`<svg class="scene" viewBox="0 0 320 180" role="img" aria-label="${esc(h.name)} auf der Weide"><rect width="320" height="180" style="fill:var(--sky)"/><circle cx="268" cy="36" r="16" fill="#e2b24a"/><path d="M0 118Q80 88 170 116T320 106V180H0Z" style="fill:var(--h2)"/>${[0,1,2,3,4].map(i=>`<rect x="${24+i*68}" y="120" width="5" height="40" fill="#b9a27a"/>`).join('')}<rect y="130" width="320" height="4" fill="#b9a27a"/><rect y="144" width="320" height="4" fill="#b9a27a"/><rect y="158" width="320" height="22" style="fill:var(--h1)"/><g id="hg"${an?` class="an-${an.t}" style="--a:${an.a}px"`:''}><g transform="translate(${160-10*s} 163) scale(${s*.5})">${pfBild(pfSpec(hh(k),st),{idle:idle&&!RM})}</g></g><g id="ht"></g></svg>`};
 const pick=(c)=>`<button class="pick ${CH==c?'on':''}" onclick="CH='${c}';ui()" aria-pressed="${CH==c}"><svg viewBox="${PFVB}">${pfBild({coat:c,st:0})}</svg>${COATS[c][0]}</button>`;
 function ui(){let h='';PZ=0;
- if(v=='home'&&!S.pin&&!S.np){h=`<h1>Pferdehof Mathe</h1><div class="card"><b>Willkommen!</b><p>Soll es eine <b>Eltern-Ansicht mit PIN</b> geben? Dort stehen Statistik, Klassenwahl, Zurücksetzen und die Sicherung.</p><p><b>Mit Eltern-Ansicht:</b> PIN festlegen (mindestens 4 Zeichen).</p><input id="pin0" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp()"> <button onclick="sp()">PIN festlegen</button><p class="no">${warn}</p><p><b>Ohne Eltern-Ansicht:</b> passt zum Beispiel auf dem eigenen Handy eines Kindes. Die Einstellungen sind dann für alle offen.</p><button class="alt" onclick="nopin()">Ohne Eltern-Ansicht starten</button><p class="small">Das lässt sich später jederzeit ändern.</p></div>`}
+ if(!S.mo&&v=='besuch')v='home';// Besuchs-Link auf einem neuen Gerät: erst die Startabfrage, der Besuch (BES) wartet
+ if(v=='home'&&(!S.mo||EIN=='kinder')){h=startAbfrage()}
  else if(v=='home'){h=`<h1>Pferdehof Mathe</h1><p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[stg(k)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
  `<div class="card"><b>Neues Kind</b><div class="row"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name"><select id="gr" aria-label="Klasse"><option value="5">Klasse 5</option><option value="6">Klasse 6</option><option value="7">Klasse 7</option><option value="8">Klasse 8</option></select><button onclick="add()">Hinzufügen</button></div></div><p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button></p>`}
  // Figur erstellen oder ändern (FE: Entwurf, wird erst mit "Fertig" bzw. "Speichern" übernommen)
@@ -317,9 +318,43 @@ function d3Sync(){const el=$('#d3');
 // wenn es die erste Aufgabe beginnt (start löscht die Markierung).
 function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},neu:1});save();ui()}
 // PIN festlegen: ohne id beim ersten Start (Feld pin0), mit id='pin1' nachträglich in den Einstellungen
-function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=p;delete S.np;if(id)open=true;save();ui()}
-function nopin(){S.np=1;save();ui()}
-function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellungen öffnen.'))return;S.pin='';S.np=1;open=false;save();ui()}
+function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=p;delete S.np;S.mo='e';if(id)open=true;save();ui()}
+function nopin(){S.np=1;S.mo='k';save();ui()}
+function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellungen öffnen.'))return;S.pin='';S.np=1;S.mo='k';open=false;save();ui()}
+// ---------- Startabfrage (seit 2026-10-21, siehe Notiz "Ideen Elternbereich und Startabfrage") ----------
+// Kommt einmal pro Gerät, auch bei bestehenden Spielständen: Elternteil (PIN festlegen bzw. bestätigen, dann Kinder anlegen)
+// oder Kind (ohne PIN, Einstellungen offen, wie bisher "ohne Eltern-Ansicht"). Gespeichert als S.mo = 'e' oder 'k'.
+// Ist schon eine PIN gesetzt, braucht auch der Kind-Modus die PIN (sie wird dabei entfernt), damit ein Kind die Sperre nicht umgeht.
+// EIN = aktueller Schritt: '' Auswahl, 'e' PIN, 'k' Kind, 'kinder' Kinder anlegen (nach dem Eltern-Schritt).
+let EIN='';
+const VORTEILE=`<div class="card small vorteile"><b>Pferdehof Mathe für Eltern</b><ul style="margin:6px 0 0;padding-left:20px"><li>Keine Werbung, keine Käufe durch Kinder</li><li>Kein Konto, keine Anmeldung: Alle Daten bleiben auf diesem Gerät</li><li>Zeitlimit für jedes Kind, Standard ${LIMIN} Minuten am Tag</li><li>Eltern-Ansicht mit PIN: Statistik, Klasse, Zeitlimit, Sicherung</li><li>Aufgaben für Klasse 5 bis 8 mit Tipps und Lösungswegen</li></ul></div>`;
+const klassenWahl=()=>`<select id="gr" aria-label="Klasse">${[5,6,7,8].map(c=>`<option value="${c}">Klasse ${c}</option>`).join('')}</select>`;
+function startAbfrage(){
+ const kopf='<h1>Pferdehof Mathe</h1>',zur=`<button class="alt" onclick="EIN='';warn='';ui()">Zurück</button>`,
+  pinFeld=(fn,txt)=>`<input id="pin0" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')${fn}()"> <button onclick="${fn}()">${txt}</button><p class="no">${warn}</p>`;
+ if(EIN=='kinder')return kopf+`<div class="card"><b>Kinder anlegen</b><p class="small">Jedes Kind bekommt einen eigenen Hof. Name, Klasse und Zeit pro Tag lassen sich später in der Eltern-Ansicht ändern.</p>`+
+  S.kids.map(k=>`<div class="row sp" style="align-items:center"><span>${esc(k.name)} <span class="small">Klasse ${k.g}</span></span><select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></div>`).join('')+
+  `<div class="row" style="margin-top:8px"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name" onkeydown="if(event.key=='Enter')add()">${klassenWahl()}<button onclick="add()">Hinzufügen</button></div></div><button class="go" onclick="einFertig()">${S.kids.length?'Fertig, auf zum Hof':'Später anlegen'}</button>`;
+ if(EIN=='e')return kopf+VORTEILE+`<div class="card">${S.pin?'<b>PIN eingeben</b><p class="small">Auf diesem Gerät gibt es schon eine PIN. Gib sie einmal ein, um den Eltern-Modus zu bestätigen.</p>'
+  :'<b>PIN festlegen</b><p class="small">Mit der PIN öffnest du später die Eltern-Ansicht. Mindestens 4 Zeichen. Die Kinder sollten sie nicht kennen.</p>'}${pinFeld('einEltern','Weiter')}</div>`+zur;
+ if(EIN=='k')return kopf+(S.pin?`<div class="card"><b>Kind-Modus</b><p>Auf diesem Gerät schützt eine PIN die Eltern-Ansicht. Für den Kind-Modus muss ein Elternteil sie einmal eingeben. Danach ist die PIN entfernt und die Einstellungen sind für alle offen.</p>${pinFeld('einKind','PIN entfernen')}</div>`
+  :S.kids.length?`<div class="card"><b>Kind-Modus</b><p>Du entscheidest selbst, die Einstellungen sind ohne PIN offen. Alle Spielstände bleiben, wie sie sind.</p><button class="go" onclick="einKind()">Weiter zum Hof</button></div>`
+  :`<div class="card"><b>Wie heißt du?</b><p class="small">Du entscheidest selbst, die Einstellungen sind ohne PIN offen. Ein Elternteil kann später jederzeit eine PIN festlegen.</p><div class="row"><input id="nm" placeholder="Dein Name" maxlength="20" aria-label="Dein Name" onkeydown="if(event.key=='Enter')einKind()">${klassenWahl()}</div><button class="go" onclick="einKind()">Los geht’s</button><p class="no">${warn}</p></div>`)+zur;
+ return kopf+`<div class="card"><b>Willkommen!</b>${S.kids.length?'<p class="small"><b>Neu:</b> Bitte einmal kurz auswählen, wer die App nutzt. Alle Spielstände bleiben erhalten.</p>':''}<p>Wer richtet die App ein?</p>`+
+  `<button class="big" onclick="EIN='e';warn='';ui()"><span><b>Ich bin ein Elternteil</b><br><span class="small">und richte die App für meine Kinder ein (mit PIN)</span></span></button>`+
+  `<button class="big" onclick="EIN='k';warn='';ui()"><span><b>Ich bin das Kind</b><br><span class="small">und darf selbst entscheiden (ohne PIN)</span></span></button></div>`+(S.kids.length?'':VORTEILE)}
+function einEltern(){const el=$('#pin0'),p=el?el.value.trim():'';
+ if(S.pin){if(p!==S.pin){warn='Falsche PIN.';ui();warn='';return}}
+ else{if(p.length<4){warn='Die PIN braucht mindestens 4 Zeichen.';ui();warn='';return}S.pin=p}
+ delete S.np;S.mo='e';EIN='kinder';save();ui();scrollTo(0,0)}
+function einKind(){
+ if(S.pin){const el=$('#pin0'),p=el?el.value.trim():'';if(p!==S.pin){warn='Falsche PIN.';ui();warn='';return}S.pin='';S.np=1;open=false;save();ui();return}
+ const frisch=!S.kids.length;
+ if(frisch){const n=$('#nm');if(!n||!n.value.trim()){warn='Bitte gib deinen Namen ein.';ui();warn='';return}add()}
+ S.np=1;S.mo='k';EIN='';save();
+ if(frisch&&!BES)sel(S.kids[0].id);else einWeiter()}
+function einFertig(){EIN='';einWeiter()}
+function einWeiter(){v=BES?'besuch':'home';ui();scrollTo(0,0)}
 function sel(id){cur=id;ZW=0;const k=kid();if(!k)return;if(!k.h&&!k.f)FE={...FIGUR0};v=ausZeit(k)?'bye':!k.h&&!k.f?'figur':'kid';ui();scrollTo(0,0)}
 // Figur: Entwurf FE bearbeiten und übernehmen
 let FE={...FIGUR0};
@@ -488,7 +523,7 @@ function lim(id,m){let k=S.kids.find(x=>x.id==id);m=+m;if(!k||!Number.isInteger(
 function rst(id){if(!confirm('Fortschritt wirklich zurücksetzen? Das Pferd beginnt wieder als Fohlen.'))return;let k=S.kids.find(x=>x.id==id);delete k.ld;delete k.hl;Object.assign(k,{kn:0,xp:0,st:0,sd:0,hz:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},mist:[]});if(k.h){k.h.coats=[k.h.coat];k.h.own={};k.h.bl=0;k.h.so=0;k.h.sk={};k.h.it={};k.h.lp=[];k.h.ko={n:1,u:[0,0,0],z:{}}}delete k.h2;save();ui()}
 function del(id){if(!confirm('Kind samt Fortschritt löschen?'))return;S.kids=S.kids.filter(x=>x.id!=id);save();ui()}
 function exp(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='pferdehof-sicherung.json';a.click()}
-function imp(el){let f=el.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=clean(JSON.parse(r.result));if(!d)throw 0;if(!confirm('Aktuellen Stand durch die Sicherung ersetzen? Der PIN-Schutz wird aus der Sicherung übernommen.'))return;if(!d.pin)d.np=1;S=d;save();ui()}catch(e){warn='Datei konnte nicht gelesen werden.';ui()}};r.readAsText(f)}
+function imp(el){let f=el.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=clean(JSON.parse(r.result));if(!d)throw 0;if(!confirm('Aktuellen Stand durch die Sicherung ersetzen? Der PIN-Schutz wird aus der Sicherung übernommen.'))return;if(!d.pin)d.np=1;if(!d.mo)d.mo=d.pin?'e':'k';S=d;save();ui()}catch(e){warn='Datei konnte nicht gelesen werden.';ui()}};r.readAsText(f)}
 document.addEventListener('keydown',e=>{if(e.key=='Enter'&&!e.repeat&&v=='quiz'&&Q&&Q.fb&&Date.now()-Q.ts>250&&document.activeElement.tagName!='BUTTON'){e.preventDefault();nx()}});
 // Wiehern: wird beim Klick live per Web Audio erzeugt (keine Audiodatei, kein Netzwerk)
 let AC=null,lastN=0;
