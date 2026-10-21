@@ -55,13 +55,13 @@ const nn=(x,lo=0,hi=1e9)=>{x=+x;return Number.isFinite(x)?Math.min(hi,Math.max(l
 const ct=(x,n)=>String(x==null?'':x).slice(0,n);
 function clean(d){
  if(!d||typeof d!=='object'||!Array.isArray(d.kids))return null;
- const o={pin:ct(d.pin,8),kids:[]};if(d.np&&!o.pin)o.np=1;if(d.mo==='e'||d.mo==='k')o.mo=d.mo;// mo: Startabfrage beantwortet (Elternteil/Kind)if(d.snd===0)o.snd=0;if(d.calm)o.calm=1;
+ const o={pin:ct(d.pin,8),kids:[]};if(d.np&&!o.pin)o.np=1;if(d.snd===0)o.snd=0;if(d.calm)o.calm=1;if(d.mo==='e'||d.mo==='k')o.mo=d.mo;// mo: Startabfrage beantwortet (Elternteil/Kind)
  for(const k of d.kids.slice(0,20)){if(!k||typeof k!=='object')continue;
   const c={id:nn(k.id,1,Number.MAX_SAFE_INTEGER),name:ct(k.name,20)||'Kind',g:[5,6,7,8].includes(+k.g)?+k.g:5,xp:nn(k.xp),ap:nn(k.ap),s:nn(k.s),best:nn(k.best),total:nn(k.total),r:nn(k.r),perfect:nn(k.perfect),b:[],t:{},mist:[]};
   // st = Wachstumsstufe, sd = gesammelte Tage für die nächste Stufe, ld = letzter gezählter Tag, zd/zt = Spielzeit (Sekunden) an diesem Tag
   c.st=k.st==null?GS.reduce((a,g,i)=>c.xp>=g.x?i:a,0):nn(k.st,0,3);c.sd=nn(k.sd,0,999);c.zt=nn(k.zt,0,86400);
   c.hz=nn(k.hz,0,HOFZEIT);if(k.hl)c.hl=1;
-  if(k.lm!=null&&Number.isInteger(+k.lm)&&+k.lm>=0&&+k.lm<=LIMMAX&&+k.lm%5==0)c.lm=+k.lm;// Tageslimit je Kind in Minuten, 0 = kein Limit
+  if(typeof k.lm==='number'&&Number.isInteger(k.lm)&&k.lm>=0&&k.lm<=LIMMAX&&k.lm%5==0)c.lm=k.lm;// Tageslimit je Kind in Minuten, 0 = kein Limit
   // neu = 1: frisch angelegtes Kind, das noch keine Aufgabe begonnen hat (Tageslimit und Hofzeit zählen noch nicht, seit 2026-10-20)
   if(k.neu)c.neu=1;
   // kn = Knobelrunden hintereinander (Knobel-Regel, seit 2026-10-20)
@@ -131,6 +131,7 @@ const RM=typeof matchMedia!='undefined'&&matchMedia('(prefers-reduced-motion: re
 const scene=(k,an,idle)=>{let h=k.h,st=stg(k),s=GS[st].s;return`<svg class="scene" viewBox="0 0 320 180" role="img" aria-label="${esc(h.name)} auf der Weide"><rect width="320" height="180" style="fill:var(--sky)"/><circle cx="268" cy="36" r="16" fill="#e2b24a"/><path d="M0 118Q80 88 170 116T320 106V180H0Z" style="fill:var(--h2)"/>${[0,1,2,3,4].map(i=>`<rect x="${24+i*68}" y="120" width="5" height="40" fill="#b9a27a"/>`).join('')}<rect y="130" width="320" height="4" fill="#b9a27a"/><rect y="144" width="320" height="4" fill="#b9a27a"/><rect y="158" width="320" height="22" style="fill:var(--h1)"/><g id="hg"${an?` class="an-${an.t}" style="--a:${an.a}px"`:''}><g transform="translate(${160-10*s} 163) scale(${s*.5})">${pfBild(pfSpec(hh(k),st),{idle:idle&&!RM})}</g></g><g id="ht"></g></svg>`};
 const pick=(c)=>`<button class="pick ${CH==c?'on':''}" onclick="CH='${c}';ui()" aria-pressed="${CH==c}"><svg viewBox="${PFVB}">${pfBild({coat:c,st:0})}</svg>${COATS[c][0]}</button>`;
 function ui(){let h='';PZ=0;
+ if(v!='home'){EIN='';EINPIN=false}// Einrichtungsschritt gilt nur auf der Startseite (sonst käme z. B. "Kinder anlegen" ohne PIN zurück)
  if(!S.mo&&v=='besuch')v='home';// Besuchs-Link auf einem neuen Gerät: erst die Startabfrage, der Besuch (BES) wartet
  if(v=='home'&&(!S.mo||EIN=='kinder')){h=startAbfrage()}
  else if(v=='home'){h=`<h1>Pferdehof Mathe</h1><p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[stg(k)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
@@ -326,18 +327,18 @@ function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellunge
 // oder Kind (ohne PIN, Einstellungen offen, wie bisher "ohne Eltern-Ansicht"). Gespeichert als S.mo = 'e' oder 'k'.
 // Ist schon eine PIN gesetzt, braucht auch der Kind-Modus die PIN (sie wird dabei entfernt), damit ein Kind die Sperre nicht umgeht.
 // EIN = aktueller Schritt: '' Auswahl, 'e' PIN, 'k' Kind, 'kinder' Kinder anlegen (nach dem Eltern-Schritt).
-let EIN='';
+let EIN='',EINPIN=false;// EINPIN: Kind-Modus auf Gerät mit PIN, PIN wurde richtig eingegeben (entfernt wird sie erst am Ende)
 const VORTEILE=`<div class="card small vorteile"><b>Pferdehof Mathe für Eltern</b><ul style="margin:6px 0 0;padding-left:20px"><li>Keine Werbung, keine Käufe durch Kinder</li><li>Kein Konto, keine Anmeldung: Alle Daten bleiben auf diesem Gerät</li><li>Zeitlimit für jedes Kind, Standard ${LIMIN} Minuten am Tag</li><li>Eltern-Ansicht mit PIN: Statistik, Klasse, Zeitlimit, Sicherung</li><li>Aufgaben für Klasse 5 bis 8 mit Tipps und Lösungswegen</li></ul></div>`;
 const klassenWahl=()=>`<select id="gr" aria-label="Klasse">${[5,6,7,8].map(c=>`<option value="${c}">Klasse ${c}</option>`).join('')}</select>`;
 function startAbfrage(){
- const kopf='<h1>Pferdehof Mathe</h1>',zur=`<button class="alt" onclick="EIN='';warn='';ui()">Zurück</button>`,
+ const kopf='<h1>Pferdehof Mathe</h1>',zur=`<button class="alt" onclick="EIN='';EINPIN=false;warn='';ui()">Zurück</button>`,
   pinFeld=(fn,txt)=>`<input id="pin0" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')${fn}()"> <button onclick="${fn}()">${txt}</button><p class="no">${warn}</p>`;
  if(EIN=='kinder')return kopf+`<div class="card"><b>Kinder anlegen</b><p class="small">Jedes Kind bekommt einen eigenen Hof. Name, Klasse und Zeit pro Tag lassen sich später in der Eltern-Ansicht ändern.</p>`+
   S.kids.map(k=>`<div class="row sp" style="align-items:center"><span>${esc(k.name)} <span class="small">Klasse ${k.g}</span></span><select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></div>`).join('')+
   `<div class="row" style="margin-top:8px"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name" onkeydown="if(event.key=='Enter')add()">${klassenWahl()}<button onclick="add()">Hinzufügen</button></div></div><button class="go" onclick="einFertig()">${S.kids.length?'Fertig, auf zum Hof':'Später anlegen'}</button>`;
  if(EIN=='e')return kopf+VORTEILE+`<div class="card">${S.pin?'<b>PIN eingeben</b><p class="small">Auf diesem Gerät gibt es schon eine PIN. Gib sie einmal ein, um den Eltern-Modus zu bestätigen.</p>'
   :'<b>PIN festlegen</b><p class="small">Mit der PIN öffnest du später die Eltern-Ansicht. Mindestens 4 Zeichen. Die Kinder sollten sie nicht kennen.</p>'}${pinFeld('einEltern','Weiter')}</div>`+zur;
- if(EIN=='k')return kopf+(S.pin?`<div class="card"><b>Kind-Modus</b><p>Auf diesem Gerät schützt eine PIN die Eltern-Ansicht. Für den Kind-Modus muss ein Elternteil sie einmal eingeben. Danach ist die PIN entfernt und die Einstellungen sind für alle offen.</p>${pinFeld('einKind','PIN entfernen')}</div>`
+ if(EIN=='k')return kopf+(S.pin&&!EINPIN?`<div class="card"><b>Kind-Modus</b><p>Auf diesem Gerät schützt eine PIN die Eltern-Ansicht. Für den Kind-Modus muss ein Elternteil sie einmal eingeben. Danach wird die PIN entfernt und die Einstellungen sind für alle offen.</p>${pinFeld('einKind','Weiter')}</div>`
   :S.kids.length?`<div class="card"><b>Kind-Modus</b><p>Du entscheidest selbst, die Einstellungen sind ohne PIN offen. Alle Spielstände bleiben, wie sie sind.</p><button class="go" onclick="einKind()">Weiter zum Hof</button></div>`
   :`<div class="card"><b>Wie heißt du?</b><p class="small">Du entscheidest selbst, die Einstellungen sind ohne PIN offen. Ein Elternteil kann später jederzeit eine PIN festlegen.</p><div class="row"><input id="nm" placeholder="Dein Name" maxlength="20" aria-label="Dein Name" onkeydown="if(event.key=='Enter')einKind()">${klassenWahl()}</div><button class="go" onclick="einKind()">Los geht’s</button><p class="no">${warn}</p></div>`)+zur;
  return kopf+`<div class="card"><b>Willkommen!</b>${S.kids.length?'<p class="small"><b>Neu:</b> Bitte einmal kurz auswählen, wer die App nutzt. Alle Spielstände bleiben erhalten.</p>':''}<p>Wer richtet die App ein?</p>`+
@@ -348,10 +349,10 @@ function einEltern(){const el=$('#pin0'),p=el?el.value.trim():'';
  else{if(p.length<4){warn='Die PIN braucht mindestens 4 Zeichen.';ui();warn='';return}S.pin=p}
  delete S.np;S.mo='e';EIN='kinder';save();ui();scrollTo(0,0)}
 function einKind(){
- if(S.pin){const el=$('#pin0'),p=el?el.value.trim():'';if(p!==S.pin){warn='Falsche PIN.';ui();warn='';return}S.pin='';S.np=1;open=false;save();ui();return}
+ if(S.pin&&!EINPIN){const el=$('#pin0'),p=el?el.value.trim():'';if(p!==S.pin){warn='Falsche PIN.';ui();warn='';return}EINPIN=true;ui();return}
  const frisch=!S.kids.length;
  if(frisch){const n=$('#nm');if(!n||!n.value.trim()){warn='Bitte gib deinen Namen ein.';ui();warn='';return}add()}
- S.np=1;S.mo='k';EIN='';save();
+ if(EINPIN){S.pin='';open=false}S.np=1;S.mo='k';EIN='';EINPIN=false;save();
  if(frisch&&!BES)sel(S.kids[0].id);else einWeiter()}
 function einFertig(){EIN='';einWeiter()}
 function einWeiter(){v=BES?'besuch':'home';ui();scrollTo(0,0)}
