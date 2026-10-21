@@ -37,7 +37,7 @@ const PREIS={zopf:10,gummi:3,lieb:50,leg:10,shirt:10};
 // zopf = Zöpfe und Haargummis, sk = Fähigkeiten (Training), lieb = Lieblingspferde. Die Koppeln stehen in KOPPEL.
 const XPF={ma:250,coat:500,abz:500,shirt:750,leg:750,it:1000,zopf:3500,sk:5000,lieb:6500};
 const ab=t=>`ab ${XPF[t]} Erfahrung`;
-// Fortschritt bis zur Freischaltung (seit 2026-10-22): Balken mit "1250 von 3500 Erfahrung" statt "ab 3500 Erfahrung"
+// Fortschritt bis zur Freischaltung (seit 2026-10-21): Balken mit "1250 von 3500 Erfahrung" statt "ab 3500 Erfahrung"
 const xpBalken=(k,n,kl)=>{const x=Math.min(k.xp,n);return`<span class="xpb${kl?' '+kl:''}" role="progressbar" aria-label="Erfahrung" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${x}"><i style="width:${Math.floor(x/n*100)}%"></i><span>${x} von ${n} Erfahrung</span></span>`};
 const xpb=(k,t,kl)=>xpBalken(k,XPF[t],kl);
 // Kleines Bild eines Hof-Gegenstands im Wunschbaum: dieselbe Zeichnung wie auf dem Hof (DR aus hof.js), der Ausschnitt wird nach dem Zeichnen
@@ -141,7 +141,7 @@ const RM=typeof matchMedia!='undefined'&&matchMedia('(prefers-reduced-motion: re
 const scene=(k,an,idle)=>{let h=k.h,st=stg(k),s=GS[st].s;return`<svg class="scene" viewBox="0 0 320 180" role="img" aria-label="${esc(h.name)} auf der Weide"><rect width="320" height="180" style="fill:var(--sky)"/><circle cx="268" cy="36" r="16" fill="#e2b24a"/><path d="M0 118Q80 88 170 116T320 106V180H0Z" style="fill:var(--h2)"/>${[0,1,2,3,4].map(i=>`<rect x="${24+i*68}" y="120" width="5" height="40" fill="#b9a27a"/>`).join('')}<rect y="130" width="320" height="4" fill="#b9a27a"/><rect y="144" width="320" height="4" fill="#b9a27a"/><rect y="158" width="320" height="22" style="fill:var(--h1)"/><g id="hg"${an?` class="an-${an.t}" style="--a:${an.a}px"`:''}><g transform="translate(${160-10*s} 163) scale(${s*.5})">${pfBild(pfSpec(hh(k),st),{idle:idle&&!RM})}</g></g><g id="ht"></g></svg>`};
 const pick=(c)=>`<button class="pick ${CH==c?'on':''}" onclick="CH='${c}';ui()" aria-pressed="${CH==c}"><svg viewBox="${PFVB}">${pfBild({coat:c,st:0})}</svg>${COATS[c][0]}</button>`;
 function ui(){let h='';PZ=0;
- if(v=='koppeln')v='wish';// seit 2026-10-22 stehen Koppeln, Unterstände und Stall direkt im Wunschbaum
+ if(v=='koppeln')v='wish';// seit 2026-10-21 stehen Koppeln, Unterstände und Stall direkt im Wunschbaum
  if(v!='home'){EIN='';EINPIN=false}// Einrichtungsschritt gilt nur auf der Startseite (sonst käme z. B. "Kinder anlegen" ohne PIN zurück)
  if(!S.mo&&v=='besuch')v='home';// Besuchs-Link auf einem neuen Gerät: erst die Startabfrage, der Besuch (BES) wartet
  if(v=='home'&&(!S.mo||EIN=='kinder')){h=startAbfrage()}
@@ -192,7 +192,7 @@ function ui(){let h='';PZ=0;
  ${st<D3AB?'':`${d3Fenster('')}<p class="small" style="margin-top:0">Wische über das Bild, um ${esc(k.h.name)} von allen Seiten zu sehen.</p>`}
  <h2 id="themen">Thema wählen</h2>`+themen(k)+
  `<h2>Wunschbaum</h2>${k.hl?`<p class="small">Der Wunschbaum öffnet sich wieder, wenn du eine Runde mit mindestens ${FREI} von 10 richtig geschafft hast.</p>`:`<button class="big" onclick="v='wish';note='';ui()"><span>Pferderasse, Mähne und Abzeichen für ${esc(k.h.name)}</span><span class="ap">${AP}</span></button>`}<h2>Abzeichen</h2>`+BD.map(b=>`<span class="badge ${k.b.includes(b[0])?'':'off'}">${b[1]}</span>`).join('')}
- // Wunschbaum (umgebaut 2026-10-22 nach der ersten Testrunde): Bereiche nach Erfahrung, getrennt durch Linien (section.wb).
+ // Wunschbaum (umgebaut 2026-10-21 nach der ersten Testrunde): Bereiche nach Erfahrung, getrennt durch Linien (section.wb).
  // Gesperrtes zeigt einen Balken "1250 von 3500 Erfahrung" statt "ab 3500 Erfahrung". Pferderassen auf eigener Seite (v='rassen'),
  // Hof-Gegenstände mit kleinem Bild, "Unterstand & Stall" und "Koppeln" direkt hier (früher eigene Ansicht v='koppeln').
  if(v=='wish'){let k=kid(),H=hh(k),st=stg(k),b=belegung(H),nm=f=>freundInfo(k,f).name;
@@ -233,7 +233,7 @@ function ui(){let h='';PZ=0;
     b.p[i].map(f=>f=='eigen'?`<div class="pferdzeile"><span>${esc(H.name)} <span class="small">(dein Pferd)</span></span></div>`:`<div class="pferdzeile"><span>${esc(nm(f))}${f=='e:2'?' <span class="small">(dein zweites Pferd)</span>':''}</span><span>${zuKn(f,i)}</span></div>`).join('')+`</div>`}).join('')+
   (b.w.length?`<div class="card"><b>Wartet auf einen Platz</b>${b.w.map(f=>`<div class="pferdzeile"><span>${esc(nm(f))}</span><span class="small">Kein Platz frei</span></div>`).join('')}<p class="small">Bau einen Unterstand oder eine neue Koppel, dann ist Platz.</p></div>`:`<p class="small">Alle Pferde haben einen Platz.</p>`))+
  `<p class="small">Äpfel gibt es für richtige Antworten, bei schwereren Aufgaben mehr. Ausgeben kostet keine Erfahrung.</p>`}
- // Pferderassen auf eigener Seite (seit 2026-10-22), Auswahl und Kauf wie bisher über wish('coat', …)
+ // Pferderassen auf eigener Seite (seit 2026-10-21), Auswahl und Kauf wie bisher über wish('coat', …)
  if(v=='rassen'){let k=kid(),H=hh(k),st=stg(k);
  h=`<div class="row sp"><button class="alt" onclick="v='wish';note='';ui()">Zurück</button><span class="ap">${k.ap||0} ${AP}</span></div><h1>Pferderassen</h1><p class="no">${note}</p>${st>=D3AB?d3Fenster('kleb'):''}`+
   (gesperrt(k,'coat')?`<p class="small">Weitere Pferderassen kannst du kaufen, sobald du genug Erfahrung hast:</p>${xpb(k,'coat')}`:`<p class="small">Jede neue Rasse kostet 25 Äpfel. Gekaufte Rassen kannst du jederzeit kostenlos wechseln.</p>`)+
@@ -462,7 +462,7 @@ function wechsel(){const k=kid();if(!k||!k.h2)return;const a=hh(k),b=k.h2;
  b.it=a.it;b.lp=a.lp;b.ko=a.ko;delete a.it;delete a.lp;delete a.ko;
  // Der Koppel-Wunsch "e:2" gilt für das jeweils andere Pferd und bleibt deshalb einfach stehen
  const st=b.st,sd=b.sd;a.st=stg(k);a.sd=k.sd||0;delete b.st;delete b.sd;k.st=st||0;k.sd=sd||0;k.h=b;k.h2=a;note='';save();ui()}
-// Hinweis zeigen und in den sichtbaren Bereich holen (seit 2026-10-22, der Wunschbaum ist lang, der Hinweis steht oben)
+// Hinweis zeigen und in den sichtbaren Bereich holen (seit 2026-10-21, der Wunschbaum ist lang, der Hinweis steht oben)
 function hinweis(m){note=m;ui();const n=$('#app p.no');if(n&&n.textContent)n.scrollIntoView({block:'nearest',behavior:RM?'auto':'smooth'})}
 function wish(t,c){let k=kid(),H=hh(k),no=()=>hinweis('Dafür fehlen noch Äpfel.');note='';
  // zu wenig Erfahrung: nichts kaufen (Besitz bleibt nutzbar, siehe gesperrt())

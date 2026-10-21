@@ -126,15 +126,15 @@ button:disabled{opacity:.55;cursor:not-allowed}.pick.gesperrt svg{filter:graysca
 @media(prefers-color-scheme:dark){.d3{background:linear-gradient(#2a4558 0%,#2c4a3a 70%,#2f5a3a 100%)}.d3text,.d3fehler{color:#e8f0e2}}
 .gummi{display:inline-block;width:12px;height:12px;border-radius:50%;border:1px solid #0004;vertical-align:-1px}
 table{width:100%;border-collapse:collapse;font-size:15px}td,th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:left}
-/* Schriftgröße nicht vom Browser aufblähen lassen (seit 2026-10-22) */
+/* Schriftgröße nicht vom Browser aufblähen lassen (seit 2026-10-21) */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-/* Wunschbaum (seit 2026-10-22): Trennlinien zwischen den Bereichen, Fortschrittsbalken zur Freischaltung, Bilder der Hof-Gegenstände */
+/* Wunschbaum (seit 2026-10-21): Trennlinien zwischen den Bereichen, Fortschrittsbalken zur Freischaltung, Bilder der Hof-Gegenstände */
 section.wb{border-top:1px solid var(--line);margin-top:16px}section.wb>h2{margin-top:12px}
 .xpb{position:relative;display:block;height:24px;margin:6px 0;border-radius:12px;background:var(--line);overflow:hidden;font-size:13px;line-height:24px;text-align:center;color:var(--ink)}
 .xpb i{position:absolute;left:0;top:0;bottom:0;background:var(--hay);opacity:.6}.xpb span{position:relative;font-weight:bold}
 .xpb.klein{height:16px;line-height:16px;font-size:11px;margin:4px 0 0}
 svg.itb{display:block;width:100%;height:56px;margin:0 auto 4px}
-/* Regen und Schnee als eigene Ebene über dem Hof (seit 2026-10-22): wird nur verschoben, nicht neu gezeichnet (schont das Fire-Tablet) */
+/* Regen und Schnee als eigene Ebene über dem Hof (seit 2026-10-21): wird nur verschoben, nicht neu gezeichnet (schont das Fire-Tablet) */
 #hwetter{position:fixed;left:0;top:0;width:100%;height:var(--wh,0px);z-index:0;pointer-events:none;overflow:hidden;display:none}
 body.fly #hwetter{height:100%;z-index:61}body.nohof #hwetter{visibility:hidden}
 #hwetter svg{position:absolute;left:0;top:-100%;width:100%;height:200%;will-change:transform;animation:fallen 1s linear infinite}
@@ -142,9 +142,9 @@ body.fly #hwetter{height:100%;z-index:61}body.nohof #hwetter{visibility:hidden}
 @keyframes fallen{from{transform:translateY(0)}to{transform:translateY(50%)}}
 @keyframes pendel{from{transform:translateX(calc(var(--sw,0%) * -1))}to{transform:translateX(var(--sw,0%))}}
 #hwetter.ruhig svg,#hwetter.ruhig .pendel{animation-play-state:paused}
-/* Heuballen raschelt beim Antippen (seit 2026-10-22) */
+/* Heuballen raschelt beim Antippen (seit 2026-10-21) */
 #hof .raschel{animation:raschel .6s ease-in-out;transform-box:fill-box;transform-origin:50% 100%}
 @keyframes raschel{0%,100%{transform:rotate(0)}20%{transform:rotate(-2deg)}40%{transform:rotate(2deg)}60%{transform:rotate(-1.5deg)}80%{transform:rotate(1deg)}}
 @media(prefers-reduced-motion:reduce){#hwetter svg,#hwetter .pendel,#hof .raschel{animation:none}}
-/* Hinweis beim Hineinscrollen mit etwas Abstand zum Bildschirmrand (seit 2026-10-22) */
+/* Hinweis beim Hineinscrollen mit etwas Abstand zum Bildschirmrand (seit 2026-10-21) */
 #app p.no{scroll-margin:24px}

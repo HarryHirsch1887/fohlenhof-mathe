@@ -53,7 +53,7 @@ const DR={
    `<path d="M${x-43} ${T+2}L${x} ${GY-65}L${x+43} ${T+2}" stroke="#f1e4c8" stroke-width="2" fill="none" stroke-linejoin="round"/>`+
    `<path d="M${x} ${GY-65}V${GY-75}M${x-4} ${GY-71}h8" stroke="#3d3a36" stroke-width=".7"/><g class="wfahne" data-x="${x}"><path d="M${x-5} ${GY-74.6}h7l2.4 -1.3l-2.4 -1.3h-7Z" fill="#3d3a36" stroke="none"/></g>`+
    `<rect x="${x-7}" y="${GY-53}" width="14" height="11" fill="#f4e9d0"/><rect x="${x-5.5}" y="${GY-51.5}" width="11" height="8" fill="#4a2318"/><path d="M${x-5.5} ${GY-43.5}q1.5 -4 3.5 -1q2 -4.5 3.5 -.5q1.6 -3.5 3.5 1.5Z" fill="#e2b24a" stroke="#b98a2c" stroke-width=".4"/>`+
-   // Tor (seit 2026-10-22 in zwei Flügeln, die sich beim Antippen öffnen): dahinter dunkles Inneres mit etwas Stroh
+   // Tor (seit 2026-10-21 in zwei Flügeln, die sich beim Antippen öffnen): dahinter dunkles Inneres mit etwas Stroh
    `<rect x="${x-12}" y="${GY-16}" width="24" height="26" fill="#3a1d14"/><path d="M${x-11} ${B-1.5}q3 -2.5 6 -.5q3 -2.5 6 0q3 -2.5 5 .5" fill="#e2b24a" stroke="none" opacity=".8"/>`+
    [[x-12,x-10.5,x-12],[x,x+1,x+12]].map(([l,a,hx],j)=>`<g class="stor" data-x="${hx}"><rect x="${l}" y="${GY-16}" width="12" height="26" fill="#f4e9d0"/><path d="M${a} ${GY-14.5}L${a+9.5} ${GY+8.5}M${a+9.5} ${GY-14.5}L${a} ${GY+8.5}" stroke="#b0412f" stroke-width="1.6"/><rect x="${a}" y="${GY-14.5}" width="9.5" height="23" fill="none" stroke="#d6c7a6" stroke-width=".9"/>`+
     (j?'':`<path d="M${x} ${GY-16}V${B}" stroke="#c9b893" stroke-width="1"/>`)+[GY-10,GY+4].map(b=>`<rect x="${hx-1.6}" y="${b-.7}" width="3.2" height="1.4" rx=".5" fill="#3d3a36" stroke="none"/>`).join('')+`</g>`).join('')+
@@ -126,7 +126,7 @@ function wetter(d){d=d||new Date();const q=typeof location!='undefined'?new URLS
 const falterSvg=(c,i)=>`<g class="falter" id="sf${i}"><g class="fl"><ellipse cx="-2.3" cy="-1.2" rx="2.4" ry="2.9" fill="${c}"/><ellipse cx="2.3" cy="-1.2" rx="2.4" ry="2.9" fill="${c}"/><ellipse cx="-1.6" cy="1.7" rx="1.5" ry="1.8" fill="${c}" opacity=".8"/><ellipse cx="1.6" cy="1.7" rx="1.5" ry="1.8" fill="${c}" opacity=".8"/></g><rect x="-.35" y="-2.6" width=".7" height="5.4" rx=".35" fill="#3a2a1a"/></g>`;
 const VOGEL='<path class="vogel" d="M-4 0Q-2 -2 0 0Q2 -2 4 0" fill="none" stroke="#3a3f4a" stroke-width=".9" stroke-linecap="round"/>';
 // Regen bzw. Schnee: eine Ebene enthält ihre Tropfen zweimal übereinander und wird nur verschoben (schont langsame Geräte).
-// Seit 2026-10-22 als eigenes SVG je Ebene in #hwetter (außerhalb des Hof-Bilds), bewegt per CSS-Animation (siehe wetterEbene).
+// Seit 2026-10-21 als eigenes SVG je Ebene in #hwetter (außerhalb des Hof-Bilds), bewegt per CSS-Animation (siehe wetterEbene).
 // Je Ebene: [Anzahl, Startwert für den Zufall, Strichstärke bzw. Radius, Deckkraft bzw. Radius-Streuung, Fallgeschwindigkeit, Seitwärts-Pendeln]
 function niederschlag(W,art){const pkt=(n,s)=>[...Array(Math.round(n*Math.min(2,Math.max(.4,W/360))))].map((_,i)=>[sr(i+s)*(W+20)-10,sr(i+s+500)*WH,sr(i+s+900)]),zweimal=f=>[0,WH].map(f).join(''),
   ebene=(x,vv,sw)=>{const g=`<svg class="wl" viewBox="0 0 ${W} ${2*WH}" preserveAspectRatio="none" style="animation-duration:${(WH/vv).toFixed(2)}s" aria-hidden="true">${x}</svg>`;return sw?`<div class="pendel" style="--sw:${(sw/W*100).toFixed(2)}%">${g}</div>`:g};
@@ -138,7 +138,7 @@ function niederschlag(W,art){const pkt=(n,s)=>[...Array(Math.round(n*Math.min(2,
 function wetterEbene(W,art,nacht){let el=document.getElementById('hwetter');
  if(!el){el=document.createElement('div');el.id='hwetter';el.setAttribute('aria-hidden','true');const h=document.getElementById('hof');h.parentNode.insertBefore(el,h.nextSibling)}
  el.style.display=art?'block':'none';el.style.opacity=nacht?'.55':'1';
- // Breite in Bild-Einheiten nach der echten Größe der Ebene, damit die Tropfen nicht gestreckt werden (seit 2026-10-22)
+ // Breite in Bild-Einheiten nach der echten Größe der Ebene, damit die Tropfen nicht gestreckt werden (seit 2026-10-21)
  const r=el.getBoundingClientRect(),W2=art&&r.width>0&&r.height>0?Math.max(60,Math.round(WH*r.width/r.height)):W;
  el.innerHTML=art?niederschlag(W2,art):''}
 // Gangarten: [Ausschlag der Beine in Grad, Schritte pro Sekunde]; Phasen der Beine: hinten fern, vorne fern, hinten nah, vorne nah
@@ -147,15 +147,15 @@ const HF={mode:'bg',horses:[],ord:[],key:'',t:0,last:0,raf:0,run:false,cam:0,cv:
  // Hof-Interaktionen (nur auf dem Hof eines Kindes): Apfel, Windrad (wb = Schub, wa/fa = Winkel Rad/Wetterfahne), Frosch, Wellen, Pferdeäpfel
  kind:'',apfel:null,frosch:null,wellen:[],wa:0,wb:0,fa:0,mist:[],mid:0,mistT:20,mistK:null,bis:0};
 // Klickbare Gegenstände auf dem Hof eines Kindes
-const AKT={baum1:1,windrad:1,teich:1,heu:1,stall:1};// heu und stall seit 2026-10-22 (Mäuse, Katze)
+const AKT={baum1:1,windrad:1,teich:1,heu:1,stall:1};// heu und stall seit 2026-10-21 (Mäuse, Katze)
 // Pferdeapfel: kleiner Haufen mit großer, unsichtbarer Tippfläche
 const mistSvg=m=>`<g class="mist" data-act="mist" data-id="${m.id}" transform="translate(${r1(m.x)} ${r1(m.y)}) scale(1.4)" style="cursor:pointer"><circle cy="-3" r="8" fill="#000" opacity="0"/><ellipse cy="-1.1" rx="4.2" ry="1.8" fill="#5e3f22"/><ellipse cx="-.5" cy="-2.7" rx="3.1" ry="1.5" fill="#6f4b2a"/><ellipse cx=".3" cy="-4.1" rx="2" ry="1.2" fill="#80582f"/><ellipse cx="-.6" cy="-4.5" rx=".7" ry=".35" fill="#fff" opacity=".25"/></g>`;
 const APFEL='<g class="apfel"><circle r="2.6" fill="#c0392b"/><circle cx="-.8" cy="-.9" r=".7" fill="#fff" opacity=".6"/><path d="M0 -2.5l.8 -1.6" stroke="#5a3b1d" stroke-width=".6"/></g>';
-// Stallkatze (seit 2026-10-22): grau getigert, steht mit den Pfoten auf y = 0, schaut nach rechts. .kb = Beine, .kk = Kopf, .ks = Schwanz, .kr = Körper (kippt beim Sitzen)
+// Stallkatze (seit 2026-10-21): grau getigert, steht mit den Pfoten auf y = 0, schaut nach rechts. .kb = Beine, .kk = Kopf, .ks = Schwanz, .kr = Körper (kippt beim Sitzen)
 const KATZE='<g class="katze"><g class="kr"><path class="ks" d="M-4 -3.4q-3.2 -1 -3.4 -4.8" stroke="#858a91" stroke-width="1.1" fill="none" stroke-linecap="round"/><ellipse cy="-3.1" rx="4.2" ry="2.1" fill="#8f949b"/><path d="M-2.6 -4.9l.8 1.2M-.8 -5.1l.6 1.3M1 -5l.5 1.2" stroke="#6c7178" stroke-width=".6"/></g>'+
  '<path class="kb" d="M-2.8 -1.4v1.4M-1.4 -1.4v1.4M1.6 -1.4v1.4M3 -1.4v1.4" stroke="#6c7178" stroke-width="1" stroke-linecap="round"/>'+
  '<g class="kk"><circle cx="4.4" cy="-5.1" r="2" fill="#8f949b"/><path d="M3.1 -6.3l.3 -1.9l1.2 1.3ZM4.9 -6.7l1 -1.6l.6 1.7Z" fill="#8f949b"/><circle cx="5.3" cy="-5.3" r=".35" fill="#2b2321"/><circle cx="6.3" cy="-4.8" r=".3" fill="#d98a8a"/><path d="M6.4 -4.7l1.5 -.4M6.4 -4.4l1.5 .2" stroke="#eee" stroke-width=".2"/></g></g>';
-// Maus (seit 2026-10-22): klein, grau, schaut nach rechts, Pfoten auf y = 0
+// Maus (seit 2026-10-21): klein, grau, schaut nach rechts, Pfoten auf y = 0
 const MAUS='<g class="maus"><path d="M-1.8 -.8q-2 .2 -3 -1.2" stroke="#9b8f86" stroke-width=".35" fill="none"/><ellipse cy="-.9" rx="1.9" ry="1" fill="#8b8078"/><circle cx="1.7" cy="-1.2" r=".75" fill="#8b8078"/><circle cx="1.3" cy="-1.9" r=".5" fill="#c9a9a0"/><circle cx="2.2" cy="-1.3" r=".18" fill="#222"/></g>';
 // Frosch, steht mit den Füßen auf y = 0, schaut nach rechts; .kehle ist die Schallblase beim Quaken
 const FROSCH=`<g class="frosch"><ellipse cx="-2.2" cy="-1" rx="2.4" ry="1.1" fill="#3f7a2e"/><ellipse cy="-2.4" rx="3.4" ry="2.3" fill="#5aa13f"/><ellipse cx="2.3" cy="-3.2" rx="1.9" ry="1.5" fill="#5aa13f"/><circle class="kehle" cx="3" cy="-1.8" r="1.4" fill="#d9eaa0" opacity="0"/><circle cx="1.6" cy="-4.7" r="1" fill="#fff"/><circle cx="3.1" cy="-4.6" r="1" fill="#fff"/><circle cx="1.8" cy="-4.7" r=".45" fill="#111"/><circle cx="3.3" cy="-4.6" r=".45" fill="#111"/><path d="M1.6 -2.6q1.4 .7 2.6 -.2" stroke="#2d5a20" stroke-width=".35" fill="none"/><ellipse cx="1.4" cy="-.3" rx="1.2" ry=".4" fill="#3f7a2e"/></g>`;
@@ -188,7 +188,7 @@ function hofBuild(kind){
  const kidId=kind=='kid'?kid().id:null;
  if(HF.mistK!==kidId){HF.mist=[];HF.mistT=20;HF.mistK=kidId;HF.apfel=null;HF.frosch=null}
  if(kind!='kid'){HF.apfel=null;HF.frosch=null}
- HF.wellen=[];HF.katze=null;HF.maeuse=null;// Katze und Mäuse gehen beim Neuaufbau verloren (seit 2026-10-22)
+ HF.wellen=[];HF.katze=null;HF.maeuse=null;// Katze und Mäuse gehen beim Neuaufbau verloren (seit 2026-10-21)
  const old=Object.fromEntries(HF.horses.map(h=>[h.id,h]));
  const startX=i=>{const [a,b]=HF.kr[i];return i?a+40+Math.random()*(b-a-80):Math.min(b-30,Math.max(a+30,HF.cam+30+Math.random()*(W-60)))};
  HF.horses=hofSpecs(kind).map(s=>{s.ko=s.ko|0;const o=old[s.id]&&(old[s.id].ko|0)===s.ko?old[s.id]:null;return Object.assign({ph:0,am:0,g:'walk',ha:0,joy:0,state:'stand',t:R(1,3),dir:R(0,1)?1:-1,d:Math.random(),dd:.5,sw:Math.random()*6,x:startX(s.ko)},s,o?{x:o.x,d:o.d,dir:o.dir,state:o.state,t:o.t,ph:o.ph,am:o.am,g:o.g,ha:o.ha,dd:o.dd,ziel:kind=='kid'?o.ziel:null}:{})});
@@ -232,7 +232,7 @@ function hofBuild(kind){
   [[.12,.06],[.52,.13],[.9,.05]].map(([a,b],i)=>busch(a*WW,GY+1,6+b*40,i%2?P.bu:'#4f8a4a')).join('')+
   // Figuren der anderen Kinder (auf dem Startbild: aller Kinder) stehen hinter dem Zaun und schauen den Pferden zu
   figs.zaun.map((x,i)=>`<g class="fig" data-k="${x.id}" transform="translate(${r1(OX+(H0&&H0.ko.u[0]?[.545,.565,.355,.375,.585][i]:.43+i*.022)*WK)} ${GY-3}) scale(.3)">${figurBild(x.f)}</g>`).join('')+
-  // Gras hinter dem Zaun (seit 2026-10-22): wird vor dem Zaun gezeichnet, damit die Latten davor liegen
+  // Gras hinter dem Zaun (seit 2026-10-21): wird vor dem Zaun gezeichnet, damit die Latten davor liegen
   grasStreifen(WW,Math.round(WW/9),GY-5,GY+3,2.4,4,350,gras,frei)+
   `<g fill="#a9805a">${[GY-6,GY].map(y=>`<rect x="0" y="${y-1}" width="${WW}" height="2.2" rx=".8"/><rect x="0" y="${y+1.2}" width="${WW}" height=".8" fill="#7d5c3c" opacity=".5"/>`).join('')}</g>`+
   [...Array(Math.ceil(WW/28)+1)].map((_,i)=>`<rect x="${i*28}" y="${GY-12}" width="3.2" height="18" rx=".8" fill="#9b7449"/><rect x="${i*28}" y="${GY-12}" width="1.1" height="18" rx=".5" fill="#b78c5e"/>`).join('')+
@@ -250,7 +250,7 @@ function hofBuild(kind){
   `<g id="hv">${grasStreifen(WW,Math.round(WW/12),193,201,4,8,900,gras)}</g><g id="hfx"></g></g>`;
  // Schmetterlinge (vor den Pferden) und Regen bzw. Schnee (ganz vorn), beide fest im Bild, nicht mit der Kamera
  if(falterOk)s+=`<g id="hfa" pointer-events="none">${['#f4c430','#e8508f','#4aa3df'].map(falterSvg).join('')}</g>`;
- // Regen und Schnee liegen seit 2026-10-22 in einer eigenen Ebene über dem Bild (wetterEbene, nach svg.innerHTML)
+ // Regen und Schnee liegen seit 2026-10-21 in einer eigenen Ebene über dem Bild (wetterEbene, nach svg.innerHTML)
  s+=`<rect width="${W}" height="${WH}" fill="${P.tint}" opacity="${P.ta}" pointer-events="none"/><g id="htg" opacity="0" pointer-events="none"><rect id="htr" height="12" rx="6" fill="#fff" opacity=".92"/><text id="htt" y="8.6" font-size="7.5" text-anchor="middle" fill="#26331f"></text></g>`;
  svg.innerHTML=s;
  wetterEbene(W,trueb?WT:'',nacht);
@@ -363,12 +363,12 @@ function hofAkt(a,el){if(HF.kind!='kid')return;const k=kid();if(!k||k.hl)return;
  else if(a=='windrad')HF.wb=1;
  else if(a=='teich'){const x=itemX('teich');welle(x+R(-12,12),GY+23);
   if(!HF.frosch&&Math.random()<.25){HF.hap.insertAdjacentHTML('beforeend',FROSCH);HF.frosch={x,t:0,q:0,el:HF.hap.lastElementChild}}}
- // Heuballen (seit 2026-10-22): zu 20 % flitzen drei Mäuse heraus, wuseln kurz und verschwinden hinter dem Heu. Sonst raschelt der Ballen.
+ // Heuballen (seit 2026-10-21): zu 20 % flitzen drei Mäuse heraus, wuseln kurz und verschwinden hinter dem Heu. Sonst raschelt der Ballen.
  else if(a=='heu'){if(HF.maeuse){hofKick(1);return}if(RM)return;const x=itemX('heu');
   if((HF.zTest!=null?HF.zTest:Math.random())<.2)HF.maeuse=[0,1,2].map(i=>{HF.hap.insertAdjacentHTML('beforeend',MAUS);const d=[-1,1,i%2?1:-1][i];
    return{x0:x+d*(6+i*3),y0:GY+15,x1:x+d*(18+R(0,16)),y1:GY+19+R(0,8),t:-i*.15,el:HF.hap.lastElementChild}});
   else if(el){el.classList.remove('raschel');void el.getBBox();el.classList.add('raschel');setTimeout(()=>el.classList.remove('raschel'),700)}}
- // Stall (seit 2026-10-22): das Tor geht auf, die Stallkatze läuft ein Stück auf die Wiese, putzt sich und geht zurück, das Tor schließt sich
+ // Stall (seit 2026-10-21): das Tor geht auf, die Stallkatze läuft ein Stück auf die Wiese, putzt sich und geht zurück, das Tor schließt sich
  else if(a=='stall'){if(HF.katze){hofKick(1);return}if(RM)return;const x=itemX('stall');HF.hap.insertAdjacentHTML('beforeend',KATZE);
   HF.katze={x0:x,y0:GY+9,x1:x+R(-22,22),y1:GY+27,t:0,el:HF.hap.lastElementChild}}
  else if(a=='mist'&&el){const id=+el.dataset.id;HF.mist=HF.mist.filter(m=>m.id!=id);el.remove();herzen(HF.horses)}
@@ -430,7 +430,7 @@ function hofSpass(dt){
 function hofFrame(ts){
  HF.raf=requestAnimationFrame(hofFrame);
  // Ruhiger Hintergrund: nur kurz nach einer Interaktion animieren
- // Katze und Mäuse laufen immer zu Ende (seit 2026-10-22), auch wenn die Bilder auf langsamen Geräten länger brauchen
+ // Katze und Mäuse laufen immer zu Ende (seit 2026-10-21), auch wenn die Bilder auf langsamen Geräten länger brauchen
  if(!HF.run&&ts>HF.bis&&!HF.katze&&!HF.maeuse){hofStop();return}
  const dt=(ts-HF.last)/1000;if(dt<(HF.iv||.033))return;HF.last=ts;const d=Math.min(dt,.1);HF.t+=d;
  // Sparmodus für langsame Geräte: kommen die Bilder dauerhaft zu spät (unter etwa 24 pro Sekunde),

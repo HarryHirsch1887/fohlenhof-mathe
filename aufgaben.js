@@ -27,7 +27,7 @@ const T={5:[
 ['trick','Rechentricks',d=>{let a,b,n,r;
  if(d==1){r=R(1,3);a=100*R(1,5)-r;b=R(20,90);return[`${a} + ${b} = ?`,a+b,'Runde erst auf und gleiche dann aus.',`Runde ${a} auf ${a+r} auf (es sind ${r} mehr).\n${a+r} + ${b} = ${a+r+b}.\nDie ${r} wieder abziehen: ${a+r+b} − ${r} = ${a+b}.`]}
  if(d==2){b=4*R(3,24);return[`25 · ${b} = ?`,25*b,'25 · 4 = 100',`25 · 4 = 100, also ist 25 ein Viertel von 100.\n${b} : 4 = ${b/4}.\n${b/4} · 100 = ${25*b}.`]}
- // Stufe 3 (seit 2026-10-22): Paare bilden mit kleinen Zahlen. Vorher 1 + … + n mit n von 20 bis 100, zu groß zum Kopfrechnen in Klasse 5 (Testrunde),
+ // Stufe 3 (seit 2026-10-21): Paare bilden mit kleinen Zahlen. Vorher 1 + … + n mit n von 20 bis 100, zu groß zum Kopfrechnen in Klasse 5 (Testrunde),
  // und bei ungeradem n stimmte der Lösungsweg nicht ("35 : 2 Paare"). Jetzt immer eine gerade Anzahl Zahlen, drei Arten für genug Abwechslung.
  if(d==3){const art=R(0,2);
   if(art==0){n=2*R(5,10);return[`1 + 2 + 3 + … + ${n} = ?`,n*(n+1)/2,'Bilde Paare: erste + letzte Zahl, zweite + vorletzte …',`Bilde Paare: 1 + ${n} = ${n+1}, 2 + ${n-1} = ${n+1}, 3 + ${n-2} = ${n+1} …\nJedes Paar ergibt ${n+1}. Bei ${n} Zahlen gibt es ${n} : 2 = ${n/2} Paare.\n${n/2} · ${n+1} = ${n*(n+1)/2}.`]}
