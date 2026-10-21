@@ -214,8 +214,7 @@ function ui(){let h='';PZ=0;
   (kannAnordnen(H)?`<p class="small">„Neu anordnen“ ist kostenlos und würfelt ${[H.bl&&'die Form auf dem Kopf',H.so&&'die Socken an jedem Bein',H.coat=='schecke'&&'die Flecken'].filter(Boolean).join(', ').replace(/, ([^,]*)$/,' und $1')} neu aus.</p>`:''))+
  teil('Hof ausbauen',(gesperrt(k,'it')?`<p class="small">Gegenstände für den Hof kannst du kaufen, sobald du genug Erfahrung hast:</p>${xpb(k,'it')}`:'')+
   `<div class="grid">${[...ITEMS].sort((x,y)=>x[2]-y[2]).map(([id,n,p])=>{const zu=gesperrt(k,'it',H.it[id]);return`<button class="pick it ${H.it[id]?'on':''}${zu?' gesperrt':''}" onclick="wish('it','${id}')"${zu?' disabled':''}>${itemBild(id)}${n}<br>${H.it[id]?'gebaut':zu?'gesperrt':preis(p)}</button>`}).join('')}</div><p class="small">Gebaute Gegenstände siehst du oben auf deinem Hof und im Rundflug.</p>`)+
- teil('Fähigkeiten',(gesperrt(k,'sk')?`<p class="small">Training gibt es, sobald du genug Erfahrung hast:</p>${xpb(k,'sk')}`:'')+
-  SK.map(([id,n])=>{let l=H.sk[id]||0;return`<div class="card row sp"><span>${n} ${dots(l)}</span>${l<5?`<button class="alt" onclick="wish('sk','${id}')"${gesperrt(k,'sk')?' disabled':''}>Training${gesperrt(k,'sk')?'':' · '+preis(10*(l+1))}</button>`:'<span class="small">Meister</span>'}</div>`}).join('')+`<p class="small">Fähigkeiten zeigen sich als Bewegung, wenn dein Pferd sich über eine richtige Antwort freut.</p>`)+
+ teil('Training',`<div class="card"><b>Das Training kommt bald!</b><p class="small" style="margin:4px 0 0">Bald kannst du dein Pferd trainieren. Sammle bis dahin schon Äpfel und Erfahrung.</p></div>`)+
  teil('Lieblingspferde aus dem Stall',(gesperrt(k,'lieb')?`<p class="small">Die Lieblingspferde kommen auf deinen Hof, sobald du genug Erfahrung hast:</p>${xpb(k,'lieb')}`:'')+
   `<div class="grid">${LIEB.map(([id,n,bs,sp])=>{const hat=H.lp.includes(id),zu=gesperrt(k,'lieb',hat);return`<button class="pick ${hat?'on':''}${zu?' gesperrt':''}" onclick="wish('lp','${id}')" aria-pressed="${hat}"${zu?' disabled':''}><svg viewBox="${PFVB}">${pfBild({...sp,bl:0,so:0})}</svg><b>${n}</b><br><span class="small">${bs}</span><br>${hat?'auf dem Hof':zu?'gesperrt':preis(PREIS.lieb)}</button>`}).join('')}</div><p class="small">Lieblingspferde leben als Freunde auf deinem Hof, wenn dort Platz ist. Tippe oben auf ein Pferd, dann siehst du seinen Namen.</p>`)+
  teil('Zweites Pferd',k.h2?`<p class="small">${esc(k.h2.name)} lebt auch auf deinem Hof. In der Kind-Ansicht kannst du wechseln, wer mit dir rechnet.</p>`:ausgewachsen(k)?`<button class="go" onclick="zweitWahl()">Zweites Fohlen aussuchen · ${preis(ZWEIT)}</button><p class="small">Das neue Fohlen rechnet dann mit dir und wächst. ${esc(H.name)} bleibt auf deinem Hof und braucht dort einen Platz.</p>`:`<p class="small">Wenn ${esc(H.name)} ausgewachsen ist, kannst du ein zweites Fohlen bekommen (${ZWEIT} Äpfel).</p>`)+
@@ -467,7 +466,7 @@ function hinweis(m){note=m;ui();const n=$('#app p.no');if(n&&n.textContent)n.scr
 function wish(t,c){let k=kid(),H=hh(k),no=()=>hinweis('Dafür fehlen noch Äpfel.');note='';
  // zu wenig Erfahrung: nichts kaufen (Besitz bleibt nutzbar, siehe gesperrt())
  const xp=(g,hat)=>{if(!gesperrt(k,g,hat))return 0;hinweis(`Dafür brauchst du ${XPF[g]} Erfahrung. Du hast ${k.xp}.`);return 1};
- if(t=='sk'){if(xp('sk'))return;let l=H.sk[c]||0,p=10*(l+1);if(l>=5)return;if((k.ap||0)<p)return no();k.ap-=p;H.sk[c]=l+1}
+ if(t=='sk'){return}// Training ist vorerst abgeschaltet (2026-10-21), kommt später wieder
  else if(t=='coat'){if(xp('coat',H.coats.includes(c)))return;if(!H.coats.includes(c)){if((k.ap||0)<25)return no();k.ap-=25;H.coats.push(c)}H.coat=c}
  else if(t=='ma'||t=='zk'||t=='gu'){
   if(t=='ma'){if(xp('ma'))return;H.ma=c;if(c!='lang')H.zo=0}

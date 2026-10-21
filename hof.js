@@ -122,6 +122,30 @@ const WETTER=['klar','regen','schnee','regenbogen'];
 function wetter(d){d=d||new Date();const q=typeof location!='undefined'?new URLSearchParams(location.search).get('wetter'):null;if(WETTER.includes(HF.wTest))return HF.wTest;if(WETTER.includes(q))return q;
  const blk=ms=>{const t=new Date(ms),tag=Math.floor((t-new Date(t.getFullYear(),0,1))/864e5),z=sr(t.getFullYear()*.37+tag*8+Math.floor(t.getHours()/3)+.5),m=t.getMonth();return m==11||m<2?(z<.3?'schnee':'klar'):(z<.15?'regen':'klar')};
  const jetzt=blk(d.getTime());if(jetzt!='klar')return jetzt;const h=d.getHours();return h>=7&&h<19&&blk(d.getTime()-3*36e5)=='regen'?'regenbogen':'klar'}
+// ---------- Themen auf der Startseite (seit 2026-10-21) ----------
+// Nur die Startseite (kind 'home') bekommt eine Themen-Optik, nicht die Höfe der Kinder. Halloween: 20.10. bis 02.11.
+// Zum Ausprobieren: Adresse mit ?thema=halloween bzw. ?thema=aus. Für Tests: HF.thTest ('halloween' oder '')
+const THEMEN=['halloween'];
+function thema(d){d=d||new Date();const q=typeof location!='undefined'?new URLSearchParams(location.search).get('thema'):null;
+ if(HF.thTest!=null)return HF.thTest;if(q!=null)return THEMEN.includes(q)?q:'';
+ const m=d.getMonth(),t=d.getDate();return(m==9&&t>=20)||(m==10&&t<=2)?'halloween':''}
+// Farben im Halloween-Look je Tageszeit (violetter Himmel, orange Horizont, gedämpfte Wiese)
+const HAL={
+ tag:{t:'#5b3f8f',m:'#a2679d',b:'#f2a465',far:'#8a6d9e',mid:'#7d8f55',g1:'#8da35a',g2:'#6f8c47',w1:'#e6d2ee',w2:'#b595c9',bu:'#566b3d',tint:'#4a2070',ta:.1},
+ abend:{t:'#3b2766',m:'#8a3f7a',b:'#f08a4b',far:'#6d5a8a',mid:'#5d7550',g1:'#76924c',g2:'#5b7a3c',w1:'#d9b5d6',w2:'#a46a9c',bu:'#4a5f35',tint:'#4a1a6a',ta:.16},
+ nacht:{t:'#100824',m:'#2a1450',b:'#4b2470',far:'#2e2450',mid:'#2a4235',g1:'#365a3a',g2:'#2a4a30',w1:'#4a3a7a',w2:'#36295c',bu:'#1f3828',tint:'#1a0836',ta:.3}};
+const thPal=(P,TH)=>TH=='halloween'?{...P,...HAL[P.n=='morgen'?'tag':P.n]}:P;
+// Kürbis mit Gesicht: abends und nachts leuchtet er von innen
+function kuerbis(x,y,s,gesicht,licht){const f=licht?'#ffe066':'#3a1a05';
+ return`<g class="kuerbis" transform="translate(${r1(x)} ${r1(y)}) scale(${s})">`+(licht&&gesicht?`<ellipse cy="-6" rx="15" ry="11" fill="#ffb347" opacity=".35"/>`:'')+
+  `<ellipse cy="0" rx="9" ry="1.6" fill="#000" opacity=".18"/><ellipse cx="-4.6" cy="-5.2" rx="5.4" ry="5.8" fill="#d9660a"/><ellipse cx="4.6" cy="-5.2" rx="5.4" ry="5.8" fill="#d9660a"/><ellipse cy="-5.6" rx="5.2" ry="6.4" fill="#f58a1f"/>`+
+  `<path d="M-2.6 -11Q-4.2 -5.6 -2.6 -.4M2.6 -11Q4.2 -5.6 2.6 -.4" stroke="#c45f08" stroke-width=".5" fill="none"/><path d="M-.9 -11.4Q-.6 -14 1.8 -14.6L2.2 -13.2Q1 -12.6 1 -11.2Z" fill="#4a6b2a"/>`+
+  (gesicht?`<path d="M-5 -6.2l1.9 -2.5l1.9 2.5zM1.2 -6.2l1.9 -2.5l1.9 2.5z" fill="${f}"/><path d="M-4.6 -3.4l1.3 1.3l1.3 -1l1.3 1.1l1.3 -1.1l1.3 1l1.3 -1.3l-.2 1.8q-1.9 2 -4.8 .1z" fill="${f}"/>`:`<path d="M-3.4 -7.3q1.5 .8 3 0M.4 -7.3q1.5 .8 3 0" stroke="#7a3604" stroke-width=".6" fill="none"/>`)+`</g>`}
+function kuerbisse(WW,frei,P){const n=Math.max(6,Math.round(WW/105)),licht=P.n!='tag'&&P.n!='morgen';
+ return[...Array(n)].map((_,i)=>[(i+.5)/n*WW+(sr(i+500)-.5)*70,GY+6+sr(i+510)*28,1.1+sr(i+520)*.8,i%4!=3]).filter(([x,y])=>frei(x,y)).sort((a,b)=>a[1]-b[1]).map(([x,y,sc,g])=>kuerbis(x,y,sc,g,licht)).join('')}
+// Fledermaus: Flügel schlagen über den Pfad (k = Ausschlag), der Körper bleibt in der Mitte
+const fledPfad=k=>{k=+k;const a=r1(-k*2-1),b=r1(-k*1.5),c=r1(-k*1.5+2.2),d=r1(-k*1.5+1.2);return`M-1 -1.8L-.4 -.5Q-3 ${a} -6.5 ${b}Q-5.5 ${c} -4.2 ${d}Q-3 1.4 -1.8 .8Q-.9 1.8 0 1.6Q.9 1.8 1.8 .8Q3 1.4 4.2 ${d}Q5.5 ${c} 6.5 ${b}Q3 ${a} .4 -.5L1 -1.8L0 -1.2Z`};
+const FLED=`<path class="vogel fled" d="${fledPfad(1)}" fill="#1b1030"/>`;
 // Schmetterling (von oben, Flügel schlagen über die Breite) und Vogel (Flügelschlag über den Pfad)
 const falterSvg=(c,i)=>`<g class="falter" id="sf${i}"><g class="fl"><ellipse cx="-2.3" cy="-1.2" rx="2.4" ry="2.9" fill="${c}"/><ellipse cx="2.3" cy="-1.2" rx="2.4" ry="2.9" fill="${c}"/><ellipse cx="-1.6" cy="1.7" rx="1.5" ry="1.8" fill="${c}" opacity=".8"/><ellipse cx="1.6" cy="1.7" rx="1.5" ry="1.8" fill="${c}" opacity=".8"/></g><rect x="-.35" y="-2.6" width=".7" height="5.4" rx=".35" fill="#3a2a1a"/></g>`;
 const VOGEL='<path class="vogel" d="M-4 0Q-2 -2 0 0Q2 -2 4 0" fill="none" stroke="#3a3f4a" stroke-width=".9" stroke-linecap="round"/>';
@@ -182,7 +206,7 @@ function hofBuild(kind){
  HF.cam=Math.min(Math.max(HF.cam?HF.cam+dOX:OX+(WK-W)/2,0),WW-W);
  if(dOX){HF.horses.forEach(h=>{h.x+=dOX;if(h.ziel!=null)h.ziel+=dOX});HF.mist.forEach(m=>m.x+=dOX);if(HF.apfel)HF.apfel.x+=dOX;if(HF.frosch)HF.frosch.x+=dOX}
  svg.setAttribute('viewBox',`0 0 ${W} ${WH}`);svg.setAttribute('preserveAspectRatio','xMidYMid meet');
- const now=new Date(),P=pal(HF.hTest!=null?HF.hTest:now.getHours()+now.getMinutes()/60),items=kind=='kid'?Object.keys(hh(kid()).it):ITEMS.map(i=>i[0]);
+ const now=new Date(),TH=kind=='home'?thema(now):'',P=thPal(pal(HF.hTest!=null?HF.hTest:now.getHours()+now.getMinutes()/60),TH),items=kind=='kid'?Object.keys(hh(kid()).it):ITEMS.map(i=>i[0]);
  HF.pal=P;HF.kind=kind;
  // Interaktionen: laufende Animationen gehen beim Neuaufbau verloren, Pferdeäpfel bleiben (nur beim selben Kind)
  const kidId=kind=='kid'?kid().id:null;
@@ -197,9 +221,9 @@ function hofBuild(kind){
  const belegt=[...ITEMS.filter(i=>items.includes(i[0])&&FUSS[i[0]]).map(i=>{const x=Math.round(OX+i[3]*WK),[w,b]=FUSS[i[0]];return[x-w,x+w,b]}),...geb.belegt],frei=(x,y)=>!belegt.some(([a,b,f])=>x>a&&x<b&&y<f+1);
  // Figuren: auf dem Hof eines Kindes die eigene vorn, alle anderen (höchstens 5) hinter dem Zaun
  const mitF=S.kids.filter(x=>x.f),eig=kind=='kid'?mitF.find(x=>x.id==kidId):null,figs={eigen:eig,zaun:mitF.filter(x=>x!==eig).slice(0,5)};
- const nacht=P.n=='nacht',gras=nacht?['#2f5a38','#376640','#28503a']:['#6d9f4c','#7fb258','#5f9245','#86b960'];
+ const nacht=P.n=='nacht',gras=nacht?['#2f5a38','#376640','#28503a']:TH?['#6f8f45','#7c9b4c','#5d7e3c','#86a455']:['#6d9f4c','#7fb258','#5f9245','#86b960'];
  // Wetter: bei Regen und Schnee trüber Himmel ohne Sonne, Mond und Sterne. Schmetterlinge nur tagsüber von April bis Oktober bei gutem Wetter, Vögel nicht nachts und nicht bei Regen oder Schnee.
- const WT=wetter(now),trueb=WT=='regen'||WT=='schnee',mo=HF.mTest!=null?HF.mTest:now.getMonth(),falterOk=P.n=='tag'&&!trueb&&mo>=3&&mo<=9,voegelOk=!nacht&&!trueb;HF.wetter=WT;
+ const WT=wetter(now),trueb=WT=='regen'||WT=='schnee',mo=HF.mTest!=null?HF.mTest:now.getMonth(),falterOk=P.n=='tag'&&!trueb&&mo>=3&&mo<=9,voegelOk=TH?!trueb:!nacht&&!trueb;HF.wetter=WT;HF.thema=TH;
  // Farbverläufe: Himmel, Sonnen- bzw. Mondschein, Wolken, Wiese, Teich, Schatten an der Stallwand
  // Himmel: bei Regen und Schnee grau (nachts dunkelgrau)
  const sky=trueb?(nacht?['#141b2b','#222b3d','#323c52']:['#7f8c99','#a7b2bc','#ccd3d9']):[P.t,P.m,P.b];
@@ -211,6 +235,8 @@ function hofBuild(kind){
   `<linearGradient id="wandG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient></defs>`+
   `<rect width="${W}" height="${WH}" fill="url(#sk)"/>`;
  if(trueb){}// kein Sonnen- oder Mondschein, keine Sterne
+ else if(TH=='halloween')s+=(nacht||P.n=='abend'?[...Array(nacht?26:12)].map((_,i)=>`<circle cx="${(sr(i+3)*W).toFixed(1)}" cy="${(sr(i+90)*70).toFixed(1)}" r="${(.4+sr(i)*.8).toFixed(1)}" fill="#fff" opacity="${(.5+sr(i+7)*.4).toFixed(2)}"/>`).join(''):'')+
+  `<circle cx="${W*.78}" cy="42" r="40" fill="#ffb347" opacity=".14"/><circle cx="${W*.78}" cy="42" r="27" fill="#ffb347" opacity=".2"/><circle cx="${W*.78}" cy="42" r="15" fill="#ffd27a"/><circle cx="${W*.78-4}" cy="38" r="2.4" fill="#f0b45a"/><circle cx="${W*.78+4.5}" cy="46" r="1.8" fill="#f0b45a"/><circle cx="${W*.78+3}" cy="35" r="1.2" fill="#f0b45a"/>`;
  else if(nacht)s+=[...Array(22)].map((_,i)=>`<circle cx="${(sr(i+3)*W).toFixed(1)}" cy="${(sr(i+90)*80).toFixed(1)}" r="${(.4+sr(i)*.8).toFixed(1)}" fill="#fff" opacity="${(.5+sr(i+7)*.4).toFixed(2)}"/>`).join('')+
   `<circle cx="${W*.22}" cy="34" r="30" fill="url(#sglow)"/><circle cx="${W*.22}" cy="34" r="9" fill="#f4f1de"/><circle cx="${W*.22-2.5}" cy="32" r="1.6" fill="#d9d4bd"/><circle cx="${W*.22+2.5}" cy="37" r="1.1" fill="#d9d4bd"/>`;
  else s+=`<circle cx="${W*.8}" cy="${P.sy}" r="34" fill="url(#sglow)"/><circle cx="${W*.8}" cy="${P.sy}" r="11" fill="${P.n=='tag'?'#fff3c4':P.glow}"/>`;
@@ -218,7 +244,7 @@ function hofBuild(kind){
  // Bei Regen und Schnee doppelt so viele, größere Wolken
  s+=`<g id="hc">${[...Array(trueb?8:4).keys()].map(i=>`<g class="cl" data-x="${(sr(i+11)*(W+160)).toFixed(0)}" data-y="${(14+sr(i+21)*40).toFixed(0)}" data-v="${(2+sr(i+31)*4).toFixed(1)}" fill="url(#wolkeG)" opacity="${nacht?.6:.95}"><g transform="scale(${trueb?1.5:1})"><ellipse cx="0" cy="0" rx="18" ry="5.5"/><circle cx="-8" cy="-3" r="6.5"/><circle cx="2" cy="-5.5" r="8"/><circle cx="10" cy="-2" r="5.5"/></g></g>`).join('')}</g>`;
  // Vögel ziehen über den Himmel
- if(voegelOk)s+=`<g id="hvo">${VOGEL}${VOGEL}${VOGEL}</g>`;
+ if(voegelOk)s+=TH=='halloween'?`<g id="hvo">${FLED}${FLED}${FLED}${FLED}</g>`:`<g id="hvo">${VOGEL}${VOGEL}${VOGEL}</g>`;
  // Ferne Hügel (dunstig) und nahe Hügel mit Büschen
  s+=`<g id="hl0">${hill(WW,96,9,60,1,P.far)}</g>`;
  const cam0=OX+(WK-W)/2;
@@ -239,6 +265,8 @@ function hofBuild(kind){
   ITEMS.filter(i=>items.includes(i[0])&&DR[i[0]]).map(i=>{const z=DR[i[0]](Math.round(OX+i[3]*WK)),u=UMR[i[0]]?`<g stroke="#3a261466" stroke-width=".55" stroke-linejoin="round">${z}</g>`:z;
    return kind=='kid'&&AKT[i[0]]?`<g data-act="${i[0]}" style="cursor:pointer">${u}</g>`:u}).join('')+geb.s+
   grasStreifen(WW,Math.round(WW/6),GY+6,GY+14,3,5.5,200,gras,frei)+
+  // Halloween (nur Startseite): Kürbisse auf der Wiese
+  (TH=='halloween'?kuerbisse(WW,frei,P):'')+
   // Eigene Figur steht auf dem Hof vor dem Zaun
   (figs.eigen?`<g class="fig eigen" data-k="${figs.eigen.id}" transform="translate(${r1(OX+(H0&&H0.ko.u[0]?FIGX.geb:FIGX.frei)*WK)} ${GY+FIGX.y}) scale(${FIGX.s})">${figurBild(figs.eigen.f)}</g>`:'')+
   // Figuren der Freundinnen (Besuch) stehen auch vorn auf der Wiese, etwas kleiner
@@ -284,7 +312,8 @@ function hofDraw(dt){
  (HF.falter||[]).forEach(f=>{const x=um(f.x+t*f.v,W+40)-20,y=f.y+Math.sin(t*1.3+f.ph)*8+Math.sin(t*3.1+f.ph)*2;
   f.el.setAttribute('transform',`translate(${x.toFixed(1)} ${y.toFixed(1)})`);f.fl.setAttribute('transform',`scale(${(.25+.75*Math.abs(Math.sin(t*11+f.ph))).toFixed(2)} 1)`)});
  (HF.voegel||[]).forEach((b,i)=>{const x=um(b.x+t*b.v+i*25,W+160)-40,k=(Math.sin(t*7+b.ph)*2.2).toFixed(1);
-  b.el.setAttribute('d',`M-4 0Q-2 ${-k} 0 0Q2 ${-k} 4 0`);b.el.setAttribute('transform',`translate(${x.toFixed(1)} ${(b.y+Math.sin(t*.6+b.ph)*3).toFixed(1)})`)});
+  const fl=b.el.classList.contains('fled');
+  b.el.setAttribute('d',fl?fledPfad((Math.sin(t*9+b.ph)*1.6).toFixed(1)):`M-4 0Q-2 ${-k} 0 0Q2 ${-k} 4 0`);b.el.setAttribute('transform',`translate(${x.toFixed(1)} ${(b.y+Math.sin(t*.6+b.ph)*(fl?5:3)+(fl?8:0)).toFixed(1)})${fl?' scale(1.7)':''}`)});
  const fly=HF.mode=='fly',kr0=HF.kr||[[0,WW]];
  HF.horses.forEach(h=>{
   // Jedes Pferd bleibt auf seiner Koppel; im Hintergrund zusätzlich in der Nähe des Bildausschnitts
@@ -456,7 +485,7 @@ function hofSync(force){
  const k=(v=='kid'||v=='wish'||v=='rassen'||v=='done'||v=='einladen')?kid():null,kind=k&&k.h?'kid':'home';
  const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.ma,H.coats.join(),Object.keys(H.it).join(),H.lp.join('+'),JSON.stringify(H.ko),k.h2?[k.h2.name,k.h2.coat,k.h2.st,k.h2.bl,k.h2.so,k.h2.ma].join('/'):'',JSON.stringify(k.bs||[])].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.bl,x.h.so,x.h.ma,x.h2?x.h2.coat+x.h2.st:''].join():'').join(';');
  const fsig=S.kids.map(x=>x.f?[x.id,x.f.g,x.f.hf,x.f.ha,x.f.lg,x.f.sh].join(''):'').join();
- const key=[kind,sig,fsig,pal(new Date().getHours()).n,wetter(),fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
+ const key=[kind,sig,fsig,pal(new Date().getHours()).n,wetter(),kind=='home'?thema():'',fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
  if(force||key!=HF.key){HF.key=key;hofBuild(kind)}
  hofRun()}
 function hofTap(h){
