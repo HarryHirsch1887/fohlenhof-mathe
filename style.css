@@ -148,3 +148,9 @@ body.fly #hwetter{height:100%;z-index:61}body.nohof #hwetter{visibility:hidden}
 @media(prefers-reduced-motion:reduce){#hwetter svg,#hwetter .pendel,#hof .raschel{animation:none}}
 /* Hinweis beim Hineinscrollen mit etwas Abstand zum Bildschirmrand (seit 2026-10-21) */
 #app p.no{scroll-margin:24px}
+/* Training (seit 2026-10-22): Longierzirkel, Sterne, Zeitbalken */
+.trsz{width:100%;max-width:560px;display:block;margin:8px auto;border-radius:14px}
+.trs{color:#d9a21b;font-size:19px;letter-spacing:1px;white-space:nowrap}.trs i{font-style:normal;color:var(--line)}
+.trk{padding:10px 12px}.trk .go{margin-top:6px}
+.bar.trzeit{height:12px;margin:6px 0}.bar.trzeit b{transition:none;background:#e2b24a}
+.trinfo{font-size:17px;margin:10px 0 4px}
