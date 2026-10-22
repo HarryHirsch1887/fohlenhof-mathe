@@ -148,6 +148,8 @@ const pick=(c)=>`<button class="pick ${CH==c?'on':''}" onclick="CH='${c}';ui()" 
 function ui(){let h='';PZ=0;
  if(v=='koppeln')v='wish';// seit 2026-10-21 stehen Koppeln, Unterstände und Stall direkt im Wunschbaum
  if(v!='home'){EIN='';EINPIN=false}// Einrichtungsschritt gilt nur auf der Startseite (sonst käme z. B. "Kinder anlegen" ohne PIN zurück)
+ if(v!='parent'||open){PINI=0;PINR=0}// verstecktes "i" der PIN-Seite: beim Verlassen wieder unsichtbar
+ if(v!='kid')TRNOTE='';// Hinweis im Training nur, solange die Kind-Ansicht offen ist
  if(!S.mo&&v=='besuch')v='home';// Besuchs-Link auf einem neuen Gerät: erst die Startabfrage, der Besuch (BES) wartet
  if(v=='home'&&(!S.mo||EIN=='kinder')){h=startAbfrage()}
  else if(v=='home'){h=`<h1>Pferdehof Mathe</h1><p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[stg(k)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
@@ -196,7 +198,9 @@ function ui(){let h='';PZ=0;
  <p class="small">${limS(k)?`Noch ${rest} Minute${rest>1?'n':''} für heute · `:''}${k.xp} Erfahrung · Serie ${k.s} · Rekord ${k.best}${mcount(k)?` · Fehlerheft: ${mcount(k)} zum Wiederholen`:''}</p>
  ${st<D3AB?'':`${d3Fenster('')}<p class="small" style="margin-top:0">Wische über das Bild, um ${esc(k.h.name)} von allen Seiten zu sehen.</p>`}
  <h2 id="themen">Thema wählen</h2>`+themen(k)+
- `<h2>Wunschbaum</h2>${k.hl?`<p class="small">Der Wunschbaum öffnet sich wieder, wenn du eine Runde mit mindestens ${FREI} von 10 richtig geschafft hast.</p>`:`<button class="big" onclick="v='wish';note='';ui()"><span>Pferderasse, Mähne und Abzeichen für ${esc(k.h.name)}</span><span class="ap">${AP}</span></button>`}<h2>Abzeichen</h2>`+BD.map(b=>`<span class="badge ${k.b.includes(b[0])?'':'off'}">${b[1]}</span>`).join('')}
+ `<h2>Wunschbaum</h2>${k.hl?`<p class="small">Der Wunschbaum öffnet sich wieder, wenn du eine Runde mit mindestens ${FREI} von 10 richtig geschafft hast.</p>`:`<button class="big" onclick="v='wish';note='';ui()"><span>Pferderasse, Mähne und Abzeichen für ${esc(k.h.name)}</span><span class="ap">${AP}</span></button>`}`+
+ // Training (seit 2026-10-22 hier statt im Wunschbaum, training.js), bei gesperrtem Hof wie der Wunschbaum zu
+ `<h2 id="training">Training</h2>${k.hl?`<p class="small">Das Training geht wieder, wenn du eine Runde mit mindestens ${FREI} von 10 richtig geschafft hast.</p>`:trTeil(k)}<h2>Abzeichen</h2>`+BD.map(b=>`<span class="badge ${k.b.includes(b[0])?'':'off'}">${b[1]}</span>`).join('')}
  // Wunschbaum (umgebaut 2026-10-21 nach der ersten Testrunde): Bereiche nach Erfahrung, getrennt durch Linien (section.wb).
  // Gesperrtes zeigt einen Balken "1250 von 3500 Erfahrung" statt "ab 3500 Erfahrung". Pferderassen auf eigener Seite (v='rassen'),
  // Hof-Gegenstände mit kleinem Bild, "Unterstand & Stall" und "Koppeln" direkt hier (früher eigene Ansicht v='koppeln').
@@ -219,7 +223,6 @@ function ui(){let h='';PZ=0;
   (kannAnordnen(H)?`<p class="small">„Neu anordnen“ ist kostenlos und würfelt ${[H.bl&&'die Form auf dem Kopf',H.so&&'die Socken an jedem Bein',H.coat=='schecke'&&'die Flecken'].filter(Boolean).join(', ').replace(/, ([^,]*)$/,' und $1')} neu aus.</p>`:''))+
  teil('Hof ausbauen',(gesperrt(k,'it')?`<p class="small">Gegenstände für den Hof kannst du kaufen, sobald du genug Erfahrung hast:</p>${xpb(k,'it')}`:'')+
   `<div class="grid">${[...ITEMS].sort((x,y)=>x[2]-y[2]).map(([id,n,p])=>{const zu=gesperrt(k,'it',H.it[id]);return`<button class="pick it ${H.it[id]?'on':''}${zu?' gesperrt':''}" onclick="wish('it','${id}')"${zu?' disabled':''}>${itemBild(id)}${n}<br>${H.it[id]?'gebaut':zu?'gesperrt':preis(p)}</button>`}).join('')}</div><p class="small">Gebaute Gegenstände siehst du oben auf deinem Hof und im Rundflug.</p>`)+
- teil('Training',trTeil(k))+
  teil('Lieblingspferde aus dem Stall',(gesperrt(k,'lieb')?`<p class="small">Die Lieblingspferde kommen auf deinen Hof, sobald du genug Erfahrung hast:</p>${xpb(k,'lieb')}`:'')+
   `<div class="grid">${LIEB.map(([id,n,bs,sp])=>{const hat=H.lp.includes(id),zu=gesperrt(k,'lieb',hat);return`<button class="pick ${hat?'on':''}${zu?' gesperrt':''}" onclick="wish('lp','${id}')" aria-pressed="${hat}"${zu?' disabled':''}><svg viewBox="${PFVB}">${pfBild({...sp,bl:0,so:0})}</svg><b>${n}</b><br><span class="small">${bs}</span><br>${hat?'auf dem Hof':zu?'gesperrt':preis(PREIS.lieb)}</button>`}).join('')}</div><p class="small">Lieblingspferde leben als Freunde auf deinem Hof, wenn dort Platz ist. Tippe oben auf ein Pferd, dann siehst du seinen Namen.</p>`)+
  teil('Zweites Pferd',k.h2?`<p class="small">${esc(k.h2.name)} lebt auch auf deinem Hof. In der Kind-Ansicht kannst du wechseln, wer mit dir rechnet.</p>`:ausgewachsen(k)?`<button class="go" onclick="zweitWahl()">Zweites Fohlen aussuchen · ${preis(ZWEIT)}</button><p class="small">Das neue Fohlen rechnet dann mit dir und wächst. ${esc(H.name)} bleibt auf deinem Hof und braucht dort einen Platz.</p>`:`<p class="small">Wenn ${esc(H.name)} ausgewachsen ist, kannst du ein zweites Fohlen bekommen (${ZWEIT} Äpfel).</p>`)+
@@ -261,7 +264,8 @@ function ui(){let h='';PZ=0;
  if(v=='train')h=trSeite();
  if(v=='bye'){let k=kid();h=`<h1>Bis morgen, ${esc(k.name)}!</h1><div class="card">${k.h?scene(k):''}<p>Für heute sind deine ${limM(k)} Minuten auf dem Hof um.${k.h?` ${esc(k.h.name)} freut sich, wenn du morgen wiederkommst.`:''}</p>${k.h&&stg(k)<3&&heute(k)?'<p class="small">Heute hast du gerechnet, der Tag zählt fürs Wachstum.</p>':''}</div><button class="go" onclick="v='home';ui()">Tschüss</button>`}
  if(v=='parent'){h=`<button class="alt" onclick="v='home';lock()">Zurück</button><h1>${S.pin?'Eltern-Ansicht':'Einstellungen'}</h1>`;
- if(S.pin&&!open)h+=`<div class="card"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p></div>`;
+ if(S.pin&&!open)h+=`<div class="card pinkarte"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p>${PINI&&!PINR?`<button class="pini" onclick="PINR=1;ui()" aria-label="PIN zurücksetzen">i</button>`:''}</div>`+
+  (PINR?`<div class="card"><b>PIN vergessen?</b><p class="small">Lege eine neue PIN fest (mindestens 4 Zeichen). Danach ist die Eltern-Ansicht offen.</p><input id="pinr" type="password" inputmode="numeric" maxlength="8" aria-label="Neue PIN" onkeydown="if(event.key=='Enter')pinReset()"> <button onclick="pinReset()">Neue PIN speichern</button> <button class="alt" onclick="PINI=0;PINR=0;ui()">Abbrechen</button><p class="no">${pw}</p></div>`:'');
  else{h+=S.kids.map(k=>`<div class="card"><div class="row sp"><b>${esc(k.name)}</b><span>Klasse <select onchange="gr(${k.id},this.value)" aria-label="Klasse">${[5,6,7,8].map(c=>`<option ${k.g==c?'selected':''}>${c}</option>`).join('')}</select></span></div>
  <p class="small">${k.h?esc(k.h.name)+' · '+GS[stg(k)].n+' · ':''}${k.h2?'zweites Pferd '+esc(k.h2.name)+' · '+GS[k.h2.st||0].n+' · ':''}${k.h&&stg(k)<3?`Tag ${serie(k)} von ${TAGE[stg(k)]} bis „${GS[stg(k)+1].n}“ · `:''}heute ${limS(k)?`${Math.min(limM(k),Math.floor(zeit(k)/60))} von ${limM(k)} Minuten`:`${Math.floor(zeit(k)/60)} Minuten (kein Limit)`} · ${k.xp} Erfahrung · ${k.ap||0} Äpfel · ${k.hu||0} Hufeisen · ${k.r} von ${k.total} Aufgaben richtig (${k.total?Math.round(k.r/k.total*100):0} %) · Rekordserie ${k.best} · Fehlerheft ${mcount(k)} offen</p>
  <p class="small" style="margin:6px 0"><label>Zeit pro Tag: <select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></label></p>
@@ -385,7 +389,7 @@ function einKind(){
  if(frisch&&!BES)sel(S.kids[0].id);else einWeiter()}
 function einFertig(){EIN='';einWeiter()}
 function einWeiter(){v=BES?'besuch':'home';ui();scrollTo(0,0)}
-function sel(id){cur=id;ZW=0;const k=kid();if(!k)return;if(!k.h&&!k.f)FE={...FIGUR0};v=ausZeit(k)?'bye':!k.h&&!k.f?'figur':'kid';ui();scrollTo(0,0)}
+function sel(id){cur=id;ZW=0;TRNOTE='';const k=kid();if(!k)return;if(!k.h&&!k.f)FE={...FIGUR0};v=ausZeit(k)?'bye':!k.h&&!k.f?'figur':'kid';ui();scrollTo(0,0)}
 // Figur: Entwurf FE bearbeiten und übernehmen
 let FE={...FIGUR0};
 function figurEdit(){FE={...FIGUR0,...(kid().f||{})};note='';v='figur';ui();scrollTo(0,0)}
@@ -421,10 +425,12 @@ const KNHINWEIS=`Du hast ${KNMAX} Knobelrunden hintereinander gerechnet. Schaffe
 const themaKnopf=(k,key)=>{const zu=knobelZu(k,key);return`<button class="big${zu?' gesperrt':''}" onclick="start('${key}')"${zu?' disabled':''}><span>${THEMA[key][1]}</span>${dots(ts(k,key).d)}</button>`};
 const undListe=a=>a.length>1?a.slice(0,-1).join(', ')+' und '+a[a.length-1]:String(a[0]);
 const frueher=k=>[5,6,7,8].filter(g=>g<k.g);
+// Thema aus einer früheren Klasse ("Wiederholen"): seit 2026-10-22 nur die Hälfte der Äpfel, aufgerundet, also mindestens 1 (Brain Dump)
+const frueherThema=(k,key)=>!T[k.g].some(t=>t[0]===key);
 // Kategorien: Schulstoff, Mathe-Olympiade & Knobeln, Sudoku (eigene Überschrift seit 2026-10-20), aufklappbar Wiederholen
 function themen(k){const K=KAT[k.g],fr=frueher(k),kz=(k.kn||0)>=KNMAX;
  return`<h3 class="kat">Schulstoff Klasse ${k.g}</h3>${K.schul.map(x=>themaKnopf(k,x)).join('')}<h3 class="kat">Mathe-Olympiade & Knobeln</h3>${kz?`<p class="small knsperre">${KNHINWEIS}</p>`:''}${K.oly.map(x=>themaKnopf(k,x)).join('')}<h3 class="kat">Sudoku</h3>${K.sud.map(x=>themaKnopf(k,x)).join('')}`+
-  (fr.length?`<details class="wdh"><summary>Wiederholen: Klasse ${undListe(fr)}</summary>${fr.map(g=>`<h3 class="kat">Schulstoff Klasse ${g}</h3>${KAT[g].schul.map(x=>themaKnopf(k,x)).join('')}`).join('')}</details>`:'')}
+  (fr.length?`<details class="wdh"><summary>Wiederholen: Klasse ${undListe(fr)}</summary><p class="small">Bei Themen früherer Klassen gibt es weniger Äpfel: auf Stufe 4 und 5 nur 1 statt 2.</p>${fr.map(g=>`<h3 class="kat">Schulstoff Klasse ${g}</h3>${KAT[g].schul.map(x=>themaKnopf(k,x)).join('')}`).join('')}</details>`:'')}
 // Themen für die Eltern-Ansicht: eigene Klasse und wiederholte Themen früherer Klassen, die schon geübt wurden
 const elternThemen=k=>[...new Set([...T[k.g].map(t=>t[0]),...frueher(k).flatMap(g=>KAT[g].schul).filter(x=>k.t[x]&&k.t[x].n)])].map(x=>THEMA[x]);
 // Tageslimit erreicht: Rundflug beenden und verabschieden
@@ -529,7 +535,7 @@ const gen=()=>{let k=kid(),t=THEMA[Q.key],q,n=0;Q.rp=0;
 function tip(){let el=$('#ans'),val=el?el.value:'';Q.hint=1;ui();let n=$('#ans');if(n)n.value=val}
 function chk(){let k=kid(),s=ts(k,Q.key),raw=$('#ans').value.trim().replace(',','.').replace('−','-');if(raw===''||isNaN(raw))return $('#ans').focus();
  let ok=Math.abs(+raw-Q.q[1])<1e-9,g=0,a=0,m='';k.total++;s.n++;
- if(ok){s.r++;k.r++;k.s++;k.best=Math.max(k.best,k.s);Q.right++;g=Math.round((8+3*s.d)*(Q.hint?.5:1))+(k.s>=5?5:0);a=1+(s.d>=4?1:0);k.xp+=g;k.ap=(k.ap||0)+a;Q.gain+=g;Q.ap+=a;s.run=s.run>0?s.run+1:1;
+ if(ok){s.r++;k.r++;k.s++;k.best=Math.max(k.best,k.s);Q.right++;g=Math.round((8+3*s.d)*(Q.hint?.5:1))+(k.s>=5?5:0);a=1+(s.d>=4?1:0);if(frueherThema(k,Q.key))a=Math.ceil(a/2);k.xp+=g;k.ap=(k.ap||0)+a;Q.gain+=g;Q.ap+=a;s.run=s.run>0?s.run+1:1;
   if(s.run>=3&&s.d<5){s.d++;s.run=0;m='Stufe '+s.d+' erreicht!'}}
  else{k.s=0;s.run=s.run<0?s.run-1:-1;if(s.run<=-2&&s.d>1){s.d--;s.run=0;m='Wir üben eine Stufe leichter.'}}
  BD.forEach(b=>{if(!k.b.includes(b[0])&&b[2](k)){k.b.push(b[0]);Q.newb.push(b[1])}});
@@ -549,6 +555,12 @@ function nx(){Q.i++;if(Q.i>=10){let k=kid();if(Q.right==10){k.perfect++;BD.forEa
   save();v='done'}else{Q.q=gen();Q.fb=null;Q.hint=0}ui()}
 // Sperren: muss eine Funktion sein. In onclick-Attributen würde "open=false" sonst document.open überschreiben statt diese Variable.
 function lock(){open=false;ui()}
+// PIN vergessen (seit 2026-10-22, Brain Dump): Auf der PIN-Seite der Eltern-Ansicht erscheint nach 5 schnellen Tipps (innerhalb von 2 Sekunden)
+// ein kleines "i". Damit lässt sich eine neue PIN festlegen. Danach (oder beim Verlassen der Seite) ist das "i" wieder unsichtbar.
+let PINI=0,PINR=0,PINT=[];
+document.addEventListener('pointerdown',()=>{if(v!='parent'||!S.pin||open||PINI)return;const t=Date.now();PINT=[...PINT.filter(x=>t-x<2000),t];if(PINT.length>=5){PINT=[];PINI=1;const el=$('#pin'),w=el?el.value:'';ui();const n=$('#pin');if(n)n.value=w}});
+function pinReset(){const el=$('#pinr'),p=el?el.value.trim():'';if(p.length<4){pw='Die PIN braucht mindestens 4 Zeichen.';ui();pw='';return}
+ S.pin=p;delete S.np;S.mo='e';PINI=0;PINR=0;open=true;warn='';save();ui()}
 function unl(){let p=$('#pin').value;if(!p)return;if(p==S.pin)open=true;else{warn='Falsche PIN.';ui();warn='';return}ui()}
 function gr(id,g){let k=S.kids.find(x=>x.id==id);k.g=+g;save();ui()}
 // Tageslimit je Kind (Eltern-Ansicht): 0 = kein Limit, sonst 5 bis LIMMAX Minuten in 5er-Schritten. Wirkt sofort, auch am selben Tag.

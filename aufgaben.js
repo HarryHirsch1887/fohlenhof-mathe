@@ -53,6 +53,26 @@ const T={5:[
   ()=>seiten(R(100,400)),
   ()=>{const a=R(3,6),b=R(1,a-1),H=R(a+3,20),t=Math.ceil((H-a)/(a-b));return[`Eine Schnecke sitzt unten in einem ${H} m tiefen Brunnen. Tagsüber klettert sie ${a} m hoch, nachts rutscht sie ${b} m zurück. An welchem Tag kommt sie oben an?`,t+1,'Am letzten Tag rutscht sie nicht mehr zurück.',
    `Pro Tag und Nacht schafft sie ${a} − ${b} = ${a-b} m.\nAm letzten Tag klettert sie ${a} m und ist oben. Vorher muss sie also mindestens ${H} − ${a} = ${H-a} m hoch sein.\nNach ${t} Tagen und Nächten ist sie bei ${t} · ${a-b} = ${t*(a-b)} m`+(t>1?`, nach ${t-1} erst bei ${(t-1)*(a-b)} m`:'')+`.\nAlso kommt sie am Tag ${t} + 1 = ${t+1} oben an.`]}])()}],
+// Einmaleins (seit 2026-10-22, Brain Dump): kleines 1×1 (Stufe 1 bis 3) und großes 1×1 (Stufe 4 und 5) im Schulstoff Klasse 5.
+// Höhere Klassen üben es über "Wiederholen" (dort gibt es die Hälfte der Äpfel, siehe frueherThema in app.js).
+// Stufe 1: mal 2, 5 und 10 · Stufe 2: kleines 1×1 gemischt · Stufe 3: Geteilt und Lücken im kleinen 1×1
+// Stufe 4: großes 1×1 (11 bis 19 mal 2 bis 9) · Stufe 5: großes 1×1 (11 bis 20) mit Geteilt und Lücken
+['ee','Einmaleins',d=>{let a,b,f,y;
+ // Rechenweg für f · y im kleinen 1×1 über Aufgaben, die man schon kennt (mal 10, Hälfte, Doppelt, 5 plus Rest)
+ const klein=(f,y)=>f==1?`1 · ${y} = ${y}`:f==10?`Mal 10: Hänge eine Null an. 10 · ${y} = ${10*y}`:f==5?`5 · ${y} ist die Hälfte von 10 · ${y} = ${10*y}.\nAlso 5 · ${y} = ${5*y}`:
+  f==9?`9 · ${y} = 10 · ${y} − ${y} = ${10*y} − ${y} = ${9*y}`:f>5?`${f} · ${y} = 5 · ${y} + ${f-5} · ${y} = ${5*y} + ${(f-5)*y} = ${f*y}`:
+  f==4?`4 · ${y} ist das Doppelte von 2 · ${y} = ${2*y}.\nAlso 4 · ${y} = ${4*y}`:f==3?`3 · ${y} = 2 · ${y} + ${y} = ${2*y} + ${y} = ${3*y}`:`2 · ${y} ist das Doppelte: ${y} + ${y} = ${2*y}`;
+ // Welcher Faktor ist der leichte Weg? Reihenfolge: 1, 10, 5, 9, 2, dann die anderen
+ const weg=(a,b)=>{const o=[1,10,5,9,2,8,7,6,4,3],[f,y]=o.indexOf(a)<=o.indexOf(b)?[a,b]:[b,a];return(f!==a?`Tauschen ist erlaubt: ${a} · ${b} = ${b} · ${a}\n`:'')+klein(f,y)};
+ const gross=(a,b)=>a==20?`20 · ${b} = 2 · ${b} · 10 = ${2*b} · 10 = ${20*b}`:`Zerlege ${a} in 10 + ${a-10}:\n${a} · ${b} = 10 · ${b} + ${a-10} · ${b} = ${10*b} + ${(a-10)*b} = ${a*b}`;
+ if(d==1){f=P([2,5,10]);y=R(1,10);[a,b]=R(0,1)?[f,y]:[y,f];return[`${a} · ${b} = ?`,a*b,'Zähle in Schritten, zum Beispiel 5, 10, 15 …',weg(a,b)]}
+ if(d==2){a=R(2,9);b=R(2,9);return[`${a} · ${b} = ?`,a*b,'Nimm eine Aufgabe, die du kennst: 5 mal oder 10 mal, und rechne von dort weiter.',weg(a,b)]}
+ if(d==3){a=R(2,9);b=R(2,9);return R(0,1)?[`${a*b} : ${a} = ?`,b,`Welche Zahl mal ${a} ergibt ${a*b}?`,`Gesucht ist die Zahl, die mal ${a} genau ${a*b} ergibt.\n${weg(a,b)}\nAlso ${a*b} : ${a} = ${b}`]:
+  [`${a} · ? = ${a*b}`,b,`Rechne ${a*b} : ${a}.`,`Die Lücke ist ${a*b} : ${a}.\n${weg(a,b)}\nDie fehlende Zahl ist ${b}.`]}
+ a=R(11,d==4?19:20);b=R(2,9);
+ if(d==4)return[`${a} · ${b} = ?`,a*b,'Zerlege die große Zahl in 10 und den Rest.',gross(a,b)];
+ return P([0,1,2])==0?[`${a} · ${b} = ?`,a*b,'Zerlege die große Zahl in 10 und den Rest.',gross(a,b)]:R(0,1)?[`${a*b} : ${b} = ?`,a,`Welche Zahl mal ${b} ergibt ${a*b}? Probier es mit 10 · ${b} = ${10*b}.`,`Gesucht ist die Zahl, die mal ${b} genau ${a*b} ergibt.\n${gross(a,b)}\nAlso ${a*b} : ${b} = ${a}`]:
+  [`${b} · ? = ${a*b}`,a,`Rechne ${a*b} : ${b}. Probier es mit 10 · ${b} = ${10*b}.`,`Die Lücke ist ${a*b} : ${b}. Tauschen ist erlaubt: ${b} · ${a} = ${a} · ${b}\n${gross(a,b)}\nDie fehlende Zahl ist ${a}.`]}],
 ['rechnen','Rechnen & Rechengesetze',d=>{let a,b,c,e,g,q,t,u,N;
  if(d==1){a=R(10,50);b=R(2,9);c=R(3,12);return[`${a} + ${b} · ${c} = ?`,a+b*c,'Punkt vor Strich.',`Punkt vor Strich: Rechne zuerst die Malaufgabe.\n${b} · ${c} = ${b*c}\n${a} + ${b*c} = ${a+b*c}`]}
  if(d==2){a=R(3,15);b=R(3,15);c=R(2,9);e=R(1,10);return[`(${a} + ${b}) · ${c} − ${e} = ?`,(a+b)*c-e,'Klammern zuerst, dann Punkt vor Strich.',`Klammer zuerst: ${a} + ${b} = ${a+b}\nDann Punkt vor Strich: ${a+b} · ${c} = ${(a+b)*c}\nZuletzt: ${(a+b)*c} − ${e} = ${(a+b)*c-e}`]}
@@ -298,7 +318,7 @@ T[8]=[TL,TG,TP,TY,...T[7].filter(t=>t[0]=='zt')];
 // T[g] bleibt die Liste der Themen einer Klasse (Schulstoff und Olympiade), frühere Klassen kommen in app.js als "Wiederholen" dazu.
 const THEMA={};for(const g of [5,6,7,8])for(const t of T[g])THEMA[t[0]]=t;for(const t of SUDOKU)THEMA[t[0]]=t;
 // sud: Sudoku als eigene Kategorie unter "Mathe-Olympiade & Knobeln" (seit 2026-10-20)
-const KAT={5:{schul:['rechnen','groessen','umfl','teil'],oly:['folgen','trick','knob'],sud:['sud5']},
+const KAT={5:{schul:['ee','rechnen','groessen','umfl','teil'],oly:['folgen','trick','knob'],sud:['sud5']},
  6:{schul:['bruch','dez','dreisatz'],oly:['trick','knob'],sud:['sud6']},
  7:{schul:['gl','term','pz','rat','winkel'],oly:['zt','wege'],sud:['sud78']},
  8:{schul:['lf','gls','pot','pyth'],oly:['zt'],sud:['sud78']}};

@@ -38,11 +38,13 @@ function trStatus(k,id){if(!k||!k.h)return{txt:`Ab ${GS[1].n}`};const H=hh(k),st
  if(A.tage&&!A.tage.includes(trWT()))return{txt:'Nur mittwochs und samstags.'};
  const cap=TRPROTAG[st];if(cap&&trHeute(H)>=cap)return{txt:`Für heute genug trainiert (${cap} von ${cap}). Morgen wieder.`};
  return{ok:1}}
-// Bereich "Training" im Wunschbaum
+// Bereich "Training" in der Kind-Ansicht (seit 2026-10-22, vorher im Wunschbaum). TRNOTE: Hinweis beim Start (z. B. zu wenige Äpfel)
+let TRNOTE='';
+function trHinweis(m){TRNOTE=m;ui();const n=$('#trnote');if(n)n.scrollIntoView({block:'nearest',behavior:RM?'auto':'smooth'})}
 function trTeil(k){const H=hh(k),st=stg(k);
  if(st==0)return`<p class="small">Training gibt es, wenn ${esc(H.name)} ein ${GS[1].n} ist: zuerst Longieren und Anreiten, später Reiten, Springen, Dressur und Gelände. Noch ${tageBis(k,1)} Tage mit Mathe.</p>`;
  const cap=TRPROTAG[st];
- return`<p class="small">Ein Training kostet ${TRPREIS} Äpfel. Du löst ${TRN} Aufgaben mit je ${TRZEIT} Sekunden Zeit. Mit ${TROK} richtigen bekommt ${esc(H.name)} einen Stern und du ein Hufeisen.${cap?` Heute ${Math.min(trHeute(H),cap)} von ${cap} Trainings.`:''}</p>`+
+ return`<p class="small">Ein Training kostet ${TRPREIS} Äpfel. Du löst ${TRN} Aufgaben mit je ${TRZEIT} Sekunden Zeit. Mit ${TROK} richtigen bekommt ${esc(H.name)} einen Stern und du ein Hufeisen.${cap?` Heute ${Math.min(trHeute(H),cap)} von ${cap} Trainings.`:''}</p><p class="no" id="trnote"${TRNOTE?'':' hidden'}>${TRNOTE}</p>`+
   TRA.filter(([,A])=>A.max[st]>0).map(([id,A])=>{const s=(H.tr||{})[id]||0,mx=A.max[st],S=trStatus(k,id);
    return`<div class="card trk" data-tr="${id}"><div class="row sp"><b>${A.n(st)}</b>${trSterne(Math.min(s,mx),mx)}</div>${S.ok?`<button class="go" onclick="trStart('${id}')">Trainieren · ${TRPREIS} ${AP}</button>`:`<p class="small" style="margin:4px 0 0">${esc(S.txt)}</p>`}</div>`}).join('')+
   (st==1?`<p class="small">Springen, Dressur und Geländereiten kommen, wenn ${esc(H.name)} ein ${GS[2].n} ist.</p>`:'')}
@@ -62,8 +64,8 @@ function trAufgaben(k,ziel){const unten=ziel<=3?2:1,seen=[];return[...Array(TRN)
 // TQ: laufendes Training. phase: 'lauf' (Pferd trabt eine Runde) oder 'frage' (Aufgabe mit Zeit). th = Winkel auf dem Zirkel,
 // ph = Schrittphase, lauf = schon gelaufener Winkel dieser Runde, t0 = Start der Aufgabe, fb = Rückmeldung, ende = fertig
 let TQ=null;
-function trStart(id){const k=kid();if(!k||!k.h)return;const H=hh(k),S=trStatus(k,id);note='';
- if(!S.ok)return hinweis(esc(S.txt));if(ausZeit(k))return bye();if((k.ap||0)<TRPREIS)return hinweis('Dafür fehlen noch Äpfel.');
+function trStart(id){const k=kid();if(!k||!k.h)return;const H=hh(k),S=trStatus(k,id);TRNOTE='';
+ if(!S.ok)return trHinweis(esc(S.txt));if(ausZeit(k))return bye();if(k.hl)return;if((k.ap||0)<TRPREIS)return trHinweis('Dafür fehlen noch Äpfel.');
  const t=tag(),s=(H.tr||{})[id]||0;k.ap-=TRPREIS;H.tl=H.tl||{};H.tl[id]=t;H.tz={d:t,n:trHeute(H)+1};if(k.neu)delete k.neu;
  TQ={id,i:0,right:0,fb:null,ziel:s+1,auf:trAufgaben(k,s+1),phase:RM?'frage':'lauf',t0:Date.now(),th:Math.PI/2,ph:0,lauf:0,an:1,ende:0};
  save();v='train';ui();scrollTo(0,0)}
@@ -79,9 +81,9 @@ function trEnde(){const k=kid(),H=hh(k),mx=TRART[TQ.id].max[stg(k)];TQ.ende=1;TQ
  if(TQ.right>=TROK){H.tr=H.tr||{};H.tr[TQ.id]=Math.min(mx,(H.tr[TQ.id]||0)+1);k.hu=(k.hu||0)+1;TQ.stern=1}
  save();ui()}
 function trAbbruch(){if(TQ&&!TQ.ende&&!confirm('Training beenden? Der Versuch zählt trotzdem, die Äpfel sind schon bezahlt.'))return;trZurueck()}
-function trZurueck(){TQ=null;if(ausZeit(kid()))return bye();v='wish';ui();trSektion()}
-// Im Wunschbaum zum Bereich Training springen
-function trSektion(){const e=[...document.querySelectorAll('#app section.wb')].find(s=>s.querySelector('h2').textContent=='Training');if(e)e.scrollIntoView();else scrollTo(0,0)}
+function trZurueck(){TQ=null;if(ausZeit(kid()))return bye();v='kid';ui();trSektion()}
+// In der Kind-Ansicht zum Bereich Training springen
+function trSektion(){const e=$('#training');if(e)e.scrollIntoView();else scrollTo(0,0)}
 // ---------- Seite ----------
 function trSeite(){const k=kid(),H=hh(k),st=stg(k),A=TRART[TQ.id],it=TQ.auf[TQ.i],q=it&&it.q;
  let h=`<div class="row sp qkopf"><button class="alt" onclick="${TQ.ende?'trZurueck()':'trAbbruch()'}">${TQ.ende?'Zurück':'Beenden'}</button><span class="qthema">${A.n(st)}</span><span class="ap">${k.ap||0} ${AP}</span></div>`+trSzene(k);
@@ -99,8 +101,7 @@ function trSeite(){const k=kid(),H=hh(k),st=stg(k),A=TRART[TQ.id],it=TQ.auf[TQ.i
 document.addEventListener('keydown',e=>{if(e.key=='Enter'&&!e.repeat&&v=='train'&&TQ&&TQ.fb&&Date.now()-TQ.fts>250&&document.activeElement.tagName!='BUTTON'){e.preventDefault();trNx()}});
 // ---------- Longierzirkel (2D, Bilderbuch-Look wie der Hof) ----------
 // Ovaler Sandplatz von schräg oben. Das Pferd läuft auf einer Ellipse um die Figur: vorne groß nach rechts, hinten kleiner nach links,
-// an den Seiten kurz schmal (es dreht sich). Longe = Linie von der Hand zum Kopf. Die Peitsche schwingt nur sanft in der Luft
-// und bleibt immer ein gutes Stück vom Pferd weg.
+// an den Seiten kurz schmal (es dreht sich). Longe = Linie von der Hand zum Kopf. Eine Peitsche gibt es nicht (seit 2026-10-22 entfernt).
 const TRZ={cx:160,cy:142,rx:104,ry:38,fx:160,fy:150,fs:.44};
 function trSzene(k){const H=hh(k),now=new Date(),P=pal(now.getHours()+now.getMinutes()/60),cx=TRZ.cx,cy=TRZ.cy;
  const pf=(a,b)=>[...Array(22)].map((_,i)=>i*Math.PI*2/22).filter(t=>a?Math.sin(t)>=0:Math.sin(t)<0).map(t=>{const x=cx+(TRZ.rx+24)*Math.cos(t),y=cy+(TRZ.ry+13)*Math.sin(t),s=.75+.25*(Math.sin(t)+1)/2;
@@ -113,7 +114,7 @@ function trSzene(k){const H=hh(k),now=new Date(),P=pal(now.getHours()+now.getMin
   [[30,104,9],[290,102,8],[110,100,6]].map(([x,y,r])=>busch(x,y,r,P.bu)).join('')+
   ring(0)+pf(0)+`<ellipse cx="${cx}" cy="${cy}" rx="${TRZ.rx+18}" ry="${TRZ.ry+10}" fill="url(#trsand)"/><ellipse cx="${cx}" cy="${cy}" rx="${TRZ.rx}" ry="${TRZ.ry}" fill="none" stroke="#b9975d" stroke-width="7" opacity=".35"/>`+
   `<g id="trhinten"></g><g id="trfig" transform="translate(${TRZ.fx} ${TRZ.fy}) scale(${TRZ.fs})">${figurBild(k.f)}</g>`+
-  `<path id="trpeit" fill="none" stroke="#3a2a1a" stroke-width=".9" stroke-linecap="round"/><path id="trlonge" fill="none" stroke="#f4f1de" stroke-width=".9"/>`+
+  `<path id="trlonge" fill="none" stroke="#f4f1de" stroke-width=".9"/>`+
   `<g id="trvorn"><g id="trpf"><g id="trpfs">${PF.bild('tr_',pfSpec(H,stg(k)))}</g></g></g>`+ring(1)+pf(1)+
   `<rect width="320" height="196" fill="${P.tint}" opacity="${P.ta}" pointer-events="none"/></svg>`}
 let TRRAF=0,TRL=0,TRRIG=null;
@@ -123,7 +124,7 @@ function trSync(){if(v!='train'||!TQ||!$('#trsz')){if(TRRAF)cancelAnimationFrame
 function trFrame(ts){TRRAF=0;if(v!='train'||!TQ||!$('#trsz'))return;
  const dt=Math.min(.1,(ts-TRL)/1000);if(dt>=1/31){TRL=ts;trZeichne(dt)}
  if(!TRRAF&&v=='train'&&TQ&&$('#trsz'))TRRAF=requestAnimationFrame(trFrame)}
-// Ein Bild: Pferd weiterbewegen, Longe und Peitsche nachführen, Zeitbalken der Aufgabe
+// Ein Bild: Pferd weiterbewegen, Longe nachführen, Zeitbalken der Aufgabe
 function trZeichne(dt){if(!TQ)return;const pf=$('#trpf');if(!pf||!TRRIG)return;
  const lauf=TQ.phase=='lauf'&&!TQ.ende&&!RM,steht=RM||TQ.ende&&!TQ.stern;
  // Tempo: Trab in der Laufrunde (zu Beginn angetrieben, kurz schneller), sonst ruhiger Schritt; am Ende mit Stern noch ein Galopp
@@ -135,15 +136,12 @@ function trZeichne(dt){if(!TQ)return;const pf=$('#trpf');if(!pf||!TRRIG)return;
  TRRIG.pose(dt,{g,am:om?1:0,ph:TQ.ph,gr:0,hop:0});
  $('#trpfs').setAttribute('transform',`translate(${r1(x)} ${r1(y)}) scale(${(sx).toFixed(3)} ${sc.toFixed(3)})`);
  // vorne (näher) vor der Figur, hinten dahinter
- // Longe und Peitsche wandern mit: hinten hinter die Figur (nach dem Pferd), vorne vor die Figur (unter das Pferd, der Kopf deckt das Ende)
- const ziel=$(sn>=0?'#trvorn':'#trhinten');if(pf.parentNode!==ziel){const lo=$('#trlonge'),pe=$('#trpeit');if(sn>=0){ziel.insertBefore(pe,ziel.firstChild);ziel.insertBefore(lo,pe);ziel.appendChild(pf)}else{ziel.appendChild(pf);ziel.appendChild(lo);ziel.appendChild(pe)}}
- // Hände der Figur (ungefähr) und Kopf bzw. Hinterhand des Pferds
- const hx=TRZ.fx+(dir>0?1:-1)*6,hy=TRZ.fy-25,kx=x+sx*112,ky=y-sc*175,bx=x-sx*80,by=y-sc*120;
- const lo=$('#trlonge'),pe=$('#trpeit');
+ // Die Longe wandert mit: hinten hinter die Figur (nach dem Pferd), vorne vor die Figur (unter das Pferd, der Kopf deckt das Ende)
+ const ziel=$(sn>=0?'#trvorn':'#trhinten');if(pf.parentNode!==ziel){const lo=$('#trlonge');if(sn>=0){ziel.insertBefore(lo,ziel.firstChild);ziel.appendChild(pf)}else{ziel.appendChild(pf);ziel.appendChild(lo)}}
+ // Hand der Figur (ungefähr) und Kopf des Pferds
+ const hx=TRZ.fx+(dir>0?1:-1)*6,hy=TRZ.fy-25,kx=x+sx*112,ky=y-sc*175;
+ const lo=$('#trlonge');
  lo.setAttribute('d',`M${r1(hx)} ${r1(hy)}Q${r1((hx+kx)/2)} ${r1((hy+ky)/2+6)} ${r1(kx)} ${r1(ky)}`);
- // Peitsche: höchstens 55 % des Wegs zur Hinterhand, deutlich darüber in der Luft, schwingt beim Antreiben etwas weiter
- const px=TRZ.fx-(dir>0?1:-1)*6,py=TRZ.fy-25,sw=Math.sin(performance.now()/420)*(2+an*6),tx=px+(bx-px)*(.45+an*.1),ty=py+(by-py)*.3-18-sw;
- pe.setAttribute('d',`M${r1(px)} ${r1(py)}Q${r1((px+tx)/2)} ${r1(Math.min(py,ty)-10)} ${r1(tx)} ${r1(ty)}`);
  // Zeitbalken
  if(TQ.phase=='frage'&&!TQ.fb&&!TQ.ende){const rest=1-(Date.now()-TQ.t0)/1000/TRZEIT,b=$('#trzeit');if(b)b.style.width=Math.max(0,rest*100).toFixed(1)+'%';if(rest<=0)trChk(true)}}
 // Bei "Bewegung reduzieren" gibt es keine Animation: Der Zeitbalken läuft trotzdem (eigener Takt)

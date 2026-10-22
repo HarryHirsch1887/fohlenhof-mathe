@@ -154,3 +154,5 @@ body.fly #hwetter{height:100%;z-index:61}body.nohof #hwetter{visibility:hidden}
 .trk{padding:10px 12px}.trk .go{margin-top:6px}
 .bar.trzeit{height:12px;margin:6px 0}.bar.trzeit b{transition:none;background:#e2b24a}
 .trinfo{font-size:17px;margin:10px 0 4px}
+/* PIN vergessen (seit 2026-10-22): kleines "i" auf der PIN-Seite, erst nach 5 schnellen Tipps sichtbar */
+.pinkarte{position:relative}.pini{position:absolute;right:10px;top:10px;width:28px;height:28px;min-height:0;padding:0;border-radius:50%;font:italic bold 15px Georgia,serif;line-height:26px}
