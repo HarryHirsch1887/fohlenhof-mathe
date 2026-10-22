@@ -136,13 +136,14 @@ const HAL={
  nacht:{t:'#100824',m:'#2a1450',b:'#4b2470',far:'#2e2450',mid:'#2a4235',g1:'#365a3a',g2:'#2a4a30',w1:'#4a3a7a',w2:'#36295c',bu:'#1f3828',tint:'#1a0836',ta:.3}};
 const thPal=(P,TH)=>TH=='halloween'?{...P,...HAL[P.n=='morgen'?'tag':P.n]}:P;
 // Kürbis mit Gesicht: abends und nachts leuchtet er von innen
-function kuerbis(x,y,s,gesicht,licht){const f=licht?'#ffe066':'#3a1a05';
- return`<g class="kuerbis" transform="translate(${r1(x)} ${r1(y)}) scale(${s})">`+(licht&&gesicht?`<ellipse cy="-6" rx="15" ry="11" fill="#ffb347" opacity=".35"/>`:'')+
+function kuerbis(x,y,s,licht){const f=licht?'#ffe066':'#3a1a05';
+ return`<g class="kuerbis" transform="translate(${r1(x)} ${r1(y)}) scale(${s})">`+(licht?`<ellipse cy="-6" rx="15" ry="11" fill="#ffb347" opacity=".35"/>`:'')+
   `<ellipse cy="0" rx="9" ry="1.6" fill="#000" opacity=".18"/><ellipse cx="-4.6" cy="-5.2" rx="5.4" ry="5.8" fill="#d9660a"/><ellipse cx="4.6" cy="-5.2" rx="5.4" ry="5.8" fill="#d9660a"/><ellipse cy="-5.6" rx="5.2" ry="6.4" fill="#f58a1f"/>`+
   `<path d="M-2.6 -11Q-4.2 -5.6 -2.6 -.4M2.6 -11Q4.2 -5.6 2.6 -.4" stroke="#c45f08" stroke-width=".5" fill="none"/><path d="M-.9 -11.4Q-.6 -14 1.8 -14.6L2.2 -13.2Q1 -12.6 1 -11.2Z" fill="#4a6b2a"/>`+
-  (gesicht?`<path d="M-5 -6.2l1.9 -2.5l1.9 2.5zM1.2 -6.2l1.9 -2.5l1.9 2.5z" fill="${f}"/><path d="M-4.6 -3.4l1.3 1.3l1.3 -1l1.3 1.1l1.3 -1.1l1.3 1l1.3 -1.3l-.2 1.8q-1.9 2 -4.8 .1z" fill="${f}"/>`:`<path d="M-3.4 -7.3q1.5 .8 3 0M.4 -7.3q1.5 .8 3 0" stroke="#7a3604" stroke-width=".6" fill="none"/>`)+`</g>`}
-function kuerbisse(WW,frei,P){const n=Math.max(6,Math.round(WW/105)),licht=P.n!='tag'&&P.n!='morgen';
- return[...Array(n)].map((_,i)=>[(i+.5)/n*WW+(sr(i+500)-.5)*70,GY+6+sr(i+510)*28,1.1+sr(i+520)*.8,i%4!=3]).filter(([x,y])=>frei(x,y)).sort((a,b)=>a[1]-b[1]).map(([x,y,sc,g])=>kuerbis(x,y,sc,g,licht)).join('')}
+  `<path d="M-5 -6.2l1.9 -2.5l1.9 2.5zM1.2 -6.2l1.9 -2.5l1.9 2.5z" fill="${f}"/><path d="M-4.6 -3.4l1.3 1.3l1.3 -1l1.3 1.1l1.3 -1.1l1.3 1l1.3 -1.3l-.2 1.8q-1.9 2 -4.8 .1z" fill="${f}"/></g>`}
+// Jeder vierte Platz bleibt frei (die Kürbisse ohne Gesicht sind seit 2026-10-22 weg), keiner liegt auf dem Teich
+function kuerbisse(WW,frei,P){const n=Math.max(6,Math.round(WW/105)),licht=P.n!='tag'&&P.n!='morgen',tx=itemX('teich');
+ return[...Array(n)].map((_,i)=>[(i+.5)/n*WW+(sr(i+500)-.5)*70,GY+6+sr(i+510)*28,1.1+sr(i+520)*.8,i%4!=3]).filter(([x,y,,g])=>g&&frei(x,y)&&Math.abs(x-tx)>58).sort((a,b)=>a[1]-b[1]).map(([x,y,sc])=>kuerbis(x,y,sc,licht)).join('')}
 // Fledermaus: Flügel schlagen über den Pfad (k = Ausschlag), der Körper bleibt in der Mitte
 const fledPfad=k=>{k=+k;const a=r1(-k*2-1),b=r1(-k*1.5),c=r1(-k*1.5+2.2),d=r1(-k*1.5+1.2);return`M-1 -1.8L-.4 -.5Q-3 ${a} -6.5 ${b}Q-5.5 ${c} -4.2 ${d}Q-3 1.4 -1.8 .8Q-.9 1.8 0 1.6Q.9 1.8 1.8 .8Q3 1.4 4.2 ${d}Q5.5 ${c} 6.5 ${b}Q3 ${a} .4 -.5L1 -1.8L0 -1.2Z`};
 const FLED=`<path class="vogel fled" d="${fledPfad(1)}" fill="#1b1030"/>`;
