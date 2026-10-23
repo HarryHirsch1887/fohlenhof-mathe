@@ -30,6 +30,23 @@ const GUMMI={rosa:['Rosa','#e8508f'],lila:['Lila','#9b59b6'],blau:['Hellblau','#
 // lieb: Preis eines Lieblingspferds (50, bestätigt 2026-10-21; die Preise insgesamt werden später noch neu gedacht).
 // leg/shirt: je weitere Farbe für Reitleggings bzw. Reitshirt der Figur (10, bestätigt 2026-10-21)
 const PREIS={zopf:10,gummi:3,lieb:50,leg:10,shirt:10};
+// GLMAX: höchstens so viele gelöste Aufgaben merken (k.gl, fürs Training). Muss vor clean() stehen, das beim Start den Spielstand prüft.
+const GLMAX=80;
+// Schulstoff-Themen aller Klassen: nur diese kommen ins Training (Olympiade, Knobeln und Sudoku haben oft lange Texte)
+const SCHUL=new Set([5,6,7,8].flatMap(g=>KAT[g].schul));
+// Reitausrüstung und Pflege (seit 2026-10-22): je Pferd gekauft (H.au). Sattel mit Sattelgurt, Satteldecke und Trense braucht das Anreiten (training.js).
+// Die Pferdedecke trägt das Pferd auf dem eigenen Hof bei Regen, Schnee und nachts. Die Pflegekiste ist für die Pferdepflege gedacht (kommt später).
+// [id, Name, Preis (vorläufig), Beschreibung]
+const AUSR=[['sattel','Sattel mit Sattelgurt',30,'Zum Anreiten und Reiten'],['decke','Satteldecke',10,'Liegt unter dem Sattel'],['trense','Trense',20,'Zaumzeug mit Gebiss und Zügeln'],
+ ['pdecke','Pferdedecke',15,'Hält warm bei Regen, Schnee und in der Nacht'],['pflege','Pflegekiste',20,'Huf-Auskratzer, Bürste, Striegel, Schwamm und Schweißabzieher']];
+const reitfertig=H=>!!(H&&H.au&&H.au.sattel&&H.au.decke&&H.au.trense);
+// Kleine Bilder der Ausrüstung im Wunschbaum
+const AUBILD={sattel:'<path d="M5 14Q8 6 13 12Q20 15 27 12Q31 5 35 13L32 20Q20 23 8 20Z" fill="#6b3e1f" stroke="#3b2414"/><path d="M16 20h8l1 8h-10z" fill="#7d4a26" stroke="#3b2414"/>',
+ decke:'<path d="M4 9Q20 14 36 9L35 25Q20 29 5 25Z" fill="#2c3f68" stroke="#1b2740"/><path d="M5 23Q20 27 35 23" fill="none" stroke="#f1e4c8" stroke-width="1.5"/>',
+ trense:'<path d="M9 5L17 25M14 12Q24 9 33 17M7 9Q9 5 13 5" fill="none" stroke="#3b2414" stroke-width="2.4" stroke-linecap="round"/><circle cx="27" cy="22" r="3" fill="none" stroke="#9aa0a6" stroke-width="1.5"/>',
+ pdecke:'<path d="M3 8Q20 3 37 8L36 24Q20 28 4 24Z" fill="#b0412f" stroke="#7a2a1e"/><path d="M4 12H36M4 18H36" stroke="#e2b24a" stroke-width="1.4"/>',
+ pflege:'<rect x="5" y="12" width="30" height="14" rx="2" fill="#4a90c2" stroke="#2c5f86"/><path d="M12 12V8h16v4" fill="none" stroke="#2c5f86" stroke-width="2"/><rect x="9" y="5" width="9" height="5" rx="1" fill="#8b5a2b"/><path d="M10 5v-3M13 5v-3M16 5v-3" stroke="#3b2414"/>'};
+const ausrBild=id=>`<svg viewBox="0 0 40 30" width="56" height="42" aria-hidden="true">${AUBILD[id]||''}</svg>`;
 // Freischaltung über Erfahrung (seit 2026-10-19): Gesperrtes bleibt sichtbar mit "ab X Erfahrung".
 // Was ein Kind schon besitzt, bleibt immer nutzbar. Äpfel bezahlen, Erfahrung schaltet frei.
 // ma = Mähnenlänge, coat = Pferderassen (Fellfarben) und abz = Blesse und Socken, shirt/leg = Farben der Figur, it = Hof-Gegenstände,
@@ -75,7 +92,7 @@ function clean(d){
   // neu = 1: frisch angelegtes Kind, das noch keine Aufgabe begonnen hat (Tageslimit und Hofzeit zählen noch nicht, seit 2026-10-20)
   if(k.neu)c.neu=1;
   // hu = Hufeisen (seit 2026-10-22): 1 je Runde mit mindestens FREI von 10 und je Training mit Stern, für die Pferdepflege
-  if(k.hu)c.hu=nn(k.hu,0,99999);
+  if(k.hu)c.hu=nn(k.hu,0,HUMAX);
   // kn = Knobelrunden hintereinander (Knobel-Regel, seit 2026-10-20)
   if(k.kn)c.kn=nn(k.kn,0,9);
   // bs = Besuch von Freundinnen (seit 2026-10-20), höchstens 3, jeder Eintrag wird wie ein Link streng geprüft
@@ -88,6 +105,8 @@ function clean(d){
   if(k.t&&typeof k.t==='object')for(const key of Object.keys(k.t)){const s=k.t[key];if(s&&typeof s==='object'&&/^[a-z0-9]{1,12}$/.test(key))c.t[key]={d:nn(s.d,1,5),n:nn(s.n),r:nn(s.r),run:Math.max(-9,Math.min(9,Math.trunc(+s.run)||0))}}
   // Altes Thema "Geometrie & Zählen" (bis 2026-10-18): Fortschritt geht an "Winkel & Vielecke"
   if(c.t.geo){if(!c.t.winkel)c.t.winkel=c.t.geo;delete c.t.geo}
+  // gl: gelöste Aufgaben fürs Training (seit 2026-10-22), Prüfung wie beim Fehlerheft, ohne Zeichnung
+  if(Array.isArray(k.gl)){c.gl=[];for(const m of k.gl.slice(-GLMAX))if(m&&typeof m.key==='string'&&/^[a-z0-9]{1,12}$/.test(m.key)&&Array.isArray(m.q)&&typeof m.q[0]==='string'&&Number.isFinite(+m.q[1]))c.gl.push({key:m.key,d:nn(m.d,1,5),q:[ct(m.q[0],400),+m.q[1],ct(m.q[2],200),ct(m.q[3],800)]});if(!c.gl.length)delete c.gl}
   if(Array.isArray(k.mist))for(const m of k.mist.slice(0,30)){if(m&&typeof m.key==='string'&&Array.isArray(m.q)&&typeof m.q[0]==='string'&&Number.isFinite(+m.q[1]))c.mist.push({key:m.key==='geo'?(m.q[4]&&(m.q[4].t=='gitter'||m.q[4].diag||/Diagonale|Weg führt/.test(m.q[0]))?'wege':'winkel'):ct(m.key,12),q:[ct(m.q[0],400),+m.q[1],ct(m.q[2],200),ct(m.q[3],800),...(zCheck(m.q[4])?[zCheck(m.q[4])]:[])]})}
   if(k.h&&typeof k.h==='object'){c.h=pclean(k.h);
    // Gekaufte Rassen (bis 2026-10-18, 40 Äpfel) gibt es nicht mehr: Die Äpfel werden zurückgegeben, die Rassen-Freunde verschwinden vom Hof
@@ -105,6 +124,9 @@ function pclean(h){const co=COATS[h.coat]?h.coat:'fuchs',own=h.own&&typeof h.own
  // Anordnung der Abzeichen (seit 2026-10-18): bf Kopfform 0-4, sm Socken je Bein ("3120"), fs Zahl für die Schecken-Flecken
  if(h.bf!=null)p.bf=nn(h.bf,0,4);if(/^[0-3]{4}$/.test(h.sm||'')&&/[1-3]/.test(h.sm))p.sm=h.sm;if(+h.fs>0)p.fs=nn(h.fs,1,99999);
  // Training (seit 2026-10-22, training.js): tr = Sterne je Art, tl = letzter Trainingstag je Art, tz = Trainings an einem Tag. Alte Fähigkeiten (sk) fallen weg.
+ const au=h.au&&typeof h.au==='object'?h.au:{};p.au={};for(const [id] of AUSR)if(au[id])p.au[id]=1;
+ // Unterstand/Stall (seit 2026-10-22): hs = {d: Datum, s: 'raus'} heißt, das Pferd wurde an diesem Tag herausgeholt
+ if(h.hs&&/^\d{4}-\d\d-\d\d$/.test(h.hs.d)&&h.hs.s==='raus')p.hs={d:h.hs.d,s:'raus'};
  const tr=h.tr&&typeof h.tr==='object'?h.tr:{},tl=h.tl&&typeof h.tl==='object'?h.tl:{};p.tr={};p.tl={};
  for(const [id] of TRA){const x=nn(tr[id],0,10);if(x)p.tr[id]=x;if(/^\d{4}-\d\d-\d\d$/.test(tl[id]))p.tl[id]=tl[id]}
  if(h.tz&&/^\d{4}-\d\d-\d\d$/.test(h.tz.d))p.tz={d:h.tz.d,n:nn(h.tz.n,0,9)};
@@ -148,7 +170,7 @@ const pick=(c)=>`<button class="pick ${CH==c?'on':''}" onclick="CH='${c}';ui()" 
 function ui(){let h='';PZ=0;
  if(v=='koppeln')v='wish';// seit 2026-10-21 stehen Koppeln, Unterstände und Stall direkt im Wunschbaum
  if(v!='home'){EIN='';EINPIN=false}// Einrichtungsschritt gilt nur auf der Startseite (sonst käme z. B. "Kinder anlegen" ohne PIN zurück)
- if(v!='parent'||open){PINI=0;PINR=0}// verstecktes "i" der PIN-Seite: beim Verlassen wieder unsichtbar
+ if(!pinSeite()){PINI=0;PINR=0}// verstecktes "i" der PIN-Seiten: beim Verlassen wieder unsichtbar
  if(v!='kid')TRNOTE='';// Hinweis im Training nur, solange die Kind-Ansicht offen ist
  if(!S.mo&&v=='besuch')v='home';// Besuchs-Link auf einem neuen Gerät: erst die Startabfrage, der Besuch (BES) wartet
  if(v=='home'&&(!S.mo||EIN=='kinder')){h=startAbfrage()}
@@ -192,7 +214,7 @@ function ui(){let h='';PZ=0;
  <h2 id="themen">Thema wählen</h2>${themen(k)}`}
  if(v=='kid'&&kid().h){let k=kid(),st=stg(k),nx=GS[st+1],se=serie(k),pr=nx?se/TAGE[st]*100:100,rest=Math.max(1,Math.ceil((limS(k)-zeit(k))/60));
  h=`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button><button class="alt" onclick="figurEdit()">Figur</button><button class="alt" onclick="snd()" aria-pressed="${S.snd!==0}">Ton: ${S.snd===0?'aus':'an'}</button></div>
- ${k.f?'':`<div class="card row sp" style="margin-top:8px"><span><b>Neu!</b> Erstelle deine eigene Figur. Sie steht dann auf deinem Hof.</span><button class="go" onclick="figurEdit()">Figur erstellen</button></div>`}${wartetHinweis(k)}${besuchKarte(k)}<p class="small" style="margin:8px 0 0">${k.hl?'Tippe oben auf dein Pferd, um es zu streicheln.</p>'+SPERRINFO:`Tippe oben auf dein Pferd, um es zu streicheln. Probier auch Apfelbaum, Windrad und Teich aus, wenn du sie gebaut hast.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button><button class="alt" onclick="v='einladen';note='';ui();scrollTo(0,0)">Freundin einladen</button></div>`}<div class="row sp"><h1>${esc(k.h.name)} <span class="small">${GS[st].n} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}${k.hu?` · ${k.hu} ${HU}`:''}</span></div>
+ ${k.f?'':`<div class="card row sp" style="margin-top:8px"><span><b>Neu!</b> Erstelle deine eigene Figur. Sie steht dann auf deinem Hof.</span><button class="go" onclick="figurEdit()">Figur erstellen</button></div>`}${wartetHinweis(k)}${besuchKarte(k)}<p class="small" style="margin:8px 0 0">${k.hl?'Tippe oben auf dein Pferd, um es zu streicheln.</p>'+SPERRINFO:`Tippe oben auf dein Pferd, um es zu streicheln. Probier auch Apfelbaum, Windrad und Teich aus, wenn du sie gebaut hast.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button><button class="alt" onclick="v='einladen';note='';ui();scrollTo(0,0)">Freundin einladen</button></div>`}${fuehrKnopf(k)}<div class="row sp"><h1>${esc(k.h.name)} <span class="small">${GS[st].n} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}${k.hu?` · ${k.hu}${k.hu>=HUMAX?' (voll)':''} ${HU}`:''}</span></div>
  <div class="bar" style="margin:6px 0"><b style="width:${pr}%"></b></div><p class="small">${nx?`Tag ${se} von ${TAGE[st]} bis „${nx.n}“ · ${heute(k)?'heute schon gerechnet':'rechne heute eine Runde, damit der Tag zählt'}`:'Dein Pferd ist ausgewachsen!'}</p>
  ${k.h2?`<div class="card row sp" style="align-items:center;padding:8px 12px"><span class="small">Dein zweites Pferd: <b>${esc(k.h2.name)}</b> (${GS[k.h2.st||0].n})</span><button class="alt" onclick="wechsel()">Mit ${esc(k.h2.name)} rechnen</button></div>`:''}
  <p class="small">${limS(k)?`Noch ${rest} Minute${rest>1?'n':''} für heute · `:''}${k.xp} Erfahrung · Serie ${k.s} · Rekord ${k.best}${mcount(k)?` · Fehlerheft: ${mcount(k)} zum Wiederholen`:''}</p>
@@ -221,6 +243,7 @@ function ui(){let h='';PZ=0;
   <div class="row">${[['bl','Blesse'],['so','Weiße Socken']].map(([t,n])=>`<button class="${H[t]?'go':'alt'}" onclick="wish('${t}')"${gesperrt(k,'abz',H.own[t])?' disabled':''}>${n}${H.own[t]?(H[t]?' an':' aus'):gesperrt(k,'abz')?'':' · '+preis(15)}</button>`).join('')}${kannAnordnen(H)?`<button class="alt" onclick="anordnen()">Neu anordnen</button>`:''}</div>`+
   (gesperrt(k,'abz')&&!H.own.bl&&!H.own.so?xpb(k,'abz'):'')+
   (kannAnordnen(H)?`<p class="small">„Neu anordnen“ ist kostenlos und würfelt ${[H.bl&&'die Form auf dem Kopf',H.so&&'die Socken an jedem Bein',H.coat=='schecke'&&'die Flecken'].filter(Boolean).join(', ').replace(/, ([^,]*)$/,' und $1')} neu aus.</p>`:''))+
+ teil('Reitausrüstung & Pflege',`<p class="small">Für das Anreiten braucht ${esc(H.name)} Sattel, Satteldecke und Trense. Die Ausrüstung gehört ${esc(H.name)}.</p><div class="grid">${AUSR.map(([id,n,p,b])=>{const hat=(H.au||{})[id];return`<button class="pick au ${hat?'on':''}" data-au="${id}" onclick="wish('au','${id}')" aria-pressed="${!!hat}">${ausrBild(id)}<b>${n}</b><br><span class="small">${b}</span><br>${hat?'gekauft':preis(p)}</button>`}).join('')}</div>`)+
  teil('Hof ausbauen',(gesperrt(k,'it')?`<p class="small">Gegenstände für den Hof kannst du kaufen, sobald du genug Erfahrung hast:</p>${xpb(k,'it')}`:'')+
   `<div class="grid">${[...ITEMS].sort((x,y)=>x[2]-y[2]).map(([id,n,p])=>{const zu=gesperrt(k,'it',H.it[id]);return`<button class="pick it ${H.it[id]?'on':''}${zu?' gesperrt':''}" onclick="wish('it','${id}')"${zu?' disabled':''}>${itemBild(id)}${n}<br>${H.it[id]?'gebaut':zu?'gesperrt':preis(p)}</button>`}).join('')}</div><p class="small">Gebaute Gegenstände siehst du oben auf deinem Hof und im Rundflug.</p>`)+
  teil('Lieblingspferde aus dem Stall',(gesperrt(k,'lieb')?`<p class="small">Die Lieblingspferde kommen auf deinen Hof, sobald du genug Erfahrung hast:</p>${xpb(k,'lieb')}`:'')+
@@ -256,7 +279,7 @@ function ui(){let h='';PZ=0;
  `<div class="antwort${neuQ?' rein2':''}"><span class="antw"><input id="ans" autocomplete="off" aria-label="Antwort${fe?' in '+esc(fe):''}" onkeydown="if(event.key=='Enter')chk()">${fe?`<span class="einheit">${esc(fe)}</span>`:''}</span><button class="go pruefen" onclick="chk()">Prüfen</button></div>${q[2]&&!Q.hint?'<button class="tipp" onclick="tip()">Tipp anzeigen (halbe Punkte)</button>':''}`)}
  // Rundenende: Konfetti und Hufeisen bei 10 von 10, neue Abzeichen und Wachstum ploppen auf (nur beim ersten Anzeigen)
  if(v=='done'){let k=kid(),fw=!k.h&&k.r>=FOHLEN,neuE=!Q.ende;Q.ende=1;ANI={konfetti:neuE&&Q.right==10};h=`<h1>Geschafft!</h1><div class="card">${k.h?scene(k):`<div style="text-align:center">${figurMini(k.f,120)}</div>`}`+
- (k.h?'':fw?`<p class="ok"><b>Super, ${FOHLEN} Aufgaben richtig! Jetzt darfst du dir dein Fohlen aussuchen.</b></p>`:`<p class="small">Noch ${FOHLEN-k.r} richtige Aufgabe${FOHLEN-k.r>1?'n':''} bis zu deinem Fohlen.</p>`)+`<p><b>${Q.right} von 10</b> richtig, <b>+${Q.gain} Erfahrung</b> und <b class="ap">+${Q.ap} ${AP}</b>${Q.hu?` und <b class="ap">+1 Hufeisen ${HU}</b>`:''}.</p>${Q.grow?`<p class="ok${neuE?' pop':''}"><b>${esc(k.h.name)} ist jetzt ein ${Q.grow}!</b></p>`:''}${Q.tg?`<p class="small">${Q.tg}</p>`:''}${Q.frei?`<p class="ok"><b>Super! Der Hof ist wieder offen.</b></p>`:''}${Q.zu?`<p class="no">Für den Hof brauchst du mindestens ${FREI} von 10 richtig. Versuch es gleich noch einmal! Du kannst jedes Thema nehmen.</p>`:''}${knobelZu(k,Q.key)?`<p class="no">${KNHINWEIS}</p>`:''}${Q.knzu?`<p class="no">Für das Knobeln brauchst du eine Runde Schulstoff mit mindestens ${FREI} von 10. Versuch es gleich noch einmal!</p>`:''}${Q.knfrei?`<p class="ok"><b>Super! Knobeln ist wieder frei.</b></p>`:''}${Q.mast?`<p class="ok"><b>${Q.mast} Aufgabe${Q.mast>1?'n':''} aus dem Fehlerheft gemeistert!</b></p>`:''}${Q.newb.map((b,i)=>`<span class="badge${neuE?' pop':''}" style="animation-delay:${.3+i*.2}s">Neues Abzeichen: ${b}</span>`).join('')}</div>`+
+ (k.h?'':fw?`<p class="ok"><b>Super, ${FOHLEN} Aufgaben richtig! Jetzt darfst du dir dein Fohlen aussuchen.</b></p>`:`<p class="small">Noch ${FOHLEN-k.r} richtige Aufgabe${FOHLEN-k.r>1?'n':''} bis zu deinem Fohlen.</p>`)+`<p><b>${Q.right} von 10</b> richtig, <b>+${Q.gain} Erfahrung</b> und <b class="ap">+${Q.ap} ${AP}</b>${Q.hu?` und <b class="ap">+1 Hufeisen ${HU}</b>`:''}${Q.huvoll?` <span class="small">(Dein Hufeisen-Vorrat ist voll: ${HUMAX})</span>`:''}.</p>${Q.grow?`<p class="ok${neuE?' pop':''}"><b>${esc(k.h.name)} ist jetzt ein ${Q.grow}!</b></p>`:''}${Q.tg?`<p class="small">${Q.tg}</p>`:''}${Q.frei?`<p class="ok"><b>Super! Der Hof ist wieder offen.</b></p>`:''}${Q.zu?`<p class="no">Für den Hof brauchst du mindestens ${FREI} von 10 richtig. Versuch es gleich noch einmal! Du kannst jedes Thema nehmen.</p>`:''}${knobelZu(k,Q.key)?`<p class="no">${KNHINWEIS}</p>`:''}${Q.knzu?`<p class="no">Für das Knobeln brauchst du eine Runde Schulstoff mit mindestens ${FREI} von 10. Versuch es gleich noch einmal!</p>`:''}${Q.knfrei?`<p class="ok"><b>Super! Knobeln ist wieder frei.</b></p>`:''}${Q.mast?`<p class="ok"><b>${Q.mast} Aufgabe${Q.mast>1?'n':''} aus dem Fehlerheft gemeistert!</b></p>`:''}${Q.newb.map((b,i)=>`<span class="badge${neuE?' pop':''}" style="animation-delay:${.3+i*.2}s">Neues Abzeichen: ${b}</span>`).join('')}</div>`+
  (ausZeit(k)?`<div class="card" id="limit"><b>Für heute ist Schluss.</b><p>Deine ${limM(k)} Minuten auf dem Hof sind um. Morgen geht es weiter${k.h?`, ${esc(k.h.name)} wartet auf dich`:''}!</p></div><button class="go" onclick="v='home';ui()">Tschüss, bis morgen</button>`:
  `<div class="row">${fw?`<button class="go" onclick="v='choose';ui();scrollTo(0,0)">Fohlen aussuchen</button>`:''}${knobelZu(k,Q.key)?`<button class="go" onclick="andersThema()">Schulstoff wählen</button>`:`<button class="${fw?'alt':'go'}" onclick="start('${Q.key}')">Nochmal</button>${Q.zu?'':`<button class="alt" onclick="andersThema()">Anderes Thema</button>`}`}<button class="alt" onclick="v='kid';ui()">Zurück zum Hof</button></div>`+
  // Hof noch gesperrt: alle Themen direkt zur Auswahl
@@ -264,8 +287,7 @@ function ui(){let h='';PZ=0;
  if(v=='train')h=trSeite();
  if(v=='bye'){let k=kid();h=`<h1>Bis morgen, ${esc(k.name)}!</h1><div class="card">${k.h?scene(k):''}<p>Für heute sind deine ${limM(k)} Minuten auf dem Hof um.${k.h?` ${esc(k.h.name)} freut sich, wenn du morgen wiederkommst.`:''}</p>${k.h&&stg(k)<3&&heute(k)?'<p class="small">Heute hast du gerechnet, der Tag zählt fürs Wachstum.</p>':''}</div><button class="go" onclick="v='home';ui()">Tschüss</button>`}
  if(v=='parent'){h=`<button class="alt" onclick="v='home';lock()">Zurück</button><h1>${S.pin?'Eltern-Ansicht':'Einstellungen'}</h1>`;
- if(S.pin&&!open)h+=`<div class="card pinkarte"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p>${PINI&&!PINR?`<button class="pini" onclick="PINR=1;ui()" aria-label="PIN zurücksetzen">i</button>`:''}</div>`+
-  (PINR?`<div class="card"><b>PIN vergessen?</b><p class="small">Lege eine neue PIN fest (mindestens 4 Zeichen). Danach ist die Eltern-Ansicht offen.</p><input id="pinr" type="password" inputmode="numeric" maxlength="8" aria-label="Neue PIN" onkeydown="if(event.key=='Enter')pinReset()"> <button onclick="pinReset()">Neue PIN speichern</button> <button class="alt" onclick="PINI=0;PINR=0;ui()">Abbrechen</button><p class="no">${pw}</p></div>`:'');
+ if(S.pin&&!open)h+=`<div class="card pinkarte"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p>${pinI()}</div>`+pinResetKarte();
  else{h+=S.kids.map(k=>`<div class="card"><div class="row sp"><b>${esc(k.name)}</b><span>Klasse <select onchange="gr(${k.id},this.value)" aria-label="Klasse">${[5,6,7,8].map(c=>`<option ${k.g==c?'selected':''}>${c}</option>`).join('')}</select></span></div>
  <p class="small">${k.h?esc(k.h.name)+' · '+GS[stg(k)].n+' · ':''}${k.h2?'zweites Pferd '+esc(k.h2.name)+' · '+GS[k.h2.st||0].n+' · ':''}${k.h&&stg(k)<3?`Tag ${serie(k)} von ${TAGE[stg(k)]} bis „${GS[stg(k)+1].n}“ · `:''}heute ${limS(k)?`${Math.min(limM(k),Math.floor(zeit(k)/60))} von ${limM(k)} Minuten`:`${Math.floor(zeit(k)/60)} Minuten (kein Limit)`} · ${k.xp} Erfahrung · ${k.ap||0} Äpfel · ${k.hu||0} Hufeisen · ${k.r} von ${k.total} Aufgaben richtig (${k.total?Math.round(k.r/k.total*100):0} %) · Rekordserie ${k.best} · Fehlerheft ${mcount(k)} offen</p>
  <p class="small" style="margin:6px 0"><label>Zeit pro Tag: <select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></label></p>
@@ -365,13 +387,13 @@ const VORTEILE=`<div class="card small vorteile"><b>Pferdehof Mathe für Eltern<
 const klassenWahl=()=>`<select id="gr" aria-label="Klasse">${[5,6,7,8].map(c=>`<option value="${c}">Klasse ${c}</option>`).join('')}</select>`;
 function startAbfrage(){
  const kopf='<h1>Pferdehof Mathe</h1>',zur=`<button class="alt" onclick="EIN='';EINPIN=false;warn='';ui()">Zurück</button>`,
-  pinFeld=(fn,txt)=>`<input id="pin0" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')${fn}()"> <button onclick="${fn}()">${txt}</button><p class="no">${warn}</p>`;
+  pinFeld=(fn,txt)=>`<input id="pin0" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')${fn}()"> <button onclick="${fn}()">${txt}</button>${PINMSG?`<p class="ok">${PINMSG}</p>`:''}<p class="no">${warn}</p>`;
  if(EIN=='kinder')return kopf+`<div class="card"><b>Kinder anlegen</b><p class="small">Jedes Kind bekommt einen eigenen Hof. Name, Klasse und Zeit pro Tag lassen sich später in der Eltern-Ansicht ändern.</p>`+
   S.kids.map(k=>`<div class="row sp" style="align-items:center"><span>${esc(k.name)} <span class="small">Klasse ${k.g}</span></span><select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></div>`).join('')+
   `<div class="row" style="margin-top:8px"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name" onkeydown="if(event.key=='Enter')add()">${klassenWahl()}<button onclick="add()">Hinzufügen</button></div></div><button class="go" onclick="einFertig()">${S.kids.length?'Fertig, auf zum Hof':'Später anlegen'}</button>`;
- if(EIN=='e')return kopf+VORTEILE+`<div class="card">${S.pin?'<b>PIN eingeben</b><p class="small">Auf diesem Gerät gibt es schon eine PIN. Gib sie einmal ein, um den Eltern-Modus zu bestätigen.</p>'
-  :'<b>PIN festlegen</b><p class="small">Mit der PIN öffnest du später die Eltern-Ansicht. Mindestens 4 Zeichen. Die Kinder sollten sie nicht kennen.</p>'}${pinFeld('einEltern','Weiter')}</div>`+zur;
- if(EIN=='k')return kopf+(S.pin&&!EINPIN?`<div class="card"><b>Kind-Modus</b><p>Auf diesem Gerät schützt eine PIN die Eltern-Ansicht. Für den Kind-Modus muss ein Elternteil sie einmal eingeben. Danach wird die PIN entfernt und die Einstellungen sind für alle offen.</p>${pinFeld('einKind','Weiter')}</div>`
+ if(EIN=='e')return kopf+VORTEILE+`<div class="card${S.pin?' pinkarte':''}">${S.pin?'<b>PIN eingeben</b><p class="small">Auf diesem Gerät gibt es schon eine PIN. Gib sie einmal ein, um den Eltern-Modus zu bestätigen.</p>'
+  :'<b>PIN festlegen</b><p class="small">Mit der PIN öffnest du später die Eltern-Ansicht. Mindestens 4 Zeichen. Die Kinder sollten sie nicht kennen.</p>'}${pinFeld('einEltern','Weiter')}${pinI()}</div>`+pinResetKarte()+zur;
+ if(EIN=='k')return kopf+(S.pin&&!EINPIN?`<div class="card pinkarte"><b>Kind-Modus</b><p>Auf diesem Gerät schützt eine PIN die Eltern-Ansicht. Für den Kind-Modus muss ein Elternteil sie einmal eingeben. Danach wird die PIN entfernt und die Einstellungen sind für alle offen.</p>${pinFeld('einKind','Weiter')}${pinI()}</div>${pinResetKarte()}`
   :S.kids.length?`<div class="card"><b>Kind-Modus</b><p>Du entscheidest selbst, die Einstellungen sind ohne PIN offen. Alle Spielstände bleiben, wie sie sind.</p><button class="go" onclick="einKind()">Weiter zum Hof</button></div>`
   :`<div class="card"><b>Wie heißt du?</b><p class="small">Du entscheidest selbst, die Einstellungen sind ohne PIN offen. Ein Elternteil kann später jederzeit eine PIN festlegen.</p><div class="row"><input id="nm" placeholder="Dein Name" maxlength="20" aria-label="Dein Name" onkeydown="if(event.key=='Enter')einKind()">${klassenWahl()}</div><button class="go" onclick="einKind()">Los geht’s</button><p class="no">${warn}</p></div>`)+zur;
  return kopf+`<div class="card"><b>Willkommen!</b>${S.kids.length?'<p class="small"><b>Neu:</b> Bitte einmal kurz auswählen, wer die App nutzt. Alle Spielstände bleiben erhalten.</p>':''}<p>Wer richtet die App ein?</p>`+
@@ -485,6 +507,7 @@ function wish(t,c){let k=kid(),H=hh(k),no=()=>hinweis('Dafür fehlen noch Äpfel
   else{if(xp('zopf',H.zk))return;if(!H.gus.includes(c)){if((k.ap||0)<PREIS.gummi)return no();k.ap-=PREIS.gummi;H.gus.push(c)}H.gu=c}}
  else if(t=='lp'){if(H.lp.includes(c)||!LIEB.some(l=>l[0]==c))return;if(xp('lieb'))return;if((k.ap||0)<PREIS.lieb)return no();k.ap-=PREIS.lieb;H.lp.push(c)}
  else if(t=='it'){if(H.it[c])return;if(xp('it'))return;const p=ITEMS.find(x=>x[0]==c)[2];if((k.ap||0)<p)return no();k.ap-=p;H.it[c]=1}
+ else if(t=='au'){const a=AUSR.find(x=>x[0]==c);H.au=H.au||{};if(!a||H.au[c])return;if((k.ap||0)<a[2])return no();k.ap-=a[2];H.au[c]=1}
  else if(t!='bl'&&t!='so')return;// nur Blesse und Socken; Unbekanntes (z. B. die alten Fähigkeiten "sk") kauft nichts
  else if(!H.own[t]){if(xp('abz'))return;if((k.ap||0)<15)return no();k.ap-=15;H.own[t]=1;H[t]=1}else H[t]=H[t]?0:1;
  save();ui()}
@@ -533,9 +556,12 @@ const gen=()=>{let k=kid(),t=THEMA[Q.key],q,n=0;Q.rp=0;
  Q.seen.push(q[0]);return q};
 // Tipp anzeigen, ohne die bereits getippte Antwort zu verlieren (ui() baut die Seite neu auf)
 function tip(){let el=$('#ans'),val=el?el.value:'';Q.hint=1;ui();let n=$('#ans');if(n)n.value=val}
+// k.gl: zuletzt richtig gelöste Aufgaben [{key, d (Stufe), q}]. Das Training fragt nur solche ab (Brain Dump 2026-10-22). GLMAX steht oben bei PREIS.
+function glMerken(k,key,d,q){if(q[4]||!Number.isFinite(+q[1])||!SCHUL.has(key)||String(q[0]).length>130)return;const L=k.gl||(k.gl=[]),i=L.findIndex(x=>x.q[0]===q[0]);if(i>=0)L.splice(i,1);L.push({key,d,q:[q[0],q[1],q[2]||'',q[3]||'']});if(L.length>GLMAX)L.shift()}
 function chk(){let k=kid(),s=ts(k,Q.key),raw=$('#ans').value.trim().replace(',','.').replace('−','-');if(raw===''||isNaN(raw))return $('#ans').focus();
  let ok=Math.abs(+raw-Q.q[1])<1e-9,g=0,a=0,m='';k.total++;s.n++;
  if(ok){s.r++;k.r++;k.s++;k.best=Math.max(k.best,k.s);Q.right++;g=Math.round((8+3*s.d)*(Q.hint?.5:1))+(k.s>=5?5:0);a=1+(s.d>=4?1:0);if(frueherThema(k,Q.key))a=Math.ceil(a/2);k.xp+=g;k.ap=(k.ap||0)+a;Q.gain+=g;Q.ap+=a;s.run=s.run>0?s.run+1:1;
+  glMerken(k,Q.key,s.d,Q.q);
   if(s.run>=3&&s.d<5){s.d++;s.run=0;m='Stufe '+s.d+' erreicht!'}}
  else{k.s=0;s.run=s.run<0?s.run-1:-1;if(s.run<=-2&&s.d>1){s.d--;s.run=0;m='Wir üben eine Stufe leichter.'}}
  BD.forEach(b=>{if(!k.b.includes(b[0])&&b[2](k)){k.b.push(b[0]);Q.newb.push(b[1])}});
@@ -547,7 +573,7 @@ function nx(){Q.i++;if(Q.i>=10){let k=kid();if(Q.right==10){k.perfect++;BD.forEa
   // Hof-Sperre: Eine Runde mit mindestens 8 von 10 richtig öffnet den Hof und startet die 3 Minuten neu
   if(Q.right>=FREI){k.hz=0;if(k.hl){delete k.hl;Q.frei=1}}else if(k.hl)Q.zu=1;
   // Hufeisen (seit 2026-10-22): eins für jede Runde mit mindestens FREI von 10, egal welches Thema
-  if(Q.right>=FREI){k.hu=(k.hu||0)+1;Q.hu=1}
+  if(Q.right>=FREI){Q.hu=huPlus(k);Q.huvoll=!Q.hu}
   // Knobel-Regel: Knobelrunde zählt mit, Schulstoff mit mindestens FREI von 10 setzt zurück
   if(KNOBEL.has(Q.key))k.kn=(k.kn||0)+1;else if(Q.right>=FREI){if((k.kn||0)>=KNMAX)Q.knfrei=1;k.kn=0}else if((k.kn||0)>=KNMAX)Q.knzu=1;
   const w=tagZaehlt(k),st=stg(k);Q.grow=w.grow||'';
@@ -555,18 +581,27 @@ function nx(){Q.i++;if(Q.i>=10){let k=kid();if(Q.right==10){k.perfect++;BD.forEa
   save();v='done'}else{Q.q=gen();Q.fb=null;Q.hint=0}ui()}
 // Sperren: muss eine Funktion sein. In onclick-Attributen würde "open=false" sonst document.open überschreiben statt diese Variable.
 function lock(){open=false;ui()}
-// PIN vergessen (seit 2026-10-22, Brain Dump): Auf der PIN-Seite der Eltern-Ansicht erscheint nach 5 schnellen Tipps (innerhalb von 2 Sekunden)
+// PIN vergessen (seit 2026-10-22, Brain Dump): Auf jeder Seite, die nach der PIN fragt (Eltern-Ansicht, Startabfrage "Elternteil" und
+// "Kind" auf einem Gerät mit PIN), erscheint nach 5 schnellen Tipps (innerhalb von 3 Sekunden, irgendwo auf den Bildschirm) oben rechts
 // ein kleines "i". Damit lässt sich eine neue PIN festlegen. Danach (oder beim Verlassen der Seite) ist das "i" wieder unsichtbar.
-let PINI=0,PINR=0,PINT=[];
-document.addEventListener('pointerdown',()=>{if(v!='parent'||!S.pin||open||PINI)return;const t=Date.now();PINT=[...PINT.filter(x=>t-x<2000),t];if(PINT.length>=5){PINT=[];PINI=1;const el=$('#pin'),w=el?el.value:'';ui();const n=$('#pin');if(n)n.value=w}});
+let PINI=0,PINR=0,PINT=[],PINL=0,PINMSG='';
+const pinSeite=()=>!!S.pin&&((v=='parent'&&!open)||(v=='home'&&(EIN=='e'||(EIN=='k'&&!EINPIN))));
+const pinI=()=>PINI&&!PINR?`<button class="pini" onclick="PINR=1;ui()" aria-label="PIN zurücksetzen">i</button>`:'';
+const pinResetKarte=()=>PINR?`<div class="card"><b>PIN vergessen?</b><p class="small">Lege eine neue PIN fest (mindestens 4 Zeichen).${v=='parent'?' Danach ist die Eltern-Ansicht offen.':' Danach gibst du sie oben ein.'}</p><input id="pinr" type="password" inputmode="numeric" maxlength="8" aria-label="Neue PIN" onkeydown="if(event.key=='Enter')pinReset()"> <button onclick="pinReset()">Neue PIN speichern</button> <button class="alt" onclick="PINI=0;PINR=0;ui()">Abbrechen</button><p class="no">${pw}</p></div>`:'';
+// Tipps zählen: Touch, Stift und Maus (ein Tipp kann mehrere Ereignisse auslösen, deshalb höchstens eins je 60 ms)
+let PINTOUCH=0;
+function pinTipp(e){if(e&&e.type=='touchstart')PINTOUCH=Date.now();if(e&&e.type=='mousedown'&&Date.now()-PINTOUCH<800)return;if(!pinSeite()||PINI)return;const t=Date.now();if(t-PINL<60)return;PINL=t;PINT=[...PINT.filter(x=>t-x<3000),t];
+ if(PINT.length>=5){PINT=[];PINI=1;const el=$('#pin')||$('#pin0'),w=el?el.value:'',id=el&&el.id;ui();const nn2=id&&$('#'+id);if(nn2)nn2.value=w}}
+(window.PointerEvent?['pointerdown']:['touchstart','mousedown']).forEach(e=>document.addEventListener(e,pinTipp,{passive:true}));
 function pinReset(){const el=$('#pinr'),p=el?el.value.trim():'';if(p.length<4){pw='Die PIN braucht mindestens 4 Zeichen.';ui();pw='';return}
- S.pin=p;delete S.np;S.mo='e';PINI=0;PINR=0;open=true;warn='';save();ui()}
+ S.pin=p;delete S.np;PINI=0;PINR=0;
+ if(v=='parent'){S.mo='e';open=true;warn='';save();ui()}else{save();PINMSG='Neue PIN gespeichert. Gib sie jetzt oben ein.';ui();PINMSG=''}}
 function unl(){let p=$('#pin').value;if(!p)return;if(p==S.pin)open=true;else{warn='Falsche PIN.';ui();warn='';return}ui()}
 function gr(id,g){let k=S.kids.find(x=>x.id==id);k.g=+g;save();ui()}
 // Tageslimit je Kind (Eltern-Ansicht): 0 = kein Limit, sonst 5 bis LIMMAX Minuten in 5er-Schritten. Wirkt sofort, auch am selben Tag.
 const limOptionen=k=>[0,...Array.from({length:LIMMAX/5},(_,i)=>(i+1)*5)].map(m=>`<option value="${m}"${limM(k)==m?' selected':''}>${m?m+' Minuten':'kein Limit'}</option>`).join('');
 function lim(id,m){let k=S.kids.find(x=>x.id==id);m=+m;if(!k||!Number.isInteger(m)||m<0||m>LIMMAX||m%5)return;k.lm=m;save();ui()}
-function rst(id){if(!confirm('Fortschritt wirklich zurücksetzen? Das Pferd beginnt wieder als Fohlen.'))return;let k=S.kids.find(x=>x.id==id);delete k.ld;delete k.hl;delete k.hu;Object.assign(k,{kn:0,xp:0,st:0,sd:0,hz:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},mist:[]});if(k.h){k.h.coats=[k.h.coat];k.h.own={};k.h.bl=0;k.h.so=0;k.h.tr={};k.h.tl={};delete k.h.tz;k.h.it={};k.h.lp=[];k.h.ko={n:1,u:[0,0,0],z:{}}}delete k.h2;save();ui()}
+function rst(id){if(!confirm('Fortschritt wirklich zurücksetzen? Das Pferd beginnt wieder als Fohlen.'))return;let k=S.kids.find(x=>x.id==id);delete k.ld;delete k.hl;delete k.hu;Object.assign(k,{kn:0,xp:0,st:0,sd:0,hz:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},mist:[]});delete k.gl;if(k.h){k.h.coats=[k.h.coat];k.h.own={};k.h.bl=0;k.h.so=0;k.h.tr={};k.h.tl={};delete k.h.tz;k.h.au={};delete k.h.hs;k.h.it={};k.h.lp=[];k.h.ko={n:1,u:[0,0,0],z:{}}}delete k.h2;save();ui()}
 function del(id){if(!confirm('Kind samt Fortschritt löschen?'))return;S.kids=S.kids.filter(x=>x.id!=id);save();ui()}
 function exp(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='pferdehof-sicherung.json';a.click()}
 function imp(el){let f=el.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=clean(JSON.parse(r.result));if(!d)throw 0;if(!confirm('Aktuellen Stand durch die Sicherung ersetzen? Der PIN-Schutz wird aus der Sicherung übernommen.'))return;if(!d.pin)d.np=1;if(!d.mo)d.mo=d.pin?'e':'k';S=d;save();ui()}catch(e){warn='Datei konnte nicht gelesen werden.';ui()}};r.readAsText(f)}

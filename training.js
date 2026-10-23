@@ -10,7 +10,10 @@
 // Arten: n = Name je Stufe, max = höchste Sternzahl je Stufe (Fohlen, Jährling, Jungpferd, Pferd),
 // alle = Abstand in Tagen je Stufe (Anreiten beim Jährling nur alle 2 Tage), tage = nur an diesen Wochentagen (0 = Sonntag),
 // spiel = Minispiel ist schon gebaut (1 oder je Stufe, die anderen zeigen "Kommt bald"); Anreiten (Jährling) seit 2026-10-22, Reiten ab Jungpferd folgt
-const TRPREIS=10,TRN=5,TROK=4,TRZEIT=15,TRXP=10;
+// TRZEIT: Sekunden je Aufgabe (seit 2026-10-23 30, vorher 20 bzw. 15). HUMAX: höchstens so viele Hufeisen auf Vorrat (seit 2026-10-22)
+const TRPREIS=10,TRN=5,TROK=4,TRZEIT=30,TRXP=10,HUMAX=10;
+// Hufeisen dazubekommen, höchstens HUMAX. Liefert 1, wenn eins dazukam.
+const huPlus=k=>{if((k.hu||0)>=HUMAX)return 0;k.hu=(k.hu||0)+1;return 1};
 const TRA=[
  ['lo',{n:()=>'Longieren',max:[0,5,5,5],spiel:1}],
  ['re',{n:st=>st==1?'Anreiten':'Reiten',max:[0,3,7,10],alle:[1,2,1,1],spiel:[0,1,0,0]}],
@@ -32,6 +35,8 @@ function trStatus(k,id){if(!k||!k.h)return{txt:`Ab ${GS[1].n}`};const H=hh(k),st
  if(!mx)return{txt:st==0?`Ab ${GS[1].n}`:`Ab ${GS[2].n}`};
  if(s>=mx)return{voll:1,txt:st<3&&A.max[st+1]>mx?`Alle Sterne geschafft. Mehr gibt es, wenn ${H.name} ein ${GS[st+1].n} ist.`:'Alle Sterne geschafft!'};
  if(!(Array.isArray(A.spiel)?A.spiel[st]:A.spiel))return{bald:1,txt:'Kommt bald'};
+ // Anreiten und Reiten nur mit Sattel (mit Sattelgurt), Satteldecke und Trense (seit 2026-10-22, Kauf im Wunschbaum, AUSR in app.js)
+ if(id=='re'&&!reitfertig(H))return{ausr:1,txt:`Zum ${A.n(st)} braucht ${H.name} Sattel mit Sattelgurt, Satteldecke und Trense. Du bekommst sie im Wunschbaum unter „Reitausrüstung & Pflege“.`};
  const tl=(H.tl||{})[id],ab=(A.alle||[])[st]||1;
  if(tl==t)return{txt:ab>1?'Heute schon trainiert. Übermorgen wieder, damit das Pferd sich erholen kann.':'Heute schon trainiert, morgen wieder.'};
  if(tl&&ab>1&&trTagNr(t)-trTagNr(tl)<ab)return{txt:'Morgen wieder. Das Pferd braucht einen Tag Pause.'};
@@ -54,12 +59,17 @@ function trAnim(H){const c=[['sp','jump'],['lo','gal'],['re','wig'],['dr','wig']
 // ---------- Aufgaben fürs Training ----------
 // Kopfrechnen in 15 Sekunden: Schulstoff ohne Zeichnung und ohne lange Texte, eine Stufe leichter als der Stand des Kindes.
 // Bis zum 3. Stern kommen 2 von 5 Aufgaben aus der Klasse darunter, ab dem 4. Stern nur noch 1. Klasse 5 nimmt dafür ihre Stufen 1 und 2.
-function trAufgabe(k,unten,seen){const g=k.g,gk=unten&&g>5?g-1:g,keys=KAT[gk].schul;let best=null;
+function trAufgabe(k,unten,seen){const g=k.g,gk=unten&&g>5?g-1:g,alle=KAT[gk].schul,gel=alle.filter(x=>((k.t||{})[x]||{}).r>0),keys=gel.length?gel:alle;let best=null;
  for(let n=0;n<60;n++){const key=P(keys),d0=(k.t[key]||{}).d,d=unten?(g>5?Math.max(1,(d0||3)-1):R(1,2)):Math.max(1,(d0||1)-1),q=THEMA[key][2](d);
   if(q[4]||!Number.isFinite(+q[1]))continue;if(!best)best={key,q};
   if(String(q[0]).length<=130&&!seen.includes(q[0])){seen.push(q[0]);return{key,q}}}
  return best||{key:keys[0],q:THEMA[keys[0]][2](1)}}
-function trAufgaben(k,ziel){const unten=ziel<=3?2:1,seen=[];return[...Array(TRN)].map((_,i)=>trAufgabe(k,i<unten,seen)).sort(()=>Math.random()-.5)}
+// Seit 2026-10-23 (Brain Dump): Das Training fragt nur Aufgaben ab, die das Kind schon einmal richtig gelöst hat (k.gl).
+// "Klasse darunter" sind dabei Themen früherer Klassen, in Klasse 5 Aufgaben der Stufen 1 und 2. Reicht die Liste nicht (neue Kinder, alte Stände),
+// kommen frisch erzeugte Aufgaben aus Themen, in denen das Kind schon etwas gelöst hat.
+function trAufgaben(k,ziel){const unten=ziel<=3?2:1,seen=[],gl=(k.gl||[]).filter(x=>THEMA[x.key]&&SCHUL.has(x.key)&&String(x.q[0]).length<=130),ist=x=>k.g>5?!T[k.g].some(t=>t[0]===x.key):x.d<=2,
+ eig=gl.filter(x=>!ist(x)),unt=gl.filter(ist),zieh=L=>{const c=L.filter(x=>!seen.includes(x.q[0]));if(!c.length)return null;const x=P(c);seen.push(x.q[0]);return{key:x.key,q:x.q,alt:1}};
+ return[...Array(TRN)].map((_,i)=>(i<unten?zieh(unt)||zieh(eig):zieh(eig)||zieh(unt))||trAufgabe(k,i<unten,seen)).sort(()=>Math.random()-.5)}
 // ---------- Ablauf ----------
 // TQ: laufendes Training. phase: 'lauf' (Pferd trabt eine Runde) oder 'frage' (Aufgabe mit Zeit). th = Winkel auf dem Zirkel,
 // ph = Schrittphase, lauf = schon gelaufener Winkel dieser Runde, t0 = Start der Aufgabe, fb = Rückmeldung, ende = fertig
@@ -78,7 +88,7 @@ function trChk(zeitUm){if(!TQ||TQ.ende||TQ.fb||TQ.phase!='frage')return;const k=
  TQ.fb={ok,zeit:!!zeitUm};TQ.fts=Date.now();save();ui()}
 function trNx(){if(!TQ||!TQ.fb)return;if(TQ.i>=TRN-1)return trEnde();TQ.i++;TQ.fb=null;TQ.an=1;if(RM)return trFrage();TQ.phase='lauf';TQ.lauf=0;ui()}
 function trEnde(){const k=kid(),H=hh(k),mx=TRART[TQ.id].max[stg(k)];TQ.ende=1;TQ.fb=null;
- if(TQ.right>=TROK){H.tr=H.tr||{};H.tr[TQ.id]=Math.min(mx,(H.tr[TQ.id]||0)+1);k.hu=(k.hu||0)+1;TQ.stern=1}
+ if(TQ.right>=TROK){H.tr=H.tr||{};H.tr[TQ.id]=Math.min(mx,(H.tr[TQ.id]||0)+1);TQ.hu=huPlus(k);TQ.stern=1}
  save();ui()}
 function trAbbruch(){if(TQ&&!TQ.ende&&!confirm('Training beenden? Der Versuch zählt trotzdem, die Äpfel sind schon bezahlt.'))return;trZurueck()}
 function trZurueck(){TQ=null;if(ausZeit(kid()))return bye();v='kid';ui();trSektion()}
@@ -89,7 +99,7 @@ function trSeite(){const k=kid(),H=hh(k),st=stg(k),A=TRART[TQ.id],it=TQ.auf[TQ.i
  let h=`<div class="row sp qkopf"><button class="alt" onclick="${TQ.ende?'trZurueck()':'trAbbruch()'}">${TQ.ende?'Zurück':'Beenden'}</button><span class="qthema">${A.n(st)}</span><span class="ap">${k.ap||0} ${AP}</span></div>`+trSzene(k);
  if(TQ.ende){const S=trStatus(k,TQ.id),s=(H.tr||{})[TQ.id]||0,mx=A.max[st];
   return h+`<div class="card trende" style="text-align:center"><h1 style="margin:4px 0">${TQ.stern?'Super gemacht!':'Fast geschafft!'}</h1><p><b>${TQ.right} von ${TRN}</b> richtig.</p>`+
-   (TQ.stern?`<p class="ok pop"><b>${esc(H.name)} hat einen Stern beim ${A.n(st)} bekommen!</b></p><p>${trSterne(s,mx)}</p><p>+1 Hufeisen ${HU} · +${TQ.right*TRXP} Erfahrung</p>`:
+   (TQ.stern?`<p class="ok pop"><b>${esc(H.name)} hat einen Stern beim ${A.n(st)} bekommen!</b></p><p>${trSterne(s,mx)}</p><p>${TQ.hu?`+1 Hufeisen ${HU}`:`Dein Hufeisen-Vorrat ist voll (${HUMAX} ${HU})`} · +${TQ.right*TRXP} Erfahrung</p>`:
     `<p class="no">Für einen Stern brauchst du ${TROK} von ${TRN}. Üb weiter, dann klappt es beim nächsten Mal!</p><p class="small">+${TQ.right*TRXP} Erfahrung</p>`)+
    (ausZeit(k)?`</div><div class="card" id="limit"><b>Für heute ist Schluss.</b><p>Deine ${limM(k)} Minuten auf dem Hof sind um. Morgen geht es weiter, ${esc(H.name)} wartet auf dich!</p></div><button class="go" onclick="trZurueck()">Tschüss, bis morgen</button>`:
    `<p class="small">${esc(S.ok?'Du kannst gleich noch einmal trainieren.':S.txt)}</p></div><button class="go" onclick="trZurueck()">Zurück zum Training</button>`)}
@@ -141,7 +151,15 @@ function trReiter(k){const ko=document.getElementById('tr_koerper'),kf=document.
  const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.id='trreiter';
  TRZH={x:s0.x+18*sc,y:s0.y-16*sc};
  g.innerHTML=`<path id="trzuegel" d="M${r1(TRZH.x)} ${r1(TRZH.y)}L${r1(maul.x)} ${r1(maul.y)}" fill="none" stroke="#3b2414" stroke-width="${r1(1.6*sc)}"/><g transform="translate(${r1(s0.x)} ${r1(s0.y)}) scale(${sc.toFixed(3)})">${reiterBild(k.f)}</g>`;
- ko.appendChild(g)}
+ ko.appendChild(g);
+ // Ausrüstung: Satteldecke, Sattel und Sattelgurt im Raum der Körperform (wie der Rücken), Trense am Kopf. Der Gurt bleibt innerhalb des Körpers.
+ const ns='http://www.w3.org/2000/svg',a1=document.createElementNS(ns,'g');a1.id='trsattel';
+ a1.innerHTML='<path d="M-42 -160Q-10 -150 26 -160L24 -124Q-8 -116 -40 -124Z" fill="#2c3f68" stroke="#1b2740" stroke-width="1.2"/><path d="M-40 -127Q-8 -119 24 -127" fill="none" stroke="#f1e4c8" stroke-width="2"/>'+
+  '<g clip-path="url(#tr_koerperClip)"><rect x="-4" y="-132" width="7" height="50" fill="#4a2e1a"/><rect x="-5" y="-112" width="9" height="5" rx="1" fill="#c9b27a"/></g>'+
+  '<path d="M-30 -158Q-27 -170 -19 -162Q-6 -155 8 -158Q13 -168 19 -160L15 -147Q-8 -142 -28 -147Z" fill="#6b3e1f" stroke="#3b2414" stroke-width="1.2"/><path d="M-16 -148L4 -148L6 -128L-14 -128Z" fill="#7d4a26" stroke="#3b2414" stroke-width="1"/>';
+ kf.parentNode.appendChild(a1);
+ const kg=kp&&kp.parentNode;if(kg){const a2=document.createElementNS(ns,'g');a2.id='trtrense';
+  a2.innerHTML='<path d="M99 -213L118 -169M110 -180Q123 -183 135 -171M95 -205Q100 -213 107 -213" fill="none" stroke="#3b2414" stroke-width="2.4" stroke-linecap="round"/><circle cx="127" cy="-161" r="2.2" fill="none" stroke="#c9c9c9" stroke-width="1.2"/>';kg.appendChild(a2)}}
 // TRRS: Größe der Reiterin im Verhältnis zum Pferd (1,6: ein Kind im Sattel, Kopf etwa auf Höhe der Ohren)
 const TRRS=1.6;
 let TRRAF=0,TRL=0,TRRIG=null;

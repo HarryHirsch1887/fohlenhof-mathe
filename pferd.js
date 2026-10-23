@@ -201,6 +201,7 @@ function bild(P, sp, opt = {}) {
    <ellipse class="glanz" cx="-64" cy="-138" rx="25" ry="15" transform="rotate(-18 -64 -138)"/><ellipse class="glanz" cx="56" cy="-142" rx="15" ry="10"/>
    <path class="aal" d="M38 -158C18 -152 -8 -153 -36 -157C-52 -159 -66 -159 -80 -153"/>
    ${linie('M42 -152C52 -140 64 -127 74 -117')}${linie('M-36 -148C-46 -132 -48 -114 -42 -97', .1)}${linie('M-30 -89C-6 -85 16 -85 32 -89', .06, 3)}
+   ${sp.dk ? `<g clip-path="url(#koerperClip)" class="pdecke"><path d="M-112 -182H92V-114Q-10 -100 -112 -116Z" fill="${sp.dk}"/><path d="M-112 -116Q-10 -100 92 -114" fill="none" stroke="#e2b24a" stroke-width="3"/><path d="M-40 -175V-110M20 -175V-108" stroke="#000" stroke-opacity=".12" stroke-width="2"/></g>` : ''}
   </g>
   <g transform="translate(${nx} ${ny}) scale(${r1(m.ns * 100) / 100}) translate(-62 132)">
    <g id="hals1"><path id="hals1Form" class="kN" d="${HALS1}"/><circle class="kN" cx="80" cy="-172" r="17"/><g clip-path="url(#hals1Clip)" class="fleck">${fleckSvg(flHals)}</g>

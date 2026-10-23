@@ -186,9 +186,47 @@ const MAUS='<g class="maus"><path d="M-1.8 -.8q-2 .2 -3 -1.2" stroke="#9b8f86" s
 const FROSCH=`<g class="frosch"><ellipse cx="-2.2" cy="-1" rx="2.4" ry="1.1" fill="#3f7a2e"/><ellipse cy="-2.4" rx="3.4" ry="2.3" fill="#5aa13f"/><ellipse cx="2.3" cy="-3.2" rx="1.9" ry="1.5" fill="#5aa13f"/><circle class="kehle" cx="3" cy="-1.8" r="1.4" fill="#d9eaa0" opacity="0"/><circle cx="1.6" cy="-4.7" r="1" fill="#fff"/><circle cx="3.1" cy="-4.6" r="1" fill="#fff"/><circle cx="1.8" cy="-4.7" r=".45" fill="#111"/><circle cx="3.3" cy="-4.6" r=".45" fill="#111"/><path d="M1.6 -2.6q1.4 .7 2.6 -.2" stroke="#2d5a20" stroke-width=".35" fill="none"/><ellipse cx="1.4" cy="-.3" rx="1.2" ry=".4" fill="#3f7a2e"/></g>`;
 
 function fillers(){if(!HF.fill){const ks=Object.keys(COATS);HF.fill=[...Array(5)].map((_,i)=>{const c=ks[(i*2+R(0,5))%ks.length];return{id:'f'+i,c,st:i==3?1:3,m:{bl:R(0,1),so:R(0,1)},name:COATS[c][0],own:0}})}return HF.fill}
+// ---------- Unterstand und Stall: Pferd morgens herausholen, abends hineinbringen (seit 2026-10-22, Wunsch der Kinder) ----------
+// Nur mit Unterstand (1) oder Stall (2) auf der Hauptkoppel. Am Pferd: hs = {d: Datum, s: 'raus'}. Ohne Eintrag von heute steht das Pferd drinnen.
+// Drinnen steht es im Unterstand unter dem Dach bzw. schaut im Stall aus dem oberen Teil der linken Boxentür.
+const unterkunft=H=>H&&H.ko&&H.ko.u?H.ko.u[0]|0:0;
+const drinnen=H=>unterkunft(H)>0&&!(H.hs&&H.hs.d==tag()&&H.hs.s=='raus');
+// Pferdedecke: auf dem eigenen Hof bei Regen, Schnee und nachts, wenn sie gekauft ist
+const deckeWetter=()=>{const w=wetter();return w=='regen'||w=='schnee'||pal(HF.hTest!=null?HF.hTest:new Date().getHours()).n=='nacht'};
+const DECKE='#b0412f';
+function fuehrKnopf(k){const H=hh(k),u=unterkunft(H);if(!u)return'';const ort=u==2?'Stall':'Unterstand',d=drinnen(H);
+ return`<div class="row fuehr" style="margin:6px 0;align-items:center"><button class="go" onclick="fuehren()">${d?`${esc(H.name)} aus dem ${ort} holen`:`${esc(H.name)} in den ${ort} bringen`}</button>${d?`<span class="small">${esc(H.name)} steht im ${ort}.</span>`:''}</div>`}
+// Knopf: Zustand sofort speichern, dann die kleine Animation (bei "Bewegung reduzieren" ohne Animation)
+function fuehren(){const k=kid();if(!k||!k.h||HF.fuehr)return;const H=hh(k);if(!unterkunft(H))return;const raus=drinnen(H);
+ if(raus)H.hs={d:tag(),s:'raus'};else delete H.hs;save();
+ if(RM||HF.kind!='kid'||!HF.horses.some(h=>h.own)){hofSync(true);ui();return}
+ hofFuehr(raus);ui()}
+// Ablauf. raus: Figur geht zur Tür (1,2 s), Pferd erscheint (0,4 s), beide gehen auf die Wiese (3 s), Figur geht zurück (1,2 s).
+// rein: Pferd kommt zur Figur (2 s), beide gehen zur Tür (3 s), Pferd verschwindet (0,4 s), dann wird der Hof neu aufgebaut.
+function hofFuehr(raus){const h=HF.horses.find(x=>x.own);if(!h)return;const xs=Math.round(HF.OX+.477*HF.WK),[fx,fy]=HF.figP||[xs-40,GY+36];
+ HF.fuehr={raus,t:0,xs,fx,fy,hx0:h.x,hd0:h.d};
+ if(raus){h.drin=0;HF.hw.insertBefore(h.g_,HF.vorne);const w=HF.hw.querySelector('#hdrin');if(w)w.remove();h.x=xs;h.d=0;h.op=0;h.g_.style.opacity='0'}
+ hofKick(raus?6:6)}
+function fuehrSchritt(h,dt){const F=HF.fuehr;if(dt>0)F.t+=dt;const t=F.t,L=(p,a,b)=>a+(b-a)*Math.max(0,Math.min(1,p)),dy=Y=>(Y-138)/54,xs=F.xs;
+ const F1=[xs-24,GY+20],ziel=(x,d)=>{h.dir=x>=h.x?1:-1;h.x=x;h.d=d};let fig=[F.fx,F.fy],geht=0,op=1,lauf=0;
+ if(F.raus){const H2=[xs+70,.45];
+  if(t<1.2){fig=[L(t/1.2,F.fx,F1[0]),L(t/1.2,F.fy,F1[1])];geht=1;op=0}
+  else if(t<1.6){fig=F1;op=(t-1.2)/.4}
+  else if(t<4.6){const p=(t-1.6)/3;ziel(L(p,xs,H2[0]),L(p,0,H2[1]));fig=[L(p,F1[0],H2[0]-28),L(p,F1[1],GY+36)];geht=1;lauf=1}
+  else if(t<5.8){const p=(t-4.6)/1.2;fig=[L(p,H2[0]-28,F.fx),L(p,GY+36,F.fy)];geht=1}
+  else{HF.fuehr=null;h.state='graze';h.t=3+Math.random()*3;h.op=1;h.g_.style.opacity='';fuehrFigur(F.fx,F.fy,0);HF.keyNeu=F.key;ui();return}}
+ else{const M=[F.fx+30,dy(F.fy)];
+  if(t<2){const p=t/2;ziel(L(p,F.hx0,M[0]),L(p,F.hd0,M[1]));lauf=1}
+  else if(t<5){const p=(t-2)/3;ziel(L(p,M[0],xs),L(p,M[1],0));fig=[L(p,F.fx,F1[0]),L(p,F.fy,F1[1])];geht=1;lauf=1}
+  else if(t<5.4){op=1-(t-5)/.4;fig=F1}
+  else{HF.fuehr=null;hofSync(true);ui();return}}
+ h.state=lauf?'walk':'stand';h.g='walk';h.am+=((lauf?1:0)-h.am)*Math.min(1,dt*6);if(lauf)h.ph=(h.ph+dt*G.walk[1])%1;h.ha+=(0-h.ha)*Math.min(1,dt*3);h.joy=0;
+ h.g_.style.opacity=op<1?op.toFixed(2):'';fuehrFigur(fig[0],fig[1],geht?t:0)}
+// Eigene Figur verschieben (leichtes Wippen beim Gehen)
+function fuehrFigur(x,y,t){const e=HF.figE;if(!e)return;e.setAttribute('transform',`translate(${r1(x)} ${r1(y-(t?Math.abs(Math.sin(t*9))*1.2:0))}) scale(${FIGX.s})`)}
 function hofSpecs(kind){
  const A=[],km=k=>{const H=hh(k);return{id:'k'+k.id,c:H.coat,st:stg(k),m:pfSpec(H,stg(k)),name:H.name,own:k.id}};
- if(kind=='kid'){const k=kid(),H=hh(k),b=belegung(H);A.push({...km(k),ko:0});
+ if(kind=='kid'){const k=kid(),H=hh(k),b=belegung(H),o={...km(k),ko:0,drin:drinnen(H)?unterkunft(H):0};if(H.au&&H.au.pdecke&&deckeWetter())o.m={...o.m,dk:DECKE};A.push(o);
   // Freunde stehen auf der Koppel, auf der sie einen Platz haben (belegung in app.js). Ohne Platz sind sie nicht auf dem Hof.
   b.p.forEach((L,i)=>L.forEach(f=>{if(f!='eigen')A.push({...freundInfo(k,f),ko:i})}));
   // Besuch (seit 2026-10-20): Pferde der Freundinnen laufen auf der Hauptkoppel mit, ohne Platz zu brauchen
@@ -213,7 +251,7 @@ function hofBuild(kind){
  const kidId=kind=='kid'?kid().id:null;
  if(HF.mistK!==kidId){HF.mist=[];HF.mistT=20;HF.mistK=kidId;HF.apfel=null;HF.frosch=null}
  if(kind!='kid'){HF.apfel=null;HF.frosch=null}
- HF.wellen=[];HF.katze=null;HF.maeuse=null;// Katze und Mäuse gehen beim Neuaufbau verloren (seit 2026-10-21)
+ HF.wellen=[];HF.katze=null;HF.maeuse=null;HF.fuehr=null;// Katze und Mäuse gehen beim Neuaufbau verloren (seit 2026-10-21)
  const old=Object.fromEntries(HF.horses.map(h=>[h.id,h]));
  const startX=i=>{const [a,b]=HF.kr[i];return i?a+40+Math.random()*(b-a-80):Math.min(b-30,Math.max(a+30,HF.cam+30+Math.random()*(W-60)))};
  HF.horses=hofSpecs(kind).map(s=>{s.ko=s.ko|0;const o=old[s.id]&&(old[s.id].ko|0)===s.ko?old[s.id]:null;return Object.assign({ph:0,am:0,g:'walk',ha:0,joy:0,state:'stand',t:R(1,3),dir:R(0,1)?1:-1,d:Math.random(),dd:.5,sw:Math.random()*6,x:startX(s.ko)},s,o?{x:o.x,d:o.d,dir:o.dir,state:o.state,t:o.t,ph:o.ph,am:o.am,g:o.g,ha:o.ha,dd:o.dd,ziel:kind=='kid'?o.ziel:null}:{})});
@@ -222,6 +260,8 @@ function hofBuild(kind){
  const belegt=[...ITEMS.filter(i=>items.includes(i[0])&&FUSS[i[0]]).map(i=>{const x=Math.round(OX+i[3]*WK),[w,b]=FUSS[i[0]];return[x-w,x+w,b]}),...geb.belegt],frei=(x,y)=>!belegt.some(([a,b,f])=>x>a&&x<b&&y<f+1);
  // Figuren: auf dem Hof eines Kindes die eigene vorn, alle anderen (höchstens 5) hinter dem Zaun
  const mitF=S.kids.filter(x=>x.f),eig=kind=='kid'?mitF.find(x=>x.id==kidId):null,figs={eigen:eig,zaun:mitF.filter(x=>x!==eig).slice(0,5)};
+ const hsSvg=(h,i)=>`<g class="hs" id="hs${i}" data-i="${i}">${PF.bild('h'+i+'_',{...h.m,coat:h.c,st:h.st})}</g>`,dh=HF.horses.findIndex(h=>h.drin),
+  drinSvg=dh<0?'':`<g id="hdrin"${HF.horses[dh].drin==2?' clip-path="url(#drinClip)"':''}>${hsSvg(HF.horses[dh],dh)}</g>`;
  const nacht=P.n=='nacht',gras=nacht?['#2f5a38','#376640','#28503a']:TH?['#6f8f45','#7c9b4c','#5d7e3c','#86a455']:['#6d9f4c','#7fb258','#5f9245','#86b960'];
  // Wetter: bei Regen und Schnee trüber Himmel ohne Sonne, Mond und Sterne. Schmetterlinge nur tagsüber von April bis Oktober bei gutem Wetter, Vögel nicht nachts und nicht bei Regen oder Schnee.
  const WT=wetter(now),trueb=WT=='regen'||WT=='schnee',mo=HF.mTest!=null?HF.mTest:now.getMonth(),falterOk=P.n=='tag'&&!trueb&&mo>=3&&mo<=9,voegelOk=TH?!trueb:!nacht&&!trueb;HF.wetter=WT;HF.thema=TH;
@@ -233,7 +273,7 @@ function hofBuild(kind){
   `<linearGradient id="wolkeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${trueb?(nacht?'#59657e':'#e4e8ec'):P.w1}"/><stop offset="1" stop-color="${trueb?(nacht?'#3c465e':'#a3adb8'):P.w2}"/></linearGradient>`+
   `<linearGradient id="bodenG" gradientUnits="userSpaceOnUse" x1="0" y1="${GY-8}" x2="0" y2="${WH}"><stop offset="0" stop-color="${P.g1}"/><stop offset="1" stop-color="${P.g2}"/></linearGradient>`+
   `<linearGradient id="teichG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc0ea"/><stop offset="1" stop-color="#4a90c2"/></linearGradient>`+
-  `<linearGradient id="wandG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient></defs>`+
+  `<linearGradient id="wandG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>`+(H0&&unterkunft(H0)==2?`<clipPath id="drinClip"><rect x="${Math.round(OX+.477*WK)-27+1.6}" y="${GY+12-25.5}" width="18.8" height="11"/></clipPath>`:'')+`</defs>`+
   `<rect width="${W}" height="${WH}" fill="url(#sk)"/>`;
  if(trueb){}// kein Sonnen- oder Mondschein, keine Sterne
  else if(TH=='halloween')s+=(nacht||P.n=='abend'?[...Array(nacht?26:12)].map((_,i)=>`<circle cx="${(sr(i+3)*W).toFixed(1)}" cy="${(sr(i+90)*70).toFixed(1)}" r="${(.4+sr(i)*.8).toFixed(1)}" fill="#fff" opacity="${(.5+sr(i+7)*.4).toFixed(2)}"/>`).join(''):'')+
@@ -264,7 +304,7 @@ function hofBuild(kind){
   `<g fill="#a9805a">${[GY-6,GY].map(y=>`<rect x="0" y="${y-1}" width="${WW}" height="2.2" rx=".8"/><rect x="0" y="${y+1.2}" width="${WW}" height=".8" fill="#7d5c3c" opacity=".5"/>`).join('')}</g>`+
   [...Array(Math.ceil(WW/28)+1)].map((_,i)=>`<rect x="${i*28}" y="${GY-12}" width="3.2" height="18" rx=".8" fill="#9b7449"/><rect x="${i*28}" y="${GY-12}" width="1.1" height="18" rx=".5" fill="#b78c5e"/>`).join('')+
   ITEMS.filter(i=>items.includes(i[0])&&DR[i[0]]).map(i=>{const z=DR[i[0]](Math.round(OX+i[3]*WK)),u=UMR[i[0]]?`<g stroke="#3a261466" stroke-width=".55" stroke-linejoin="round">${z}</g>`:z;
-   return kind=='kid'&&AKT[i[0]]?`<g data-act="${i[0]}" style="cursor:pointer">${u}</g>`:u}).join('')+geb.s+
+   return kind=='kid'&&AKT[i[0]]?`<g data-act="${i[0]}" style="cursor:pointer">${u}</g>`:u}).join('')+geb.s+drinSvg+
   grasStreifen(WW,Math.round(WW/6),GY+6,GY+14,3,5.5,200,gras,frei)+
   // Halloween (nur Startseite): Kürbisse auf der Wiese
   (TH=='halloween'?kuerbisse(WW,frei,P):'')+
@@ -274,7 +314,7 @@ function hofBuild(kind){
   (kind=='kid'?besuche(kid()).map((b,i)=>`<g class="fig besuch" data-b="${i}" transform="translate(${r1(OX+FIGX.besuch[i]*WK)} ${GY+FIGX.y-2}) scale(${FIGX.s*.92})">${figurBild(b.f)}</g>`).join(''):'')+
   // Ebene für Apfel, Frosch, Wellen und Pferdeäpfel (hinter den Pferden)
   `<g id="hap">${kind=='kid'?HF.mist.map(mistSvg).join(''):''}</g>`+
-  HF.horses.map((h,i)=>`<g class="hs" id="hs${i}" data-i="${i}">${PF.bild('h'+i+'_',{...h.m,coat:h.c,st:h.st})}</g>`).join('')+
+  HF.horses.map((h,i)=>h.drin?'':hsSvg(h,i)).join('')+
   // Gras ganz vorn (vor allen Pferden), danach die Herzen beim Antippen
   `<g id="hv">${grasStreifen(WW,Math.round(WW/12),193,201,4,8,900,gras)}</g><g id="hfx"></g></g>`;
  // Schmetterlinge (vor den Pferden) und Regen bzw. Schnee (ganz vorn), beide fest im Bild, nicht mit der Kamera
@@ -294,7 +334,7 @@ function hofBuild(kind){
  HF.falter=[...svg.querySelectorAll('.falter')].map((e,i)=>({el:e,fl:e.querySelector('.fl'),x:sr(i+40)*W,y:GY+20+sr(i+41)*40,v:(sr(i+42)<.5?-1:1)*(7+sr(i+43)*8),ph:sr(i+44)*6}));
  HF.voegel=[...svg.querySelectorAll('.vogel')].map((e,i)=>({el:e,x:sr(i+60)*W,y:18+sr(i+61)*30,v:14+sr(i+62)*8,ph:i*1.7}));
  HF.horses.forEach((h,i)=>{h.g_=svg.querySelector('#hs'+i);h.rig=new PF.Rig('h'+i+'_');h.hint=null});
- HF.ord=[];
+ HF.ord=[];HF.figE=svg.querySelector('.fig.eigen');HF.figP=H0?[OX+(H0.ko.u[0]?FIGX.geb:FIGX.frei)*WK,GY+FIGX.y]:null;
  svg.style.background=HF.mode=='fly'?`linear-gradient(${P.t} 50%,${P.g2} 50%)`:'';
 }
 function pickState(h,rg){const r=Math.random();h.state=r<.22?'stand':r<.5?'graze':r<.75?'walk':r<.88?'trot':'gallop';
@@ -320,8 +360,13 @@ function hofDraw(dt){
   // Jedes Pferd bleibt auf seiner Koppel; im Hintergrund zusätzlich in der Nähe des Bildausschnitts
   const kr=kr0[h.ko|0]||kr0[0],rg=fly?[kr[0]+20,kr[1]-20]:[Math.max(kr[0]+20,cam-20),Math.min(kr[1]-20,cam+W+20)];
   // Tempo (Fire-Tablet): Pferde weit außerhalb des Bildes ruhen, nachdem sie einmal gezeichnet wurden
-  if(h.gez&&(h.x<cam-120||h.x>cam+W+120))return;
-  if(dt>0&&rg[0]<rg[1]){
+  if(h.drin&&!(HF.fuehr&&h.own)){const xs=Math.round(HF.OX+.477*HF.WK),B=GY+12,s0=GS[h.st].s;let tx,ty,sc;
+   // Stall: Kopf in der oberen Öffnung der linken Boxentür (Kopf im Bild ungefähr bei 118/-185). Unterstand: unter dem Dach.
+   if(h.drin==2){sc=.2;tx=xs-27+11.2-118*sc;ty=B-19+185*sc}else{sc=.13*s0;tx=xs+2;ty=B}
+   h.ziel=null;if(h.joy>0)h.joy-=dt;h.rig.pose(dt,{g:'walk',am:0,ph:0,gr:0,hop:0});h.g_.setAttribute('transform',`translate(${r1(tx)} ${r1(ty)}) scale(${sc.toFixed(3)})`);h.x=h.drin==2?xs-16:tx;h.gy=ty;h.sc=sc/PFS;h.d=0;h.gez=1;return}
+  if(h.gez&&!(HF.fuehr&&h.own)&&(h.x<cam-120||h.x>cam+W+120))return;
+  if(HF.fuehr&&h.own)fuehrSchritt(h,dt);
+  else if(dt>0&&rg[0]<rg[1]){
    h.t-=dt;if(h.joy>0)h.joy-=dt;
    // Ziel (z. B. ein gefallener Apfel): hinlaufen, dort grasen bzw. naschen
    if(h.ziel!=null){const dx=h.ziel-h.x;
@@ -345,7 +390,7 @@ function hofDraw(dt){
   h.sc=sc;h.gy=gy;
   h.g_.setAttribute('transform',`translate(${h.x.toFixed(1)} ${gy.toFixed(1)}) scale(${(h.dir*sc*PFS).toFixed(3)} ${(sc*PFS).toFixed(3)})`);h.gez=1});
  hofSpass(dt);
- const ord=[...HF.horses].sort((a,b)=>a.d-b.d);
+ const ord=[...HF.horses].filter(h=>!h.drin).sort((a,b)=>a.d-b.d);
  if(ord.some((h,i)=>HF.ord[i]!==h)){ord.forEach(h=>HF.hw.insertBefore(h.g_,HF.vorne));HF.ord=ord}
  if(HF.tag){const h=HF.tag.h,t=HF.tag.t-=dt;
   if(t<=0&&dt>0){HF.tag=null;HF.htg.setAttribute('opacity','0')}
@@ -461,7 +506,7 @@ function hofFrame(ts){
  HF.raf=requestAnimationFrame(hofFrame);
  // Ruhiger Hintergrund: nur kurz nach einer Interaktion animieren
  // Katze und Mäuse laufen immer zu Ende (seit 2026-10-21), auch wenn die Bilder auf langsamen Geräten länger brauchen
- if(!HF.run&&ts>HF.bis&&!HF.katze&&!HF.maeuse){hofStop();return}
+ if(!HF.run&&ts>HF.bis&&!HF.katze&&!HF.maeuse&&!HF.fuehr){hofStop();return}
  const dt=(ts-HF.last)/1000;if(dt<(HF.iv||.033))return;HF.last=ts;const d=Math.min(dt,.1);HF.t+=d;
  // Sparmodus für langsame Geräte: kommen die Bilder dauerhaft zu spät (unter etwa 24 pro Sekunde),
  // zuerst den Umriss der Pferde weglassen, danach nur noch die halbe Bildrate zeichnen
@@ -476,7 +521,7 @@ function hofRun(){
  const still=S.calm||RM;HF.run=!still||(HF.mode=='fly'&&!RM);
  // Gras im Wind (CSS-Animation) nur, solange der Hintergrund läuft
  $('#hof').classList.toggle('ruhig',!HF.run);const we=document.getElementById('hwetter');if(we)we.classList.toggle('ruhig',!HF.run);
- if(HF.run){if(!HF.raf){HF.last=performance.now();HF.raf=requestAnimationFrame(hofFrame)}}else if((HF.katze||HF.maeuse)&&!RM)hofKick(1);else{hofStop();hofDraw(0)}}
+ if(HF.run){if(!HF.raf){HF.last=performance.now();HF.raf=requestAnimationFrame(hofFrame)}}else if((HF.katze||HF.maeuse||HF.fuehr)&&!RM)hofKick(1);else{hofStop();hofDraw(0)}}
 // Wird nach jeder Änderung der Ansicht aufgerufen (aus ui()).
 function hofSync(force){
  const svg=$('#hof'),root=document.documentElement.style,fly=HF.mode=='fly',show=fly||['home','choose','figur','kid','wish','rassen','done','einladen','besuch'].includes(v);
@@ -484,9 +529,13 @@ function hofSync(force){
  if(!show){hofStop();const we=document.getElementById('hwetter');if(we)we.classList.add('ruhig');svg.style.display='none';root.setProperty('--wh','0px');return}
  svg.style.display='block';root.setProperty('--wh',(fly?0:Math.max(210,Math.min(360,Math.round(innerHeight*.34))))+'px');
  const k=(v=='kid'||v=='wish'||v=='rassen'||v=='done'||v=='einladen')?kid():null,kind=k&&k.h?'kid':'home';
- const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.ma,H.coats.join(),Object.keys(H.it).join(),H.lp.join('+'),JSON.stringify(H.ko),k.h2?[k.h2.name,k.h2.coat,k.h2.st,k.h2.bl,k.h2.so,k.h2.ma].join('/'):'',JSON.stringify(k.bs||[])].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.bl,x.h.so,x.h.ma,x.h2?x.h2.coat+x.h2.st:''].join():'').join(';');
+ const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.ma,H.coats.join(),Object.keys(H.it).join(),H.lp.join('+'),JSON.stringify(H.ko),drinnen(H),!!(H.au&&H.au.pdecke),k.h2?[k.h2.name,k.h2.coat,k.h2.st,k.h2.bl,k.h2.so,k.h2.ma].join('/'):'',JSON.stringify(k.bs||[])].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.bl,x.h.so,x.h.ma,x.h2?x.h2.coat+x.h2.st:''].join():'').join(';');
  const fsig=S.kids.map(x=>x.f?[x.id,x.f.g,x.f.hf,x.f.ha,x.f.lg,x.f.sh].join(''):'').join();
  const key=[kind,sig,fsig,pal(new Date().getHours()).n,wetter(),kind=='home'?thema():'',fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
+ // Führen (Unterstand/Stall): Der erste Abgleich nach dem Start merkt sich den Schlüssel. Ändert sich währenddessen etwas anderes
+ // (Ansicht, Kauf, Pferd gewechselt, Wachstum), wird abgebrochen und neu aufgebaut, der Zustand ist ja schon gespeichert.
+ if(HF.fuehr&&!force){if(HF.fuehr.key==null)HF.fuehr.key=key;if(key==HF.fuehr.key)return hofRun()}
+ if(HF.keyNeu){const passt=HF.keyNeu===key;HF.keyNeu=0;if(passt)HF.key=key}// nach dem Herausholen: nur übernehmen, wenn der Hof noch derselbe ist
  if(force||key!=HF.key){HF.key=key;hofBuild(kind)}
  hofRun()}
 function hofTap(h){
