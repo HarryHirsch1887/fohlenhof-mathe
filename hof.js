@@ -69,13 +69,15 @@ const DR={
   return s}
 };
 // ---------- Hof ausbauen (Entwurf 2026-10-18): Unterstand (2 Plätze), Stall (4 Plätze, Ausbau des Unterstands), Trennzaun zwischen Koppeln ----------
-// Unterstand: offener Holzunterstand mit Pultdach (hinten höher), Rückwand aus Brettern, Heuraufe, Stroh am Boden
+// Unterstand: Holzunterstand mit Pultdach (hinten höher), Bretterwand und seit 2026-10-23 zwei Halbtüren (obere Hälfte offen, Heu).
+// Steht das Pferd drinnen, schaut sein Kopf aus der linken Tür (wie beim Stall, Werte in DRIN). Vorher war er vorn offen und das Pferd stand davor.
 DR.unterstand=x=>{const B=GY+12,L=x-24,R=x+24,yl=B-36,yr=B-28,y=t=>yl+(yr-yl)*(t-L)/(R-L);
  let s=`<ellipse cx="${x}" cy="${B+1}" rx="32" ry="3.5" fill="#000" opacity=".14" stroke="none"/>`+
   `<path d="M${L} ${y(L)}L${R} ${y(R)}L${R} ${B}L${L} ${B}Z" fill="#7a5233"/>`+
   [...Array(7)].map((_,i)=>{const px=L+(i+1)*6.9;return`<path d="M${r1(px)} ${r1(y(px))}V${B}" stroke="#5e3d24" stroke-width=".6"/>`}).join('')+
-  `<path d="M${L} ${B-3}H${R}V${B}H${L}Z" fill="#e2b24a"/><path d="M${L+3} ${B-3}l2 -2M${L+11} ${B-3}l2 -2.4M${x+4} ${B-3}l2.2 -2M${R-9} ${B-3}l2 -2.2" stroke="#c4902f" stroke-width=".6"/>`+
-  `<rect x="${x-9}" y="${B-21}" width="18" height="7" rx="1" fill="#5e3d24"/><path d="M${x-8} ${B-20}h16v5h-16Z" fill="#e2b24a"/>${[0,1,2,3,4].map(i=>`<path d="M${x-7+i*3.5} ${B-21}v7" stroke="#5e3d24" stroke-width=".7"/>`).join('')}`+
+  [x-21.5,x+2.5].map(a=>`<rect x="${a}" y="${B-23}" width="19" height="23" fill="#b78656"/><rect x="${a+1.5}" y="${B-21.5}" width="16" height="9.5" fill="#2e2014"/>`+
+   `<path d="M${a+2.5} ${B-12}q2.6 -4.4 5.2 -1q1.8 -3.6 4.4 0q1.8 -2.8 4.4 1Z" fill="#e2b24a"/><rect x="${a+1.5}" y="${B-11}" width="16" height="11" fill="#8a5c36"/>`+
+   `<path d="M${a+1.5} ${B-11}L${a+17.5} ${B}M${a+17.5} ${B-11}L${a+1.5} ${B}" stroke="#b78656" stroke-width="1.2"/><rect x="${a+1.5}" y="${B-12.2}" width="16" height="1.4" fill="#c99a63"/>`).join('')+
   [L+1.5,x,R-1.5].map(px=>`<rect x="${r1(px-1.8)}" y="${r1(y(px))}" width="3.6" height="${r1(B-y(px))}" fill="#9b6b40"/><rect x="${r1(px-1.8)}" y="${r1(y(px))}" width="1.2" height="${r1(B-y(px))}" fill="#b78656"/>`).join('')+
   `<path d="M${L-4} ${yl-3}L${R+5} ${yr-2}L${R+5} ${yr+2.5}L${L-4} ${yl+1.5}Z" fill="#5b4a3a"/><path d="M${L-4} ${yl-3}L${R+5} ${yr-2}" stroke="#7d6a56" stroke-width="1.2"/>`+
   [1,2,3,4].map(i=>{const px=L-4+i*(R-L+9)/5;return`<path d="M${r1(px)} ${r1(yl-3+(yr-yl+1)*i/5)}v4" stroke="#463829" stroke-width=".5"/>`}).join('');
@@ -188,7 +190,9 @@ const FROSCH=`<g class="frosch"><ellipse cx="-2.2" cy="-1" rx="2.4" ry="1.1" fil
 function fillers(){if(!HF.fill){const ks=Object.keys(COATS);HF.fill=[...Array(5)].map((_,i)=>{const c=ks[(i*2+R(0,5))%ks.length];return{id:'f'+i,c,st:i==3?1:3,m:{bl:R(0,1),so:R(0,1)},name:COATS[c][0],own:0}})}return HF.fill}
 // ---------- Unterstand und Stall: Pferd morgens herausholen, abends hineinbringen (seit 2026-10-22, Wunsch der Kinder) ----------
 // Nur mit Unterstand (1) oder Stall (2) auf der Hauptkoppel. Am Pferd: hs = {d: Datum, s: 'raus'}. Ohne Eintrag von heute steht das Pferd drinnen.
-// Drinnen steht es im Unterstand unter dem Dach bzw. schaut im Stall aus dem oberen Teil der linken Boxentür.
+// Drinnen schaut der Kopf aus dem oberen Teil der linken Tür (Stall seit 2026-10-22, Unterstand seit 2026-10-23).
+// DRIN je Gebäude: dx/dy = Lage des Kopfes (Bildpunkt 118/-185 des Pferdes) zur Gebäudemitte bzw. zum Boden B, sc = Größe, o = Türöffnung [x, y, Breite, Höhe] zum Abschneiden
+const DRIN={1:{dx:-12,dy:-15.9,sc:.17,o:[-20,-21.5,16,9.5]},2:{dx:-15.8,dy:-19,sc:.2,o:[-25.4,-25.5,18.8,11]}};
 const unterkunft=H=>H&&H.ko&&H.ko.u?H.ko.u[0]|0:0;
 const drinnen=H=>unterkunft(H)>0&&!(H.hs&&H.hs.d==tag()&&H.hs.s=='raus');
 // Pferdedecke: auf dem eigenen Hof bei Regen, Schnee und nachts, wenn sie gekauft ist
@@ -261,7 +265,7 @@ function hofBuild(kind){
  // Figuren: auf dem Hof eines Kindes die eigene vorn, alle anderen (höchstens 5) hinter dem Zaun
  const mitF=S.kids.filter(x=>x.f),eig=kind=='kid'?mitF.find(x=>x.id==kidId):null,figs={eigen:eig,zaun:mitF.filter(x=>x!==eig).slice(0,5)};
  const hsSvg=(h,i)=>`<g class="hs" id="hs${i}" data-i="${i}">${PF.bild('h'+i+'_',{...h.m,coat:h.c,st:h.st})}</g>`,dh=HF.horses.findIndex(h=>h.drin),
-  drinSvg=dh<0?'':`<g id="hdrin"${HF.horses[dh].drin==2?' clip-path="url(#drinClip)"':''}>${hsSvg(HF.horses[dh],dh)}</g>`;
+  drinSvg=dh<0?'':`<g id="hdrin" clip-path="url(#drinClip)">${hsSvg(HF.horses[dh],dh)}</g>`;
  const nacht=P.n=='nacht',gras=nacht?['#2f5a38','#376640','#28503a']:TH?['#6f8f45','#7c9b4c','#5d7e3c','#86a455']:['#6d9f4c','#7fb258','#5f9245','#86b960'];
  // Wetter: bei Regen und Schnee trüber Himmel ohne Sonne, Mond und Sterne. Schmetterlinge nur tagsüber von April bis Oktober bei gutem Wetter, Vögel nicht nachts und nicht bei Regen oder Schnee.
  const WT=wetter(now),trueb=WT=='regen'||WT=='schnee',mo=HF.mTest!=null?HF.mTest:now.getMonth(),falterOk=P.n=='tag'&&!trueb&&mo>=3&&mo<=9,voegelOk=TH?!trueb:!nacht&&!trueb;HF.wetter=WT;HF.thema=TH;
@@ -273,7 +277,7 @@ function hofBuild(kind){
   `<linearGradient id="wolkeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${trueb?(nacht?'#59657e':'#e4e8ec'):P.w1}"/><stop offset="1" stop-color="${trueb?(nacht?'#3c465e':'#a3adb8'):P.w2}"/></linearGradient>`+
   `<linearGradient id="bodenG" gradientUnits="userSpaceOnUse" x1="0" y1="${GY-8}" x2="0" y2="${WH}"><stop offset="0" stop-color="${P.g1}"/><stop offset="1" stop-color="${P.g2}"/></linearGradient>`+
   `<linearGradient id="teichG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc0ea"/><stop offset="1" stop-color="#4a90c2"/></linearGradient>`+
-  `<linearGradient id="wandG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>`+(H0&&unterkunft(H0)==2?`<clipPath id="drinClip"><rect x="${Math.round(OX+.477*WK)-27+1.6}" y="${GY+12-25.5}" width="18.8" height="11"/></clipPath>`:'')+`</defs>`+
+  `<linearGradient id="wandG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>`+(H0&&unterkunft(H0)?(o=>`<clipPath id="drinClip"><rect x="${Math.round(OX+.477*WK)+o[0]}" y="${GY+12+o[1]}" width="${o[2]}" height="${o[3]}"/></clipPath>`)(DRIN[unterkunft(H0)].o):'')+`</defs>`+
   `<rect width="${W}" height="${WH}" fill="url(#sk)"/>`;
  if(trueb){}// kein Sonnen- oder Mondschein, keine Sterne
  else if(TH=='halloween')s+=(nacht||P.n=='abend'?[...Array(nacht?26:12)].map((_,i)=>`<circle cx="${(sr(i+3)*W).toFixed(1)}" cy="${(sr(i+90)*70).toFixed(1)}" r="${(.4+sr(i)*.8).toFixed(1)}" fill="#fff" opacity="${(.5+sr(i+7)*.4).toFixed(2)}"/>`).join(''):'')+
@@ -360,10 +364,10 @@ function hofDraw(dt){
   // Jedes Pferd bleibt auf seiner Koppel; im Hintergrund zusätzlich in der Nähe des Bildausschnitts
   const kr=kr0[h.ko|0]||kr0[0],rg=fly?[kr[0]+20,kr[1]-20]:[Math.max(kr[0]+20,cam-20),Math.min(kr[1]-20,cam+W+20)];
   // Tempo (Fire-Tablet): Pferde weit außerhalb des Bildes ruhen, nachdem sie einmal gezeichnet wurden
-  if(h.drin&&!(HF.fuehr&&h.own)){const xs=Math.round(HF.OX+.477*HF.WK),B=GY+12,s0=GS[h.st].s;let tx,ty,sc;
-   // Stall: Kopf in der oberen Öffnung der linken Boxentür (Kopf im Bild ungefähr bei 118/-185). Unterstand: unter dem Dach.
-   if(h.drin==2){sc=.2;tx=xs-27+11.2-118*sc;ty=B-19+185*sc}else{sc=.13*s0;tx=xs+2;ty=B}
-   h.ziel=null;if(h.joy>0)h.joy-=dt;h.rig.pose(dt,{g:'walk',am:0,ph:0,gr:0,hop:0});h.g_.setAttribute('transform',`translate(${r1(tx)} ${r1(ty)}) scale(${sc.toFixed(3)})`);h.x=h.drin==2?xs-16:tx;h.gy=ty;h.sc=sc/PFS;h.d=0;h.gez=1;return}
+  if(h.drin&&!(HF.fuehr&&h.own)){const xs=Math.round(HF.OX+.477*HF.WK),B=GY+12,D=DRIN[h.drin]||DRIN[2],sc=D.sc;
+   // Stall und Unterstand: Kopf (im Bild ungefähr bei 118/-185) in der oberen Öffnung der linken Tür, abgeschnitten über drinClip
+   const tx=xs+D.dx-118*sc,ty=B+D.dy+185*sc;
+   h.ziel=null;if(h.joy>0)h.joy-=dt;h.rig.pose(dt,{g:'walk',am:0,ph:0,gr:0,hop:0});h.g_.setAttribute('transform',`translate(${r1(tx)} ${r1(ty)}) scale(${sc.toFixed(3)})`);h.x=xs+D.dx;h.gy=ty;h.sc=sc/PFS;h.d=0;h.gez=1;return}
   if(h.gez&&!(HF.fuehr&&h.own)&&(h.x<cam-120||h.x>cam+W+120))return;
   if(HF.fuehr&&h.own)fuehrSchritt(h,dt);
   else if(dt>0&&rg[0]<rg[1]){
