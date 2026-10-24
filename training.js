@@ -6,7 +6,7 @@
 // - Der Versuch zählt mit dem Start (Äpfel weg, für heute verbraucht), auch wenn er nicht klappt oder abgebrochen wird.
 // - Je Pferd gespeichert: tr = Sterne je Art, tl = letzter Trainingstag je Art, tz = {d: Datum, n: Trainings an diesem Tag}.
 //   Sterne bleiben, wie sie sind: Wer nicht trainiert, hat es seinem Pferd eben nicht beigebracht.
-// - Hufeisen (k.hu, je Kind): 1 für jede Runde mit mindestens FREI von 10 und 1 für jedes Training mit Stern. Sie sind für die Pflege gedacht.
+// - Hufeisen (k.hu, je Kind): 1 für jede Runde mit mindestens FREI von 10 und 1 für jedes Training mit Stern. Sie sind für die Pflege gedacht, seit 2026-10-23 kostet das Motto für den eigenen Hof 5 (MOTTOPREIS in hof.js).
 // Arten: n = Name je Stufe, max = höchste Sternzahl je Stufe (Fohlen, Jährling, Jungpferd, Pferd),
 // alle = Abstand in Tagen je Stufe (Anreiten beim Jährling nur alle 2 Tage), tage = nur an diesen Wochentagen (0 = Sonntag),
 // spiel = Minispiel ist schon gebaut (1 oder je Stufe, die anderen zeigen "Kommt bald"); Anreiten (Jährling) seit 2026-10-22, Reiten ab Jungpferd folgt

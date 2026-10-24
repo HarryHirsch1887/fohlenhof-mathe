@@ -52,7 +52,13 @@ const ausrBild=id=>`<svg viewBox="0 0 40 30" width="56" height="42" aria-hidden=
 // ma = Mähnenlänge, coat = Pferderassen (Fellfarben) und abz = Blesse und Socken, shirt/leg = Farben der Figur, it = Hof-Gegenstände,
 // zopf = Zöpfe und Haargummis, lieb = Lieblingspferde. Die Koppeln stehen in KOPPEL.
 // Das Training hängt seit 2026-10-22 am Alter des Pferds (training.js), nicht mehr an der Erfahrung (früher sk ab 5000).
-const XPF={ma:250,coat:500,abz:500,shirt:750,leg:750,it:1000,zopf:3500,lieb:6500};
+const XPF={ma:250,coat:500,abz:500,shirt:750,leg:750,it:500,zopf:3500,lieb:6500};
+// Hof-Gegenstände je nach Erfahrung (seit 2026-10-24, vorher alle ab 1000). XPF.it = 500 ist die erste Stufe.
+// ausbau = Ausbau des Unterstands zum Stall, stall = die rote Scheune
+const ITXP={blumen:500,mohn:500,lavendel:500,heu:500,baum1:750,baum2:750,troge:750,teich:750,unterstand:750,stall:1000,windrad:1000,regenbogen:1000,ausbau:1250};
+const itZu=(k,id,hat)=>!hat&&k.xp<(ITXP[id]||XPF.it);
+// Text auf einer gesperrten Karte: wie viel Erfahrung noch fehlt
+const itNoch=(k,id)=>`noch ${(ITXP[id]||XPF.it)-k.xp} Erfahrung`;
 const ab=t=>`ab ${XPF[t]} Erfahrung`;
 // Fortschritt bis zur Freischaltung (seit 2026-10-21): Balken mit "1250 von 3500 Erfahrung" statt "ab 3500 Erfahrung"
 const xpBalken=(k,n,kl)=>{const x=Math.min(k.xp,n);return`<span class="xpb${kl?' '+kl:''}" role="progressbar" aria-label="Erfahrung" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${x}"><i style="width:${Math.floor(x/n*100)}%"></i><span>${x} von ${n} Erfahrung</span></span>`};
@@ -93,6 +99,8 @@ function clean(d){
   if(k.neu)c.neu=1;
   // hu = Hufeisen (seit 2026-10-22): 1 je Runde mit mindestens FREI von 10 und je Training mit Stern, für die Pferdepflege
   if(k.hu)c.hu=nn(k.hu,0,HUMAX);
+  // mt = gekaufte Mottos für den eigenen Hof (seit 2026-10-23, 5 Hufeisen): {halloween: 1 an / 0 aus}, nur bekannte Mottos
+  if(k.mt&&typeof k.mt==='object'){const mt={};for(const t of THEMEN)if(Object.prototype.hasOwnProperty.call(k.mt,t))mt[t]=k.mt[t]?1:0;if(Object.keys(mt).length)c.mt=mt}
   // kn = Knobelrunden hintereinander (Knobel-Regel, seit 2026-10-20)
   if(k.kn)c.kn=nn(k.kn,0,9);
   // bs = Besuch von Freundinnen (seit 2026-10-20), höchstens 3, jeder Eintrag wird wie ein Link streng geprüft
@@ -141,6 +149,8 @@ function pclean(h){const co=COATS[h.coat]?h.coat:'fuchs',own=h.own&&typeof h.own
  return p}
 // S.pin: PIN der Eltern-Ansicht. S.np = 1: beim Start bewusst ohne PIN gewählt (Bereich heißt dann "Einstellungen" und ist offen)
 let S={pin:'',kids:[]},v='home',cur=null,Q=null,open=false,warn='',note='',pw='',CH='fuchs';
+// Seit 2026-10-24 hier oben (ui() braucht sie): NKN/NKG/NKW neues Kind (Name, Klasse, Hinweis), REIN Pferd nach Ablauf der Zeit hineingebracht
+let NKN='',NKG=5,NKW='',REIN=0;
 try{S=clean(JSON.parse(localStorage.getItem(KEY)||localStorage.getItem(OLDKEY)||'null'))||S}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));warn=''}catch(e){warn='Speichern im Browser nicht möglich. Bitte Sicherung exportieren.'}};
 const $=s=>document.querySelector(s),kid=()=>S.kids.find(k=>k.id==cur);
@@ -169,13 +179,16 @@ const scene=(k,an,idle)=>{let h=k.h,st=stg(k),s=GS[st].s;return`<svg class="scen
 const pick=(c)=>`<button class="pick ${CH==c?'on':''}" onclick="CH='${c}';ui()" aria-pressed="${CH==c}"><svg viewBox="${PFVB}">${pfBild({coat:c,st:0})}</svg>${COATS[c][0]}</button>`;
 function ui(){let h='';PZ=0;
  if(v=='koppeln')v='wish';// seit 2026-10-21 stehen Koppeln, Unterstände und Stall direkt im Wunschbaum
- if(v!='home'){EIN='';EINPIN=false}// Einrichtungsschritt gilt nur auf der Startseite (sonst käme z. B. "Kinder anlegen" ohne PIN zurück)
+ if(v!='home'){EIN='';EINPIN=false;NKN='';NKG=5}// Einrichtungsschritt gilt nur auf der Startseite (sonst käme z. B. "Kinder anlegen" ohne PIN zurück)
  if(!pinSeite()){PINI=0;PINR=0}// verstecktes "i" der PIN-Seiten: beim Verlassen wieder unsichtbar
  if(v!='kid')TRNOTE='';// Hinweis im Training nur, solange die Kind-Ansicht offen ist
+ if(v!='bye'&&v!='done')REIN=0;// "steht jetzt im Unterstand" nur auf der Abschiedsseite bzw. am Rundenende
  if(!S.mo&&v=='besuch')v='home';// Besuchs-Link auf einem neuen Gerät: erst die Startabfrage, der Besuch (BES) wartet
  if(v=='home'&&(!S.mo||EIN=='kinder')){h=startAbfrage()}
  else if(v=='home'){h=`<h1>Pferdehof Mathe</h1><p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[stg(k)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
- `<div class="card"><b>Neues Kind</b><div class="row"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name"><select id="gr" aria-label="Klasse"><option value="5">Klasse 5</option><option value="6">Klasse 6</option><option value="7">Klasse 7</option><option value="8">Klasse 8</option></select><button onclick="add()">Hinzufügen</button></div></div><p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button></p>`}
+ // Neues Kind: Gibt es schon ein Kind und ist eine PIN gesetzt, muss ein Elternteil mit der PIN bestätigen (seit 2026-10-24)
+ `<div class="card"><b>Neues Kind</b><div class="row"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name" value="${esc(NKN)}"><select id="gr" aria-label="Klasse">${[5,6,7,8].map(c=>`<option value="${c}"${NKG==c?' selected':''}>Klasse ${c}</option>`).join('')}</select>${nkPin()?'':'<button onclick="add()">Hinzufügen</button>'}</div>`+
+ (nkPin()?`<p class="small">Ein weiteres Kind muss ein Elternteil mit der PIN bestätigen.</p><div class="row"><input id="nkpin" type="password" inputmode="numeric" maxlength="8" placeholder="Eltern-PIN" aria-label="Eltern-PIN" onkeydown="if(event.key=='Enter')add()"><button onclick="add()">Hinzufügen</button></div>`:'')+`<p class="no">${NKW}</p></div><p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button></p>`}
  // Figur erstellen oder ändern (FE: Entwurf, wird erst mit "Fertig" bzw. "Speichern" übernommen)
  // Koppeln, Unterstände und Stall: bauen, ausbauen, Pferde verteilen
  // Leggings- und Shirtfarben: anprobieren kostenlos, beim Speichern werden neue Farben gekauft
@@ -225,13 +238,16 @@ function ui(){let h='';PZ=0;
  `<h2 id="training">Training</h2>${k.hl?`<p class="small">Das Training geht wieder, wenn du eine Runde mit mindestens ${FREI} von 10 richtig geschafft hast.</p>`:trTeil(k)}<h2>Abzeichen</h2>`+BD.map(b=>`<span class="badge ${k.b.includes(b[0])?'':'off'}">${b[1]}</span>`).join('')}
  // Wunschbaum (umgebaut 2026-10-21 nach der ersten Testrunde): Bereiche nach Erfahrung, getrennt durch Linien (section.wb).
  // Gesperrtes zeigt einen Balken "1250 von 3500 Erfahrung" statt "ab 3500 Erfahrung". Pferderassen auf eigener Seite (v='rassen'),
- // Hof-Gegenstände mit kleinem Bild, "Unterstand & Stall" und "Koppeln" direkt hier (früher eigene Ansicht v='koppeln').
+ // Hof-Gegenstände mit kleinem Bild und "Koppeln" direkt hier (früher eigene Ansicht v='koppeln').
+ // Seit 2026-10-23: Unterstand und Ausbau zum Stall (Hauptkoppel) stehen unter "Hof ausbauen", Unterstände auf Koppel 2 und 3 unter "Koppeln".
+ // Der Bereich "Unterstand & Stall" ist weg. Ganz oben "Motto" (nur solange eines läuft, Kauf mit Hufeisen).
  if(v=='wish'){let k=kid(),H=hh(k),st=stg(k),b=belegung(H),nm=f=>freundInfo(k,f).name;
  const preis=p=>p+' '+AP,teil=(t,x)=>`<section class="wb"><h2>${t}</h2>${x}</section>`,
   zuKn=(f,i)=>[0,1,2].filter(j=>j!==i&&j<H.ko.n&&b.p[j].length<kap(H,j)).map(j=>`<button class="alt klein" onclick="hofBau('zu',${j},'${f}')">→ ${KNAME[j]}</button>`).join('');
  h=`<button class="alt" onclick="v='kid';ui()">Zurück</button><div class="row sp"><h1>Wunschbaum</h1><span class="ap">${k.ap||0} ${AP}${k.hu?` · ${k.hu} ${HU}`:''}</span></div><p class="no">${note}</p>
  ${st>=D3AB?d3Fenster('kleb'):`<div class="card small">Wenn ${esc(H.name)} ein ${GS[D3AB].n} ist, kannst du ${esc(H.name)} hier in 3D von allen Seiten ansehen. Noch ${tageBis(k,D3AB)} Tage mit Mathe.</div>`}
- <p class="small">Du hast ${k.xp} Erfahrung. Was noch gesperrt ist, schaltet sich mit mehr Erfahrung frei. Bezahlt wird immer mit Äpfeln.</p>`+
+ <p class="small">Du hast ${k.xp} Erfahrung. Was noch gesperrt ist, schaltet sich mit mehr Erfahrung frei. Bezahlt wird mit Äpfeln, das Motto mit Hufeisen.</p>`+
+ (THINFO[thema()]?teil('Motto',mottoTeil(k,thema())):'')+
  teil('Mähne',(gesperrt(k,'ma')?`<p class="small">Die Mähnenlänge kannst du ändern, sobald du genug Erfahrung hast:</p>${xpb(k,'ma')}`:
   `<div class="row">${Object.entries(MA).map(([id,n])=>`<button class="${H.ma==id?'go':'alt'}" onclick="wish('ma','${id}')" aria-pressed="${H.ma==id}">${n}</button>`).join('')}</div>`)+
   `<div class="row"><button class="${H.zk&&H.zo?'go':'alt'}" onclick="wish('zk')" aria-pressed="${!!(H.zk&&H.zo)}"${gesperrt(k,'zopf',H.zk)?' disabled':''}>Zöpfe${H.zk?(H.zo?' an':' aus'):gesperrt(k,'zopf')?'':' · '+preis(PREIS.zopf)}</button></div>`+(gesperrt(k,'zopf',H.zk)?xpb(k,'zopf'):'')+
@@ -244,22 +260,21 @@ function ui(){let h='';PZ=0;
   (gesperrt(k,'abz')&&!H.own.bl&&!H.own.so?xpb(k,'abz'):'')+
   (kannAnordnen(H)?`<p class="small">„Neu anordnen“ ist kostenlos und würfelt ${[H.bl&&'die Form auf dem Kopf',H.so&&'die Socken an jedem Bein',H.coat=='schecke'&&'die Flecken'].filter(Boolean).join(', ').replace(/, ([^,]*)$/,' und $1')} neu aus.</p>`:''))+
  teil('Reitausrüstung & Pflege',`<p class="small">Für das Anreiten braucht ${esc(H.name)} Sattel, Satteldecke und Trense. Die Ausrüstung gehört ${esc(H.name)}.</p><div class="grid">${AUSR.map(([id,n,p,b])=>{const hat=(H.au||{})[id];return`<button class="pick au ${hat?'on':''}" data-au="${id}" onclick="wish('au','${id}')" aria-pressed="${!!hat}">${ausrBild(id)}<b>${n}</b><br><span class="small">${b}</span><br>${hat?'gekauft':preis(p)}</button>`}).join('')}</div>`)+
- teil('Hof ausbauen',(gesperrt(k,'it')?`<p class="small">Gegenstände für den Hof kannst du kaufen, sobald du genug Erfahrung hast:</p>${xpb(k,'it')}`:'')+
-  `<div class="grid">${[...ITEMS].sort((x,y)=>x[2]-y[2]).map(([id,n,p])=>{const zu=gesperrt(k,'it',H.it[id]);return`<button class="pick it ${H.it[id]?'on':''}${zu?' gesperrt':''}" onclick="wish('it','${id}')"${zu?' disabled':''}>${itemBild(id)}${n}<br>${H.it[id]?'gebaut':zu?'gesperrt':preis(p)}</button>`}).join('')}</div><p class="small">Gebaute Gegenstände siehst du oben auf deinem Hof und im Rundflug.</p>`)+
+ teil('Hof ausbauen',(gesperrt(k,'it')?`<p class="small">Gegenstände für den Hof kannst du kaufen, sobald du genug Erfahrung hast:</p>${xpb(k,'it')}`:k.xp<ITXP.ausbau?`<p class="small">Weitere Gegenstände schalten sich mit mehr Erfahrung frei.</p>`:'')+
+  // Von billig nach teuer; Unterstand und Stall (Ausbau) direkt nacheinander bei 25 Äpfeln
+  `<div class="grid">${[...ITEMS.map(([id,n,p])=>{const zu=itZu(k,id,H.it[id]);return[p,0,`<button class="pick it ${H.it[id]?'on':''}${zu?' gesperrt':''}" data-id="${id}" onclick="wish('it','${id}')"${zu?' disabled':''}>${itemBild(id)}${n}<br>${H.it[id]?'gebaut':zu?`<span class="small">${itNoch(k,id)}</span>`:preis(p)}</button>`]}),
+   [KOPPEL.unterstand,1,gebKarte(k,H,1)],[KOPPEL.unterstand,2,gebKarte(k,H,2)]].sort((x,y)=>x[0]-y[0]||x[1]-y[1]).map(x=>x[2]).join('')}</div>`+
+  `<p class="small">Gebaute Gegenstände siehst du oben auf deinem Hof und im Rundflug. Unterstand (2 Plätze) und Stall (4 Plätze) schaffen auf der Hauptkoppel Platz für Freunde, ${esc(H.name)} wohnt dann darin.</p>`)+
  teil('Lieblingspferde aus dem Stall',(gesperrt(k,'lieb')?`<p class="small">Die Lieblingspferde kommen auf deinen Hof, sobald du genug Erfahrung hast:</p>${xpb(k,'lieb')}`:'')+
   `<div class="grid">${LIEB.map(([id,n,bs,sp])=>{const hat=H.lp.includes(id),zu=gesperrt(k,'lieb',hat);return`<button class="pick ${hat?'on':''}${zu?' gesperrt':''}" onclick="wish('lp','${id}')" aria-pressed="${hat}"${zu?' disabled':''}><svg viewBox="${PFVB}">${pfBild({...sp,bl:0,so:0})}</svg><b>${n}</b><br><span class="small">${bs}</span><br>${hat?'auf dem Hof':zu?'gesperrt':preis(PREIS.lieb)}</button>`}).join('')}</div><p class="small">Lieblingspferde leben als Freunde auf deinem Hof, wenn dort Platz ist. Tippe oben auf ein Pferd, dann siehst du seinen Namen.</p>`)+
  teil('Zweites Pferd',k.h2?`<p class="small">${esc(k.h2.name)} lebt auch auf deinem Hof. In der Kind-Ansicht kannst du wechseln, wer mit dir rechnet.</p>`:ausgewachsen(k)?`<button class="go" onclick="zweitWahl()">Zweites Fohlen aussuchen · ${preis(ZWEIT)}</button><p class="small">Das neue Fohlen rechnet dann mit dir und wächst. ${esc(H.name)} bleibt auf deinem Hof und braucht dort einen Platz.</p>`:`<p class="small">Wenn ${esc(H.name)} ausgewachsen ist, kannst du ein zweites Fohlen bekommen (${ZWEIT} Äpfel).</p>`)+
- teil('Unterstand & Stall',`<p class="small">Jedes Pferd braucht einen Platz. ${esc(H.name)} hat immer einen Platz auf der Hauptkoppel. Unterstände und der Stall schaffen Platz für Freunde.</p>`+
-  [0,1,2].filter(i=>i<H.ko.n).map(i=>{const u=H.ko.u[i],n=kap(H,i);let s=`<div class="card koppel"><div class="row sp"><b>${KNAME[i]}</b><span class="small">${u==2?'Stall':u==1?'Unterstand':'Noch kein Unterstand'} · ${n} ${n==1?'Platz':'Plätze'}</span></div>`;
-   if(!u)s+=`<button class="go" onclick="hofBau('unterstand',${i})">Unterstand bauen (2 Plätze) · ${preis(KOPPEL.unterstand)}</button>`;
-   if(i==0&&u==1)s+=!ausgewachsen(k)?`<p class="small">Wenn ${esc(H.name)} ausgewachsen ist, kannst du den Unterstand zum Stall mit 4 Plätzen ausbauen.</p>`:`<button class="go" onclick="hofBau('stall',0)">Zum Stall ausbauen (4 Plätze) · ${preis(KOPPEL.stall)}</button>`;
-   return s+`</div>`}).join(''))+
- teil('Koppeln',`<p class="small">${platzText(H)}</p>`+
+ teil('Koppeln',`<p class="small">Jedes Pferd braucht einen Platz. ${esc(H.name)} hat immer einen Platz auf der Hauptkoppel. Unterstand und Stall unter „Hof ausbauen“ schaffen dort Platz für Freunde, auf Koppel 2 und 3 je ein Unterstand.</p><p class="small">${platzText(H)}</p>`+
   [0,1,2].map(i=>{
    if(i>H.ko.n)return`<div class="card koppel zu"><b>${KNAME[i]}</b><p class="small">Erst ${KNAME[i-1]} bauen.</p>${k.xp<KOPPEL.xp[i]?xpBalken(k,KOPPEL.xp[i]):''}</div>`;
    if(i==H.ko.n)return`<div class="card koppel zu"><b>${KNAME[i]}</b>`+(k.xp<KOPPEL.xp[i]?`<p class="small">Eine neue Koppel kannst du bauen, sobald du genug Erfahrung hast:</p>${xpBalken(k,KOPPEL.xp[i])}`:
     `<p class="small">Ein neuer Zaun teilt die Weide, ${i==1?'links':'rechts'} kommt eine Koppel dazu.</p><button class="go" onclick="hofBau('koppel',${i})">Koppel bauen · ${preis(KOPPEL.preis)}</button>`)+`</div>`;
-   return`<div class="card koppel"><div class="row sp"><b>${KNAME[i]}</b><span class="small">${b.p[i].length} von ${kap(H,i)} Plätzen belegt</span></div>`+
+   return`<div class="card koppel"><div class="row sp"><b>${KNAME[i]}</b><span class="small">${['','Unterstand · ','Stall · '][H.ko.u[i]]}${b.p[i].length} von ${kap(H,i)} Plätzen belegt</span></div>`+
+    (i&&!H.ko.u[i]?`<button class="go" onclick="hofBau('unterstand',${i})">Unterstand bauen (2 Plätze) · ${preis(KOPPEL.unterstand)}</button>`:'')+
     b.p[i].map(f=>f=='eigen'?`<div class="pferdzeile"><span>${esc(H.name)} <span class="small">(dein Pferd)</span></span></div>`:`<div class="pferdzeile"><span>${esc(nm(f))}${f=='e:2'?' <span class="small">(dein zweites Pferd)</span>':''}</span><span>${zuKn(f,i)}</span></div>`).join('')+`</div>`}).join('')+
   (b.w.length?`<div class="card"><b>Wartet auf einen Platz</b>${b.w.map(f=>`<div class="pferdzeile"><span>${esc(nm(f))}</span><span class="small">Kein Platz frei</span></div>`).join('')}<p class="small">Bau einen Unterstand oder eine neue Koppel, dann ist Platz.</p></div>`:`<p class="small">Alle Pferde haben einen Platz.</p>`))+
  `<p class="small">Äpfel gibt es für richtige Antworten, bei schwereren Aufgaben mehr. Ausgeben kostet keine Erfahrung.</p>`}
@@ -280,12 +295,13 @@ function ui(){let h='';PZ=0;
  // Rundenende: Konfetti und Hufeisen bei 10 von 10, neue Abzeichen und Wachstum ploppen auf (nur beim ersten Anzeigen)
  if(v=='done'){let k=kid(),fw=!k.h&&k.r>=FOHLEN,neuE=!Q.ende;Q.ende=1;ANI={konfetti:neuE&&Q.right==10};h=`<h1>Geschafft!</h1><div class="card">${k.h?scene(k):`<div style="text-align:center">${figurMini(k.f,120)}</div>`}`+
  (k.h?'':fw?`<p class="ok"><b>Super, ${FOHLEN} Aufgaben richtig! Jetzt darfst du dir dein Fohlen aussuchen.</b></p>`:`<p class="small">Noch ${FOHLEN-k.r} richtige Aufgabe${FOHLEN-k.r>1?'n':''} bis zu deinem Fohlen.</p>`)+`<p><b>${Q.right} von 10</b> richtig, <b>+${Q.gain} Erfahrung</b> und <b class="ap">+${Q.ap} ${AP}</b>${Q.hu?` und <b class="ap">+1 Hufeisen ${HU}</b>`:''}${Q.huvoll?` <span class="small">(Dein Hufeisen-Vorrat ist voll: ${HUMAX})</span>`:''}.</p>${Q.grow?`<p class="ok${neuE?' pop':''}"><b>${esc(k.h.name)} ist jetzt ein ${Q.grow}!</b></p>`:''}${Q.tg?`<p class="small">${Q.tg}</p>`:''}${Q.frei?`<p class="ok"><b>Super! Der Hof ist wieder offen.</b></p>`:''}${Q.zu?`<p class="no">Für den Hof brauchst du mindestens ${FREI} von 10 richtig. Versuch es gleich noch einmal! Du kannst jedes Thema nehmen.</p>`:''}${knobelZu(k,Q.key)?`<p class="no">${KNHINWEIS}</p>`:''}${Q.knzu?`<p class="no">Für das Knobeln brauchst du eine Runde Schulstoff mit mindestens ${FREI} von 10. Versuch es gleich noch einmal!</p>`:''}${Q.knfrei?`<p class="ok"><b>Super! Knobeln ist wieder frei.</b></p>`:''}${Q.mast?`<p class="ok"><b>${Q.mast} Aufgabe${Q.mast>1?'n':''} aus dem Fehlerheft gemeistert!</b></p>`:''}${Q.newb.map((b,i)=>`<span class="badge${neuE?' pop':''}" style="animation-delay:${.3+i*.2}s">Neues Abzeichen: ${b}</span>`).join('')}</div>`+
- (ausZeit(k)?`<div class="card" id="limit"><b>Für heute ist Schluss.</b><p>Deine ${limM(k)} Minuten auf dem Hof sind um. Morgen geht es weiter${k.h?`, ${esc(k.h.name)} wartet auf dich`:''}!</p></div><button class="go" onclick="v='home';ui()">Tschüss, bis morgen</button>`:
+ (ausZeit(k)?(rf=>`<div class="card" id="limit"><b>Für heute ist Schluss.</b><p>Deine ${limM(k)} Minuten auf dem Hof sind um. Morgen geht es weiter${k.h?`, ${esc(k.h.name)} wartet auf dich`:''}!</p></div>${rf}<button class="${rf.includes('reinfrage')?'alt':'go'}" onclick="v='home';ui()">${rf.includes('reinfrage')?'Nein, tschüss':'Tschüss, bis morgen'}</button>`)(reinFrage(k)):
  `<div class="row">${fw?`<button class="go" onclick="v='choose';ui();scrollTo(0,0)">Fohlen aussuchen</button>`:''}${knobelZu(k,Q.key)?`<button class="go" onclick="andersThema()">Schulstoff wählen</button>`:`<button class="${fw?'alt':'go'}" onclick="start('${Q.key}')">Nochmal</button>${Q.zu?'':`<button class="alt" onclick="andersThema()">Anderes Thema</button>`}`}<button class="alt" onclick="v='kid';ui()">Zurück zum Hof</button></div>`+
  // Hof noch gesperrt: alle Themen direkt zur Auswahl
  (Q.zu?`<h2>Anderes Thema wählen</h2>${themen(k)}`:''))}
  if(v=='train')h=trSeite();
- if(v=='bye'){let k=kid();h=`<h1>Bis morgen, ${esc(k.name)}!</h1><div class="card">${k.h?scene(k):''}<p>Für heute sind deine ${limM(k)} Minuten auf dem Hof um.${k.h?` ${esc(k.h.name)} freut sich, wenn du morgen wiederkommst.`:''}</p>${k.h&&stg(k)<3&&heute(k)?'<p class="small">Heute hast du gerechnet, der Tag zählt fürs Wachstum.</p>':''}</div><button class="go" onclick="v='home';ui()">Tschüss</button>`}
+ // Abschied: Mit Unterstand oder Stall steht oben der Hof (statt des kleinen Bilds), damit das Pferd noch hineingebracht werden kann (seit 2026-10-24)
+ if(v=='bye'){let k=kid(),rf=reinFrage(k);h=`<h1>Bis morgen, ${esc(k.name)}!</h1><div class="card">${k.h&&!byeHof()?scene(k):''}<p>Für heute sind deine ${limM(k)} Minuten auf dem Hof um.${k.h?` ${esc(k.h.name)} freut sich, wenn du morgen wiederkommst.`:''}</p>${k.h&&stg(k)<3&&heute(k)?'<p class="small">Heute hast du gerechnet, der Tag zählt fürs Wachstum.</p>':''}</div>${rf}<button class="${rf.includes('reinfrage')?'alt':'go'}" onclick="v='home';ui()">${rf.includes('reinfrage')?'Nein, tschüss':'Tschüss'}</button>`}
  if(v=='parent'){h=`<button class="alt" onclick="v='home';lock()">Zurück</button><h1>${S.pin?'Eltern-Ansicht':'Einstellungen'}</h1>`;
  if(S.pin&&!open)h+=`<div class="card pinkarte"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p>${pinI()}</div>`+pinResetKarte();
  else{h+=S.kids.map(k=>`<div class="card"><div class="row sp"><b>${esc(k.name)}</b><span>Klasse <select onchange="gr(${k.id},this.value)" aria-label="Klasse">${[5,6,7,8].map(c=>`<option ${k.g==c?'selected':''}>${c}</option>`).join('')}</select></span></div>
@@ -372,7 +388,12 @@ function d3Sync(){const el=$('#d3');
  D3.then(m=>{if($('#d3')===el)m.zeige(el,spec)}).catch(e=>{D3=null;el.classList.add('fehler');console.warn('3D nicht verfügbar',e)})}
 // Neues Kind: neu = 1, damit es sich beim ersten Mal alles in Ruhe ansehen kann. Die 30 Minuten (und die Hofzeit) laufen erst,
 // wenn es die erste Aufgabe beginnt (start löscht die Markierung).
-function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},neu:1});save();ui()}
+// Auf der Startseite (nicht beim Einrichten, dort ist die PIN schon eingegeben): ab dem zweiten Kind mit Eltern-PIN (seit 2026-10-24).
+// NKN/NKG/NKW: eingegebener Name, Klasse und Hinweis bleiben bei falscher PIN stehen.
+const nkPin=()=>!!S.pin&&S.kids.length>0&&v=='home'&&!EIN;
+function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();
+ if(nkPin()){const p=($('#nkpin')||{}).value||'';if(p!==S.pin){NKN=n;NKG=+$('#gr').value;NKW=p?'Falsche PIN.':'Bitte gib die Eltern-PIN ein.';ui();NKW='';const f=$('#nkpin');if(f)f.focus();return}}
+ NKN='';NKG=5;S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},neu:1});save();ui()}
 // PIN festlegen: ohne id beim ersten Start (Feld pin0), mit id='pin1' nachträglich in den Einstellungen
 function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=p;delete S.np;S.mo='e';if(id)open=true;save();ui()}
 function nopin(){S.np=1;S.mo='k';save();ui()}
@@ -457,6 +478,14 @@ function themen(k){const K=KAT[k.g],fr=frueher(k),kz=(k.kn||0)>=KNMAX;
 const elternThemen=k=>[...new Set([...T[k.g].map(t=>t[0]),...frueher(k).flatMap(g=>KAT[g].schul).filter(x=>k.t[x]&&k.t[x].n)])].map(x=>THEMA[x]);
 // Tageslimit erreicht: Rundflug beenden und verabschieden
 function bye(){if(HF.mode=='fly')flyOff();v='bye';ui();scrollTo(0,0)}
+// Nach Ablauf der Zeit (Abschied bzw. Rundenende): Steht das Pferd draußen und gibt es Unterstand oder Stall, wird gefragt,
+// ob das Kind es noch hineinbringen möchte (seit 2026-10-24). REIN = 1, nachdem es das getan hat (Bestätigung statt Frage).
+const byeHof=()=>{const k=cur&&kid();return!!(k&&k.h&&unterkunft(hh(k)))};
+function reinFrage(k){const H=k&&k.h?hh(k):null,u=H?unterkunft(H):0;if(!u)return'';const ort=u==2?'Stall':'Unterstand';
+ if(drinnen(H))return REIN?`<p class="ok"><b>${esc(H.name)} steht jetzt im ${ort}.</b></p>`:'';
+ return`<div class="card reinfrage"><b>Möchtest du ${esc(H.name)} noch in den ${ort} bringen?</b><div class="row" style="margin-top:6px"><button class="go" onclick="byeRein()"${HF.fuehr?' disabled':''}>Ja, ${esc(H.name)} in den ${ort} bringen</button></div></div>`}
+// Läuft noch das Herausholen (kurz vor Ablauf der Zeit gestartet), ist der Knopf gesperrt; am Ende der Animation wird neu gezeichnet
+function byeRein(){if(HF.fuehr)return;REIN=1;fuehren()}
 // Spielzeit messen: nur, solange ein Kind auf seinem Hof ist und die App sichtbar ist (auch im Rundflug, der läuft über der Kind-Ansicht)
 let ZL=Date.now(),ZS=0;const ZV=['choose','kid','wish','rassen','quiz','done','einladen','train'];
 setInterval(()=>{const now=Date.now(),dt=Math.min(5,(now-ZL)/1000);ZL=now;
@@ -506,13 +535,19 @@ function wish(t,c){let k=kid(),H=hh(k),no=()=>hinweis('Dafür fehlen noch Äpfel
   else if(t=='zk'){if(xp('zopf',H.zk))return;if(!H.zk){if((k.ap||0)<PREIS.zopf)return no();k.ap-=PREIS.zopf;H.zk=1;H.zo=1}else H.zo=H.zo?0:1;if(H.zo)H.ma='lang'}
   else{if(xp('zopf',H.zk))return;if(!H.gus.includes(c)){if((k.ap||0)<PREIS.gummi)return no();k.ap-=PREIS.gummi;H.gus.push(c)}H.gu=c}}
  else if(t=='lp'){if(H.lp.includes(c)||!LIEB.some(l=>l[0]==c))return;if(xp('lieb'))return;if((k.ap||0)<PREIS.lieb)return no();k.ap-=PREIS.lieb;H.lp.push(c)}
- else if(t=='it'){if(H.it[c])return;if(xp('it'))return;const p=ITEMS.find(x=>x[0]==c)[2];if((k.ap||0)<p)return no();k.ap-=p;H.it[c]=1}
+ else if(t=='it'){if(H.it[c]||!ITEMS.some(x=>x[0]==c))return;if(itZu(k,c)){hinweis(`Dafür brauchst du ${ITXP[c]||XPF.it} Erfahrung. Du hast ${k.xp}.`);return}const p=ITEMS.find(x=>x[0]==c)[2];if((k.ap||0)<p)return no();k.ap-=p;H.it[c]=1}
  else if(t=='au'){const a=AUSR.find(x=>x[0]==c);H.au=H.au||{};if(!a||H.au[c])return;if((k.ap||0)<a[2])return no();k.ap-=a[2];H.au[c]=1}
+ // Motto (seit 2026-10-23): kaufen nur, solange es läuft, mit Hufeisen; danach kostenlos an und aus
+ else if(t=='mt'){if(!THEMEN.includes(c))return;const mt=k.mt||{};
+  if(Object.prototype.hasOwnProperty.call(mt,c))mt[c]=mt[c]?0:1;
+  else{if(c!==thema())return;if((k.hu||0)<MOTTOPREIS)return hinweis('Dafür fehlen noch Hufeisen.');k.hu-=MOTTOPREIS;mt[c]=1}
+  k.mt=mt}
  else if(t!='bl'&&t!='so')return;// nur Blesse und Socken; Unbekanntes (z. B. die alten Fähigkeiten "sk") kauft nichts
  else if(!H.own[t]){if(xp('abz'))return;if((k.ap||0)<15)return no();k.ap-=15;H.own[t]=1;H[t]=1}else H[t]=H[t]?0:1;
  save();ui()}
 // ---------- Hof ausbauen (seit 2026-10-18, siehe Notiz "Hof ausbauen") ----------
-// Preise und Bedingungen: Koppel 2 ab 7500 Erfahrung (bis 2026-10-18: 2000), Koppel 3 ab 10000 (vorher 5000), je 30 Äpfel; Unterstand je Koppel 25 Äpfel; Stall (Ausbau auf der Hauptkoppel) 15 Äpfel, wenn das eigene Pferd ausgewachsen ist
+// Preise und Bedingungen: Koppel 2 ab 7500 Erfahrung (bis 2026-10-18: 2000), Koppel 3 ab 10000 (vorher 5000), je 30 Äpfel; Unterstand je Koppel 25 Äpfel; Stall (Ausbau auf der Hauptkoppel) 15 Äpfel, wenn das eigene Pferd ausgewachsen ist.
+// Erfahrung (ITXP, seit 2026-10-24): Unterstand ab 750, Ausbau zum Stall ab 1250
 const KOPPEL={preis:30,xp:[0,7500,10000],unterstand:25,stall:15},KNAME=['Hauptkoppel','Koppel 2','Koppel 3'];
 // Plätze einer Koppel (das eigene Pferd belegt auf der Hauptkoppel einen Platz)
 const kap=(H,i)=>i>=H.ko.n?0:i==0?[1,2,4][H.ko.u[0]]:[0,2][H.ko.u[i]];
@@ -529,12 +564,21 @@ function belegung(H){const p=[['eigen'],[],[]],offen=[],w=[];
 function platzText(H){const b=belegung(H),frei=[0,1,2].reduce((s,i)=>s+kap(H,i)-b.p[i].length,0);
  return`${H.ko.n} Koppel${H.ko.n>1?'n':''} · ${frei} ${frei==1?'Platz':'Plätze'} frei`+(b.w.length?` · ${b.w.length} warte${b.w.length==1?'t':'n'} auf einen Platz`:'')}
 // Hinweis in der Kind-Ansicht, wenn Pferde auf einen Platz warten
-const wartetHinweis=k=>{if(!k.h||k.hl)return'';const w=belegung(hh(k)).w.length;return w?`<div class="card small" style="margin-top:8px">${w} Pferd${w>1?'e warten':' wartet'} auf einen Platz. Im Wunschbaum unter „Unterstand & Stall“ kannst du einen Unterstand bauen.</div>`:''};
+const wartetHinweis=k=>{if(!k.h||k.hl)return'';const w=belegung(hh(k)).w.length;return w?`<div class="card small" style="margin-top:8px">${w} Pferd${w>1?'e warten':' wartet'} auf einen Platz. Im Wunschbaum unter „Hof ausbauen“ und „Koppeln“ kannst du Unterstände bauen.</div>`:''};
+// Karten im Bereich "Hof ausbauen" (seit 2026-10-23): t = 1 Unterstand, 2 Ausbau zum Stall (beide auf der Hauptkoppel, gleiche Erfahrungs-Grenze wie die Gegenstände)
+function gebKarte(k,H,t){const u=H.ko.u[0],id=t==1?'unterstand':'ausbau',zu=itZu(k,id,u>=t),preis=p=>p+' '+AP;
+ if(t==1)return`<button class="pick it geb ${u?'on':''}${zu?' gesperrt':''}" data-geb="unterstand" onclick="hofBau('unterstand',0)"${zu?' disabled':''}>${itemBild('unterstand')}Unterstand<br><span class="small">2 Plätze</span><br>${u==2?'zum Stall ausgebaut':u?'gebaut':zu?`<span class="small">${itNoch(k,id)}</span>`:preis(KOPPEL.unterstand)}</button>`;
+ const geht=u==1&&ausgewachsen(k)&&!zu;
+ return`<button class="pick it geb ${u==2?'on':''}${u!=2&&!geht?' gesperrt':''}" data-geb="stall" onclick="hofBau('stall',0)"${u!=2&&!geht?' disabled':''}>${itemBild('pferdestall')}Stall<br><span class="small">Ausbau des Unterstands, 4 Plätze</span><br>${u==2?'gebaut':zu?`<span class="small">${itNoch(k,id)}</span>`:u!=1?'erst Unterstand bauen':!ausgewachsen(k)?`wenn ${esc(H.name)} ausgewachsen ist`:preis(KOPPEL.stall)}</button>`}
+// Bereich "Motto" im Wunschbaum (seit 2026-10-23), nur solange ein Motto läuft
+function mottoTeil(k,th){const [n,b,bis]=THINFO[th],hat=!!(k.mt&&Object.prototype.hasOwnProperty.call(k.mt,th)),an=mottoAn(k,th);
+ return`<p class="small">${b} auf deinem Hof, nur bis ${bis}. Einmal gekauft kommt das Motto jedes Jahr wieder.</p><div class="row"><button class="${an?'go':'alt'}" data-mt="${th}" onclick="wish('mt','${th}')" aria-pressed="${an}">${n}${hat?(an?' an':' aus'):` · ${MOTTOPREIS} ${HU}`}</button></div>`+
+  (!hat&&(k.hu||0)<MOTTOPREIS?`<p class="small">Du hast ${k.hu||0} von ${MOTTOPREIS} Hufeisen. Hufeisen gibt es für Runden mit mindestens ${FREI} von 10 richtig und für Sterne im Training.</p>`:'')}
 // Bauen, Ausbauen und Pferde verteilen
 function hofBau(t,i,f){const k=kid(),H=hh(k),no=m=>hinweis(m||'Dafür fehlen noch Äpfel.');note='';
  if(t=='koppel'){if(i!==H.ko.n||i>2)return;if(k.xp<KOPPEL.xp[i])return no(`Dafür brauchst du ${KOPPEL.xp[i]} Erfahrung.`);if((k.ap||0)<KOPPEL.preis)return no();k.ap-=KOPPEL.preis;H.ko.n=i+1}
- else if(t=='unterstand'){if(i>=H.ko.n||H.ko.u[i])return;if((k.ap||0)<KOPPEL.unterstand)return no();k.ap-=KOPPEL.unterstand;H.ko.u[i]=1}
- else if(t=='stall'){if(H.ko.u[0]!==1)return;if(!ausgewachsen(k))return no(`Den Stall kannst du bauen, wenn ${esc(H.name)} ausgewachsen ist.`);if((k.ap||0)<KOPPEL.stall)return no();k.ap-=KOPPEL.stall;H.ko.u[0]=2}
+ else if(t=='unterstand'){if(i>=H.ko.n||H.ko.u[i])return;if(itZu(k,'unterstand'))return no(`Dafür brauchst du ${ITXP.unterstand} Erfahrung.`);if((k.ap||0)<KOPPEL.unterstand)return no();k.ap-=KOPPEL.unterstand;H.ko.u[i]=1}
+ else if(t=='stall'){if(H.ko.u[0]!==1)return;if(itZu(k,'ausbau'))return no(`Dafür brauchst du ${ITXP.ausbau} Erfahrung.`);if(!ausgewachsen(k))return no(`Den Stall kannst du bauen, wenn ${esc(H.name)} ausgewachsen ist.`);if((k.ap||0)<KOPPEL.stall)return no();k.ap-=KOPPEL.stall;H.ko.u[0]=2}
  else if(t=='zu'){const b=belegung(H);if(!freunde(H).includes(f)||!(b.p[i].includes(f)||b.p[i].length<kap(H,i)))return;H.ko.z[f]=i}
  save();ui()}
 // Abzeichen neu anordnen (kostenlos): Kopfform, Socken je Bein (mindestens ein Bein weiß) und Schecken-Flecken neu auswürfeln
@@ -601,7 +645,7 @@ function gr(id,g){let k=S.kids.find(x=>x.id==id);k.g=+g;save();ui()}
 // Tageslimit je Kind (Eltern-Ansicht): 0 = kein Limit, sonst 5 bis LIMMAX Minuten in 5er-Schritten. Wirkt sofort, auch am selben Tag.
 const limOptionen=k=>[0,...Array.from({length:LIMMAX/5},(_,i)=>(i+1)*5)].map(m=>`<option value="${m}"${limM(k)==m?' selected':''}>${m?m+' Minuten':'kein Limit'}</option>`).join('');
 function lim(id,m){let k=S.kids.find(x=>x.id==id);m=+m;if(!k||!Number.isInteger(m)||m<0||m>LIMMAX||m%5)return;k.lm=m;save();ui()}
-function rst(id){if(!confirm('Fortschritt wirklich zurücksetzen? Das Pferd beginnt wieder als Fohlen.'))return;let k=S.kids.find(x=>x.id==id);delete k.ld;delete k.hl;delete k.hu;Object.assign(k,{kn:0,xp:0,st:0,sd:0,hz:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},mist:[]});delete k.gl;if(k.h){k.h.coats=[k.h.coat];k.h.own={};k.h.bl=0;k.h.so=0;k.h.tr={};k.h.tl={};delete k.h.tz;k.h.au={};delete k.h.hs;k.h.it={};k.h.lp=[];k.h.ko={n:1,u:[0,0,0],z:{}}}delete k.h2;save();ui()}
+function rst(id){if(!confirm('Fortschritt wirklich zurücksetzen? Das Pferd beginnt wieder als Fohlen.'))return;let k=S.kids.find(x=>x.id==id);delete k.ld;delete k.hl;delete k.hu;delete k.mt;Object.assign(k,{kn:0,xp:0,st:0,sd:0,hz:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},mist:[]});delete k.gl;if(k.h){k.h.coats=[k.h.coat];k.h.own={};k.h.bl=0;k.h.so=0;k.h.tr={};k.h.tl={};delete k.h.tz;k.h.au={};delete k.h.hs;k.h.it={};k.h.lp=[];k.h.ko={n:1,u:[0,0,0],z:{}}}delete k.h2;save();ui()}
 function del(id){if(!confirm('Kind samt Fortschritt löschen?'))return;S.kids=S.kids.filter(x=>x.id!=id);save();ui()}
 function exp(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='pferdehof-sicherung.json';a.click()}
 function imp(el){let f=el.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=clean(JSON.parse(r.result));if(!d)throw 0;if(!confirm('Aktuellen Stand durch die Sicherung ersetzen? Der PIN-Schutz wird aus der Sicherung übernommen.'))return;if(!d.pin)d.np=1;if(!d.mo)d.mo=d.pin?'e':'k';S=d;save();ui()}catch(e){warn='Datei konnte nicht gelesen werden.';ui()}};r.readAsText(f)}

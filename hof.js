@@ -10,7 +10,8 @@ const FIGX={geb:.405,frei:.47,y:36,s:.44,besuch:[.535,.59,.355]};// besuch: Plä
 const WH=200,GY=124,sr=n=>{let x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x)};
 // Gegenstände für den Hof: [id, Name, Preis in Äpfeln, Lage auf der Weide (Anteil der Weltbreite)]
 // Drei Blumenwiesen (seit 2026-10-19): bunt (Mitte), Mohn (links neben dem Teich), Lavendel (rechts hinter der Eiche)
-const ITEMS=[['baum1','Apfelbaum',12,.33],['baum2','Eiche',15,.80],['blumen','Blumenwiese bunt',10,.46],['mohn','Blumenwiese Mohn',10,.10],['lavendel','Blumenwiese Lavendel',10,.89],['heu','Heuballen',10,.555],['troge','Wassertrog',12,.40],['stall','Stall',30,.64],['teich','Teich',25,.24],['windrad','Windrad',20,.725],['regenbogen','Regenbogen',35,.50]];
+// Der rote Stall heißt seit 2026-10-23 "Scheune" (id bleibt 'stall', damit Spielstände gültig bleiben). "Stall" ist jetzt nur der Ausbau des Unterstands.
+const ITEMS=[['baum1','Apfelbaum',12,.33],['baum2','Eiche',15,.80],['blumen','Blumenwiese bunt',10,.46],['mohn','Blumenwiese Mohn',10,.10],['lavendel','Blumenwiese Lavendel',10,.89],['heu','Heuballen',10,.555],['troge','Wassertrog',12,.40],['stall','Scheune',30,.64],['teich','Teich',25,.24],['windrad','Windrad',20,.725],['regenbogen','Regenbogen',35,.50]];
 // ---------- Zeichnungen im Bilderbuch-Stil (Weltkoordinaten: Höhe 200, Bodenlinie GY) ----------
 const r1=n=>Math.round(n*10)/10;
 const busch=(x,y,r,c)=>`<g fill="${c}"><circle cx="${r1(x)}" cy="${r1(y-r*.7)}" r="${r1(r)}"/><circle cx="${r1(x-r*.8)}" cy="${r1(y-r*.35)}" r="${r1(r*.72)}"/><circle cx="${r1(x+r*.85)}" cy="${r1(y-r*.4)}" r="${r1(r*.68)}"/></g>`;
@@ -43,7 +44,7 @@ const DR={
   `<path d="M${bx+5} ${by}v10M${bx+11} ${by}v10M${bx+5} ${by}l3 -3M${bx+11} ${by}l3 -3" stroke="#8a5a2b" stroke-width=".7" fill="none"/>`;
   return`<ellipse cx="${x+2}" cy="${GY+16.6}" rx="24" ry="2.6" fill="#000" opacity=".13" stroke="none"/>${ballen(x-17,GY+6)}${ballen(x-1,GY+6)}${ballen(x-9,GY-4)}`},
  troge:x=>`<ellipse cx="${x}" cy="${GY+18.5}" rx="20" ry="2.5" fill="#000" opacity=".12" stroke="none"/><path d="M${x-14} ${GY+18}V${GY+14}M${x+14} ${GY+18}V${GY+14}" stroke="#5a4129" stroke-width="2"/><rect x="${x-16}" y="${GY+7}" width="32" height="9" rx="2" fill="#7a5a36"/><path d="M${x-15} ${GY+12}h30" stroke="#5f4529" stroke-width=".5"/><rect x="${x-16}" y="${GY+7}" width="32" height="2" rx="1" fill="#9a7a50"/><rect x="${x-14}" y="${GY+8.5}" width="28" height="3.5" rx="1.5" fill="#6fb6e8"/><path d="M${x-10} ${GY+9.6}h9" stroke="#fff" stroke-width=".8" opacity=".7"/>`,
- // Stall: Bretterwand mit Eckleisten und Steinsockel, Schindeldach mit heller Kante und Wetterfahne, Heuluke, zweiflügeliges Tor mit Beschlägen, Lampe
+ // Scheune (id 'stall'): Bretterwand mit Eckleisten und Steinsockel, Schindeldach mit heller Kante und Wetterfahne, Heuluke, zweiflügeliges Tor mit Beschlägen, Lampe
  stall:x=>{const L=x-34,R=x+34,T=GY-34,B=GY+10;
   let s=`<ellipse cx="${x}" cy="${B+1}" rx="46" ry="4" fill="#000" opacity=".14" stroke="none"/><rect x="${L}" y="${T}" width="68" height="44" fill="#b0412f"/>`+
    [...Array(8)].map((_,i)=>(i%2?`<rect x="${L+i*8.5}" y="${T}" width="8.5" height="44" fill="#a63a28" stroke="none"/>`:'')+(i?`<path d="M${L+i*8.5} ${T}V${B}" stroke="#86301f" stroke-width=".5"/>`:'')).join('')+
@@ -124,10 +125,17 @@ const WETTER=['klar','regen','schnee','regenbogen'];
 function wetter(d){d=d||new Date();const q=typeof location!='undefined'?new URLSearchParams(location.search).get('wetter'):null;if(WETTER.includes(HF.wTest))return HF.wTest;if(WETTER.includes(q))return q;
  const blk=ms=>{const t=new Date(ms),tag=Math.floor((t-new Date(t.getFullYear(),0,1))/864e5),z=sr(t.getFullYear()*.37+tag*8+Math.floor(t.getHours()/3)+.5),m=t.getMonth();return m==11||m<2?(z<.3?'schnee':'klar'):(z<.15?'regen':'klar')};
  const jetzt=blk(d.getTime());if(jetzt!='klar')return jetzt;const h=d.getHours();return h>=7&&h<19&&blk(d.getTime()-3*36e5)=='regen'?'regenbogen':'klar'}
-// ---------- Themen auf der Startseite (seit 2026-10-21) ----------
-// Nur die Startseite (kind 'home') bekommt eine Themen-Optik, nicht die Höfe der Kinder. Halloween: 20.10. bis 02.11.
+// ---------- Themen (Motto) auf der Startseite (seit 2026-10-21) und auf dem eigenen Hof (seit 2026-10-23) ----------
+// Die Startseite (kind 'home') zeigt das laufende Motto immer. Auf dem Hof eines Kindes erscheint es nur, wenn das Kind es im
+// Wunschbaum für MOTTOPREIS Hufeisen gekauft und eingeschaltet hat: k.mt = {halloween: 1 an / 0 aus}. Gekauft bleibt es und kommt
+// jedes Jahr in seinem Zeitraum wieder. Kaufen geht nur, solange das Motto läuft. Halloween: 20.10. bis 02.11.
 // Zum Ausprobieren: Adresse mit ?thema=halloween bzw. ?thema=aus. Für Tests: HF.thTest ('halloween' oder '')
-const THEMEN=['halloween'];
+const THEMEN=['halloween'],MOTTOPREIS=5;
+// Für den Wunschbaum: [Name, was man sieht, letzter Tag]
+const THINFO={halloween:['Halloween','Kürbisse, Fledermäuse und ein violetter Himmel','2. November']};
+const mottoAn=(k,th)=>!!(th&&k&&k.mt&&k.mt[th]);
+// Motto für einen Hof: Startseite immer, Hof eines Kindes nur mit gekauftem und eingeschaltetem Motto
+const hofThema=(kind,k,d)=>{const th=thema(d);return kind=='home'||(kind=='kid'&&mottoAn(k,th))?th:''};
 function thema(d){d=d||new Date();const q=typeof location!='undefined'?new URLSearchParams(location.search).get('thema'):null;
  if(HF.thTest!=null)return HF.thTest;if(q!=null)return THEMEN.includes(q)?q:'';
  const m=d.getMonth(),t=d.getDate();return(m==9&&t>=20)||(m==10&&t<=2)?'halloween':''}
@@ -249,7 +257,7 @@ function hofBuild(kind){
  HF.cam=Math.min(Math.max(HF.cam?HF.cam+dOX:OX+(WK-W)/2,0),WW-W);
  if(dOX){HF.horses.forEach(h=>{h.x+=dOX;if(h.ziel!=null)h.ziel+=dOX});HF.mist.forEach(m=>m.x+=dOX);if(HF.apfel)HF.apfel.x+=dOX;if(HF.frosch)HF.frosch.x+=dOX}
  svg.setAttribute('viewBox',`0 0 ${W} ${WH}`);svg.setAttribute('preserveAspectRatio','xMidYMid meet');
- const now=new Date(),TH=kind=='home'?thema(now):'',P=thPal(pal(HF.hTest!=null?HF.hTest:now.getHours()+now.getMinutes()/60),TH),items=kind=='kid'?Object.keys(hh(kid()).it):ITEMS.map(i=>i[0]);
+ const now=new Date(),TH=hofThema(kind,kind=='kid'?kid():null,now),P=thPal(pal(HF.hTest!=null?HF.hTest:now.getHours()+now.getMinutes()/60),TH),items=kind=='kid'?Object.keys(hh(kid()).it):ITEMS.map(i=>i[0]);
  HF.pal=P;HF.kind=kind;
  // Interaktionen: laufende Animationen gehen beim Neuaufbau verloren, Pferdeäpfel bleiben (nur beim selben Kind)
  const kidId=kind=='kid'?kid().id:null;
@@ -310,7 +318,7 @@ function hofBuild(kind){
   ITEMS.filter(i=>items.includes(i[0])&&DR[i[0]]).map(i=>{const z=DR[i[0]](Math.round(OX+i[3]*WK)),u=UMR[i[0]]?`<g stroke="#3a261466" stroke-width=".55" stroke-linejoin="round">${z}</g>`:z;
    return kind=='kid'&&AKT[i[0]]?`<g data-act="${i[0]}" style="cursor:pointer">${u}</g>`:u}).join('')+geb.s+drinSvg+
   grasStreifen(WW,Math.round(WW/6),GY+6,GY+14,3,5.5,200,gras,frei)+
-  // Halloween (nur Startseite): Kürbisse auf der Wiese
+  // Halloween (Startseite, seit 2026-10-23 auch der eigene Hof mit gekauftem Motto): Kürbisse auf der Wiese
   (TH=='halloween'?kuerbisse(WW,frei,P):'')+
   // Eigene Figur steht auf dem Hof vor dem Zaun
   (figs.eigen?`<g class="fig eigen" data-k="${figs.eigen.id}" transform="translate(${r1(OX+(H0&&H0.ko.u[0]?FIGX.geb:FIGX.frei)*WK)} ${GY+FIGX.y}) scale(${FIGX.s})">${figurBild(figs.eigen.f)}</g>`:'')+
@@ -528,14 +536,15 @@ function hofRun(){
  if(HF.run){if(!HF.raf){HF.last=performance.now();HF.raf=requestAnimationFrame(hofFrame)}}else if((HF.katze||HF.maeuse||HF.fuehr)&&!RM)hofKick(1);else{hofStop();hofDraw(0)}}
 // Wird nach jeder Änderung der Ansicht aufgerufen (aus ui()).
 function hofSync(force){
- const svg=$('#hof'),root=document.documentElement.style,fly=HF.mode=='fly',show=fly||['home','choose','figur','kid','wish','rassen','done','einladen','besuch'].includes(v);
+ // Abschiedsseite (bye) zeigt den Hof nur mit Unterstand oder Stall, zum Hineinbringen des Pferds (seit 2026-10-24, byeHof in app.js)
+ const svg=$('#hof'),root=document.documentElement.style,fly=HF.mode=='fly',show=fly||['home','choose','figur','kid','wish','rassen','done','einladen','besuch'].includes(v)||(v=='bye'&&byeHof());
  document.body.classList.toggle('nohof',!show);
  if(!show){hofStop();const we=document.getElementById('hwetter');if(we)we.classList.add('ruhig');svg.style.display='none';root.setProperty('--wh','0px');return}
  svg.style.display='block';root.setProperty('--wh',(fly?0:Math.max(210,Math.min(360,Math.round(innerHeight*.34))))+'px');
- const k=(v=='kid'||v=='wish'||v=='rassen'||v=='done'||v=='einladen')?kid():null,kind=k&&k.h?'kid':'home';
+ const k=(v=='kid'||v=='wish'||v=='rassen'||v=='done'||v=='einladen'||v=='bye')?kid():null,kind=k&&k.h?'kid':'home';
  const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.ma,H.coats.join(),Object.keys(H.it).join(),H.lp.join('+'),JSON.stringify(H.ko),drinnen(H),!!(H.au&&H.au.pdecke),k.h2?[k.h2.name,k.h2.coat,k.h2.st,k.h2.bl,k.h2.so,k.h2.ma].join('/'):'',JSON.stringify(k.bs||[])].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.bl,x.h.so,x.h.ma,x.h2?x.h2.coat+x.h2.st:''].join():'').join(';');
  const fsig=S.kids.map(x=>x.f?[x.id,x.f.g,x.f.hf,x.f.ha,x.f.lg,x.f.sh].join(''):'').join();
- const key=[kind,sig,fsig,pal(new Date().getHours()).n,wetter(),kind=='home'?thema():'',fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
+ const key=[kind,sig,fsig,pal(new Date().getHours()).n,wetter(),hofThema(kind,k),fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
  // Führen (Unterstand/Stall): Der erste Abgleich nach dem Start merkt sich den Schlüssel. Ändert sich währenddessen etwas anderes
  // (Ansicht, Kauf, Pferd gewechselt, Wachstum), wird abgebrochen und neu aufgebaut, der Zustand ist ja schon gespeichert.
  if(HF.fuehr&&!force){if(HF.fuehr.key==null)HF.fuehr.key=key;if(key==HF.fuehr.key)return hofRun()}
@@ -554,6 +563,8 @@ function flyOff(){HF.mode='bg';document.body.classList.remove('fly');$('#fly').h
 (()=>{
  const svg=document.getElementById('hof');if(!svg)return;
  svg.addEventListener('pointerdown',e=>{
+  // Abschiedsseite und Rundenende nach Ablauf der Zeit: Hof nur zum Ansehen (Pferd hineinbringen geht über den Knopf)
+  if(v=='bye'||(v=='done'&&cur&&kid()&&ausZeit(kid())))return;
   const g=e.target.closest&&e.target.closest('.hs'),h=g?HF.horses[+g.dataset.i]:null,a=!h&&e.target.closest?e.target.closest('[data-act]'):null;
   // Figuren winken beim Antippen (eigene und die der anderen Kinder am Zaun)
   const fg=!h&&!a&&e.target.closest?e.target.closest('.fig'):null;
