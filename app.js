@@ -35,7 +35,7 @@ const PREIS={zopf:10,gummi:3,lieb:50,leg:10,shirt:10};
 // GLMAX: höchstens so viele gelöste Aufgaben merken (k.gl, fürs Training). Muss vor clean() stehen, das beim Start den Spielstand prüft.
 const GLMAX=80;
 // Schulstoff-Themen aller Klassen: nur diese kommen ins Training (Olympiade, Knobeln und Sudoku haben oft lange Texte)
-const SCHUL=new Set([5,6,7,8].flatMap(g=>KAT[g].schul));
+const SCHUL=new Set(KL.flatMap(g=>KAT[g].schul));
 // Reitausrüstung und Pflege (seit 2026-10-22): je Pferd gekauft (H.au). Sattel mit Sattelgurt, Satteldecke und Trense braucht das Anreiten (training.js).
 // Die Pferdedecke trägt das Pferd auf dem eigenen Hof bei Regen, Schnee und nachts. Die Pflegekiste ist für die Pferdepflege gedacht (kommt später).
 // [id, Name, Preis (vorläufig), Beschreibung]
@@ -96,7 +96,7 @@ function clean(d){
  if(o.pin){const jetzt=Date.now(),pf=nn(d.pf,0,PINMAX-1),ps=nn(d.ps,0,jetzt+PINSPERRE);if(pf)o.pf=pf;if(ps>jetzt)o.ps=ps}
  if(d.snd===0)o.snd=0;if(d.calm)o.calm=1;if(d.mo==='e'||d.mo==='k')o.mo=d.mo;// mo: Startabfrage beantwortet (Elternteil/Kind)
  for(const k of d.kids.slice(0,20)){if(!k||typeof k!=='object')continue;
-  const c={id:nn(k.id,1,Number.MAX_SAFE_INTEGER),name:ct(k.name,20)||'Kind',g:[5,6,7,8].includes(+k.g)?+k.g:5,xp:nn(k.xp),ap:nn(k.ap),s:nn(k.s),best:nn(k.best),total:nn(k.total),r:nn(k.r),perfect:nn(k.perfect),b:[],t:{},mist:[]};
+  const c={id:nn(k.id,1,Number.MAX_SAFE_INTEGER),name:ct(k.name,20)||'Kind',g:KL.includes(+k.g)?+k.g:5,xp:nn(k.xp),ap:nn(k.ap),s:nn(k.s),best:nn(k.best),total:nn(k.total),r:nn(k.r),perfect:nn(k.perfect),b:[],t:{},mist:[]};
   // st = Wachstumsstufe, sd = gesammelte Tage für die nächste Stufe, ld = letzter gezählter Tag, zd/zt = Spielzeit (Sekunden) an diesem Tag
   c.st=k.st==null?GS.reduce((a,g,i)=>c.xp>=g.x?i:a,0):nn(k.st,0,3);c.sd=nn(k.sd,0,999);c.zt=nn(k.zt,0,86400);
   c.hz=nn(k.hz,0,HOFZEIT);if(k.hl)c.hl=1;
@@ -198,7 +198,7 @@ function ui(){let h='';PZ=0;
  else if(v=='home'){const zu=pinZu();// PIN-Sperre (seit 2026-10-24): Hinweis oben, Kinder-Knöpfe aus
  h=`<h1>Pferdehof Mathe</h1>${zu?pinZuKarte():''}<p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"${zu?' disabled':''}><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[stg(k)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
  // Neues Kind: Gibt es schon ein Kind und ist eine PIN gesetzt, muss ein Elternteil mit der PIN bestätigen (seit 2026-10-24)
- `<div class="card"><b>Neues Kind</b><div class="row"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name" value="${esc(NKN)}"><select id="gr" aria-label="Klasse">${[5,6,7,8].map(c=>`<option value="${c}"${NKG==c?' selected':''}>Klasse ${c}</option>`).join('')}</select>${nkPin()?'':'<button onclick="add()">Hinzufügen</button>'}</div>`+
+ `<div class="card"><b>Neues Kind</b><div class="row"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name" value="${esc(NKN)}"><select id="gr" aria-label="Klasse">${KL.map(c=>`<option value="${c}"${NKG==c?' selected':''}>Klasse ${c}</option>`).join('')}</select>${nkPin()?'':'<button onclick="add()">Hinzufügen</button>'}</div>`+
  (nkPin()&&zu?`<p class="small">Neue Kinder lassen sich ab ${pinUhr()} Uhr wieder anlegen.</p>`:nkPin()?`<p class="small">Ein weiteres Kind muss ein Elternteil mit der PIN bestätigen.</p><div class="row"><input id="nkpin" type="password" inputmode="numeric" maxlength="8" placeholder="Eltern-PIN" aria-label="Eltern-PIN" onkeydown="if(event.key=='Enter')add()"><button onclick="add()">Hinzufügen</button></div>`:'')+`<p class="no">${NKW}</p></div><p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button><button class="alt" onclick="infoAuf()">Für Eltern</button></p>`}
  // Figur erstellen oder ändern (FE: Entwurf, wird erst mit "Fertig" bzw. "Speichern" übernommen)
  // Koppeln, Unterstände und Stall: bauen, ausbauen, Pferde verteilen
@@ -316,7 +316,7 @@ function ui(){let h='';PZ=0;
  // Erklärseite für Eltern (seit 2026-10-24, Brain Dump): offen für alle, ohne Hof im Hintergrund, Zahlen kommen aus den Konstanten
  if(v=='info'){const li=a=>`<ul class="info">${a.map(x=>`<li>${x}</li>`).join('')}</ul>`,zur=`<button class="alt" onclick="infoZu()">Zurück</button>`;
   h=zur+`<h1>Pferdehof Mathe für Eltern</h1><p>Kurz erklärt: was die App macht, was du als Elternteil einstellen kannst und was mit den Daten passiert.</p>`+
-  `<div class="card"><b>Worum es geht</b>`+li([`Mathe üben für die Klassen 5 bis 8 (Gymnasium). Jedes Kind hat ein eigenes Pferd, das vom Fohlen zum Pferd heranwächst, und einen eigenen Hof.`,
+  `<div class="card"><b>Worum es geht</b>`+li([`Mathe üben für die Klassen 4 bis 8 (Klasse 4 Grundschule, ab Klasse 5 Gymnasium). Jedes Kind hat ein eigenes Pferd, das vom Fohlen zum Pferd heranwächst, und einen eigenen Hof.`,
    `Für richtige Antworten gibt es Äpfel. Damit kauft das Kind Dinge für Pferd und Hof. Äpfel gibt es nur fürs Rechnen, nie für Geld.`,
    `Das Pferd wächst mit den Tagen, an denen gerechnet wurde (ein Tag zählt einmal), nicht mit der Spielzeit.`])+`</div>`+
   `<div class="card"><b>So wird geübt</b>`+li([`Eine Runde hat 10 Aufgaben. Jedes Thema hat 5 Stufen: Nach 3 richtigen Antworten in Folge geht es eine Stufe hoch, nach 2 falschen eine Stufe runter.`,
@@ -342,7 +342,7 @@ function ui(){let h='';PZ=0;
  if(v=='parent'){h=`<button class="alt" onclick="v='home';lock()">Zurück</button><h1>${S.pin?'Eltern-Ansicht':'Einstellungen'}</h1>`;
  if(S.pin&&!open&&pinZu())h+=pinZuKarte();// PIN-Sperre (seit 2026-10-24)
  else if(S.pin&&!open)h+=`<div class="card pinkarte"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p>${pinI()}</div>`+pinResetKarte();
- else{h+=S.kids.map(k=>`<div class="card"><div class="row sp"><b>${esc(k.name)}</b><span>Klasse <select onchange="gr(${k.id},this.value)" aria-label="Klasse">${[5,6,7,8].map(c=>`<option ${k.g==c?'selected':''}>${c}</option>`).join('')}</select></span></div>
+ else{h+=S.kids.map(k=>`<div class="card"><div class="row sp"><b>${esc(k.name)}</b><span>Klasse <select onchange="gr(${k.id},this.value)" aria-label="Klasse">${KL.map(c=>`<option ${k.g==c?'selected':''}>${c}</option>`).join('')}</select></span></div>
  <p class="small">${k.h?esc(k.h.name)+' · '+GS[stg(k)].n+' · ':''}${k.h2?'zweites Pferd '+esc(k.h2.name)+' · '+GS[k.h2.st||0].n+' · ':''}${k.h&&stg(k)<3?`Tag ${serie(k)} von ${TAGE[stg(k)]} bis „${GS[stg(k)+1].n}“ · `:''}heute ${limS(k)?`${Math.min(limM(k),Math.floor(zeit(k)/60))} von ${limM(k)} Minuten`:`${Math.floor(zeit(k)/60)} Minuten (kein Limit)`} · ${k.xp} Erfahrung · ${k.ap||0} Äpfel · ${k.hu||0} Hufeisen · ${k.r} von ${k.total} Aufgaben richtig (${k.total?Math.round(k.r/k.total*100):0} %) · Rekordserie ${k.best} · Fehlerheft ${mcount(k)} offen</p>
  <p class="small" style="margin:6px 0"><label>Zeit pro Tag: <select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></label></p>${ndListe(k)}
  <table><tr><th>Thema</th><th>Stufe</th><th>Aufgaben</th><th>Richtig</th></tr>${elternThemen(k).map(t=>{let s=ts(k,t[0]);return`<tr><td>${t[1]}</td><td>${s.d}</td><td>${s.n}</td><td>${s.n?Math.round(s.r/s.n*100)+' %':'–'}</td></tr>`}).join('')}</table>
@@ -442,13 +442,13 @@ function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellunge
 // Ist schon eine PIN gesetzt, braucht auch der Kind-Modus die PIN (sie wird dabei entfernt), damit ein Kind die Sperre nicht umgeht.
 // EIN = aktueller Schritt: '' Auswahl, 'e' PIN, 'k' Kind, 'kinder' Kinder anlegen (nach dem Eltern-Schritt).
 let EIN='',EINPIN=false;// EINPIN: Kind-Modus auf Gerät mit PIN, PIN wurde richtig eingegeben (entfernt wird sie erst am Ende)
-const VORTEILE=`<div class="card small vorteile"><b>Pferdehof Mathe für Eltern</b><ul style="margin:6px 0 0;padding-left:20px"><li>Keine Werbung, keine Käufe durch Kinder</li><li>Kein Konto, keine Anmeldung: Alle Daten bleiben auf diesem Gerät</li><li>Zeitlimit für jedes Kind, Standard ${LIMIN} Minuten am Tag</li><li>Eltern-Ansicht mit PIN: Statistik, Klasse, Zeitlimit, Sicherung</li><li>Aufgaben für Klasse 5 bis 8 mit Tipps und Lösungswegen</li></ul><button class="alt" style="margin-top:8px" onclick="infoAuf()">Alles für Eltern ansehen</button></div>`;
+const VORTEILE=`<div class="card small vorteile"><b>Pferdehof Mathe für Eltern</b><ul style="margin:6px 0 0;padding-left:20px"><li>Keine Werbung, keine Käufe durch Kinder</li><li>Kein Konto, keine Anmeldung: Alle Daten bleiben auf diesem Gerät</li><li>Zeitlimit für jedes Kind, Standard ${LIMIN} Minuten am Tag</li><li>Eltern-Ansicht mit PIN: Statistik, Klasse, Zeitlimit, Sicherung</li><li>Aufgaben für Klasse 4 bis 8 mit Tipps und Lösungswegen</li></ul><button class="alt" style="margin-top:8px" onclick="infoAuf()">Alles für Eltern ansehen</button></div>`;
 // Erklärseite für Eltern öffnen und wieder zurück (seit 2026-10-24). Gemerkt werden Ansicht und Schritt der Startabfrage
 // (nur Auswahl, Elternteil oder Kind, nie "Kinder anlegen": Der Schritt gilt nur direkt nach der PIN).
 let INFOZ=null;
 function infoAuf(){INFOZ={v,EIN:['','e','k'].includes(EIN)?EIN:''};v='info';ui();scrollTo(0,0)}
 function infoZu(){const z=INFOZ||{v:'home',EIN:''};INFOZ=null;v=z.v=='info'?'home':z.v;ui();if(v=='home'&&z.EIN){EIN=z.EIN;ui()}scrollTo(0,0)}
-const klassenWahl=()=>`<select id="gr" aria-label="Klasse">${[5,6,7,8].map(c=>`<option value="${c}">Klasse ${c}</option>`).join('')}</select>`;
+const klassenWahl=()=>`<select id="gr" aria-label="Klasse">${KL.map(c=>`<option value="${c}"${c==5?' selected':''}>Klasse ${c}</option>`).join('')}</select>`;
 function startAbfrage(){
  const kopf='<h1>Pferdehof Mathe</h1>',zur=`<button class="alt" onclick="EIN='';EINPIN=false;warn='';ui()">Zurück</button>`,
   pinFeld=(fn,txt)=>`<input id="pin0" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')${fn}()"> <button onclick="${fn}()">${txt}</button>${PINMSG?`<p class="ok">${PINMSG}</p>`:''}<p class="no">${warn}</p>`;
@@ -502,8 +502,8 @@ const EINH=/\s*\(in ([^()]{1,14})\)\?$|\s+in (€|Cent|cm²|cm|m²|m|km|kg|g|°)
 function frageTeile(t){t=String(t);let e='',m=t.match(EINH);if(m){e=m[1]||m[2];t=t.slice(0,m.index)+'?'}
  else if(m=t.match(EINH2)){e=m[1];t=t.slice(0,m.index)+'= ?'}
  return[de(t).replace(/([.?!])[ \t]+(?=[A-ZÄÖÜ„(0-9]|[a-z]\s*=)/g,'$1\n'),e]}
-// Antwort mit Einheit: 60° (ohne Leerzeichen), sonst 12 cm, 40 €
-const mitEinheit=(v,e)=>(e=='€'&&!Number.isInteger(+v)?de((+v).toFixed(2)):de(v))+(e?(e=='°'?'°':' '+e):'');// Geld immer mit zwei Nachkommastellen
+// Antwort mit Einheit: 60° (ohne Leerzeichen), sonst 12 cm, 40 €. Ganze Zahlen ab 10 000 mit schmalem Leerzeichen (seit 2026-10-24, gzf in aufgaben.js)
+const mitEinheit=(v,e)=>(e=='€'&&!Number.isInteger(+v)?de((+v).toFixed(2)):de(Number.isInteger(+v)?gzf(+v):v))+(e?(e=='°'?'°':' '+e):'');// Geld immer mit zwei Nachkommastellen
 // Themen als Knöpfe, geordnet nach Kategorien (KAT in aufgaben.js): Schulstoff der eigenen Klasse, Mathe-Olympiade & Knobeln,
 // aufklappbar der Schulstoff früherer Klassen zum Wiederholen
 // Knobel-Regel (seit 2026-10-20): Nach KNMAX fertigen Knobelrunden (Olympiade und Sudoku, KNOBEL in aufgaben.js) hintereinander
@@ -512,13 +512,15 @@ const KNMAX=2,knobelZu=(k,key)=>KNOBEL.has(key)&&(k.kn||0)>=KNMAX;
 const KNHINWEIS=`Du hast ${KNMAX} Knobelrunden hintereinander gerechnet. Schaffe jetzt eine Runde Schulstoff mit mindestens ${FREI} von 10, dann kannst du wieder knobeln.`;
 const themaKnopf=(k,key)=>{const zu=knobelZu(k,key);return`<button class="big${zu?' gesperrt':''}" onclick="start('${key}')"${zu?' disabled':''}><span>${THEMA[key][1]}</span>${dots(ts(k,key).d)}</button>`};
 const undListe=a=>a.length>1?a.slice(0,-1).join(', ')+' und '+a[a.length-1]:String(a[0]);
-const frueher=k=>[5,6,7,8].filter(g=>g<k.g);
+const frueher=k=>KL.filter(g=>g<k.g);
 // Thema aus einer früheren Klasse ("Wiederholen"): seit 2026-10-22 nur die Hälfte der Äpfel, aufgerundet, also mindestens 1 (Brain Dump)
 const frueherThema=(k,key)=>!T[k.g].some(t=>t[0]===key);
 // Kategorien: Schulstoff, Mathe-Olympiade & Knobeln, Sudoku (eigene Überschrift seit 2026-10-20), aufklappbar Wiederholen
+// Wiederholen: Themen früherer Klassen ohne die, die schon in der eigenen Klasse oder einer früheren Klasse stehen (z. B. Einmaleins in Klasse 4 und 5)
+const wdhListe=k=>{const da=new Set(T[k.g].map(t=>t[0]));return frueher(k).map(g=>[g,KAT[g].schul.filter(x=>!da.has(x)&&da.add(x))]).filter(([,L])=>L.length)};
 function themen(k){const K=KAT[k.g],fr=frueher(k),kz=(k.kn||0)>=KNMAX;
  return`<h3 class="kat">Schulstoff Klasse ${k.g}</h3>${K.schul.map(x=>themaKnopf(k,x)).join('')}<h3 class="kat">Mathe-Olympiade & Knobeln</h3>${kz?`<p class="small knsperre">${KNHINWEIS}</p>`:''}${K.oly.map(x=>themaKnopf(k,x)).join('')}<h3 class="kat">Sudoku</h3>${K.sud.map(x=>themaKnopf(k,x)).join('')}`+
-  (fr.length?`<details class="wdh"><summary>Wiederholen: Klasse ${undListe(fr)}</summary><p class="small">Bei Themen früherer Klassen gibt es weniger Äpfel: auf Stufe 4 und 5 nur 1 statt 2.</p>${fr.map(g=>`<h3 class="kat">Schulstoff Klasse ${g}</h3>${KAT[g].schul.map(x=>themaKnopf(k,x)).join('')}`).join('')}</details>`:'')}
+  (fr.length?`<details class="wdh"><summary>Wiederholen: Klasse ${undListe(fr)}</summary><p class="small">Bei Themen früherer Klassen gibt es weniger Äpfel: auf Stufe 4 und 5 nur 1 statt 2.</p>${wdhListe(k).map(([g,L])=>`<h3 class="kat">Schulstoff Klasse ${g}</h3>${L.map(x=>themaKnopf(k,x)).join('')}`).join('')}</details>`:'')}
 // Themen für die Eltern-Ansicht: eigene Klasse und wiederholte Themen früherer Klassen, die schon geübt wurden
 const elternThemen=k=>[...new Set([...T[k.g].map(t=>t[0]),...frueher(k).flatMap(g=>KAT[g].schul).filter(x=>k.t[x]&&k.t[x].n)])].map(x=>THEMA[x]);
 // Tageslimit erreicht: Rundflug beenden und verabschieden
@@ -647,8 +649,12 @@ const gen=()=>{let k=kid(),t=THEMA[Q.key],q,n=0;Q.rp=0;
 function tip(){let el=$('#ans'),val=el?el.value:'';Q.hint=1;ui();let n=$('#ans');if(n)n.value=val}
 // k.gl: zuletzt richtig gelöste Aufgaben [{key, d (Stufe), q}]. Das Training fragt nur solche ab (Brain Dump 2026-10-22). GLMAX steht oben bei PREIS.
 function glMerken(k,key,d,q){if(q[4]||!Number.isFinite(+q[1])||!SCHUL.has(key)||String(q[0]).length>130)return;const L=k.gl||(k.gl=[]),i=L.findIndex(x=>x.q[0]===q[0]);if(i>=0)L.splice(i,1);L.push({key,d,q:[q[0],q[1],q[2]||'',q[3]||'']});if(L.length>GLMAX)L.shift()}
-function chk(){let k=kid(),s=ts(k,Q.key),raw=$('#ans').value.trim().replace(',','.').replace('−','-');if(raw===''||isNaN(raw))return $('#ans').focus();
- let ok=Math.abs(+raw-Q.q[1])<1e-9,g=0,a=0,m='';k.total++;s.n++;
+// Eingabe lesen (seit 2026-10-24, wegen der großen Zahlen in Klasse 4): Leerzeichen vor Dreiergruppen zählen nicht ("250 000"), Komma ist das Dezimalzeichen.
+// Sieht die Eingabe wie eine Zahl mit Tausenderpunkten aus ("250.000"), gilt sie zusätzlich auch so. Ergebnis: Liste der möglichen Werte, leer = keine Zahl.
+function eingabe(v){const t=String(v).trim().replace(/(\d)\s+(?=\d{3}(?!\d))/g,'$1').replace(/−/g,'-'),d=t.replace(',','.'),w=[];// \s erfasst auch geschützte und schmale Leerzeichen
+ if(d!==''&&!isNaN(d))w.push(+d);if(/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(t))w.push(+t.replace(/\./g,''));return w}
+function chk(){let k=kid(),s=ts(k,Q.key),w=eingabe($('#ans').value);if(!w.length)return $('#ans').focus();
+ let ok=w.some(x=>Math.abs(x-Q.q[1])<1e-9),g=0,a=0,m='';k.total++;s.n++;
  if(ok){s.r++;k.r++;k.s++;k.best=Math.max(k.best,k.s);Q.right++;g=Math.round((8+3*s.d)*(Q.hint?.5:1))+(k.s>=5?5:0);a=1+(s.d>=4?1:0);if(frueherThema(k,Q.key))a=Math.ceil(a/2);k.xp+=g;k.ap=(k.ap||0)+a;Q.gain+=g;Q.ap+=a;s.run=s.run>0?s.run+1:1;
   glMerken(k,Q.key,s.d,Q.q);
   if(s.run>=3&&s.d<5){s.d++;s.run=0;m='Stufe '+s.d+' erreicht!'}}

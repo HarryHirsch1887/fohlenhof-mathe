@@ -438,6 +438,177 @@ function sudAufgabe(n,art){const [br,bc]=sudBox(n),nr=[...Array(n).keys()],zl=a=
   const g=L.map((row,r)=>row.map((d,c)=>G[r][c]?d:0).join('')).join(''),nrS=1000+[...g].reduce((h,ch)=>(h*31+ +ch)%8999,tr*n+tc);
   return[`Sudoku ${nrS}: In jeder Zeile, jeder Spalte und jedem dicken Kasten steht jede Zahl von 1 bis ${n} genau einmal. Welche Zahl gehört in das Feld mit dem Fragezeichen?`,v,tipp,weg,{t:'sudoku',n,g,z:tr*n+tc}]}
  return sudAufgabe(n,'a')}
+// ===== Klasse 4 (seit 2026-10-24): typischer Grundschulstoff =====
+// KL = alle Klassen der App. Große Zahlen (ab 10 000) mit schmalem Leerzeichen wie im Schulbuch: 250 000 (gzf).
+const KL=[4,5,6,7,8],gzf=n=>Math.abs(n)>=10000?String(n).replace(/\B(?=(\d{3})+(?!\d))/g,String.fromCharCode(0x202F)):String(n),eu2=c=>de((c/100).toFixed(2)),
+ uhr=m=>`${Math.floor(m/60)}:${pd(m%60)}`,NAM4=['Mia','Lena','Emma','Lea','Ben','Paul','Finn','Ida'];
+const ST4=['Einer','Zehner','Hunderter','Tausender','Zehntausender','Hunderttausender'],SK4=['E','Z','H','T','ZT','HT'],
+ stellenZeile=n=>{const s=String(n);return[...s].map((c,i)=>`${SK4[s.length-1-i]} ${c}`).join(' · ')},
+ STTIPP='HT = Hunderttausender, ZT = Zehntausender, T = Tausender, H = Hunderter, Z = Zehner, E = Einer.';
+// Zahlwörter bis 999 999 ("eins" nur am Ende: einhunderteins, aber eintausend)
+const ZE=['','ein','zwei','drei','vier','fünf','sechs','sieben','acht','neun','zehn','elf','zwölf','dreizehn','vierzehn','fünfzehn','sechzehn','siebzehn','achtzehn','neunzehn'],
+ ZZ=['','','zwanzig','dreißig','vierzig','fünfzig','sechzig','siebzig','achtzig','neunzig'],
+ zw2=(n,ende)=>n==1&&ende?'eins':n<20?ZE[n]:(n%10?ZE[n%10]+'und':'')+ZZ[Math.floor(n/10)],
+ zw3=(n,ende)=>(n>=100?ZE[Math.floor(n/100)]+'hundert':'')+zw2(n%100,ende),
+ zahlwort=n=>{const t=Math.floor(n/1000),r=n%1000;return(t?zw3(t)+'tausend':'')+(r?zw3(r,1):'')};
+// Schriftliche Verfahren als Lösungsweg, Stelle für Stelle von rechts
+function schrAdd(zs){const L=Math.max(...zs.map(z=>String(z).length)),o=[];let m=0;
+ for(let i=0;i<L;i++){const ds=zs.filter(z=>z>=10**i).map(z=>Math.floor(z/10**i)%10),s=ds.reduce((x,y)=>x+y,0)+m,t=ds.join(' + ')+(m?` + ${m} (gemerkt)`:'');
+  o.push(`${ST4[i]}: ${ds.length>1||m?`${t} = ${s}`:s}, schreibe ${i<L-1?s%10:s}${i<L-1&&s>=10?`, merke ${Math.floor(s/10)}`:''}.`);m=Math.floor(s/10)}
+ return o.join('\n')+`\nErgebnis: ${gzf(zs.reduce((x,y)=>x+y,0))}`}
+function schrSub(a,b){const L=String(a).length,lb=String(b).length,o=[];let m=0;
+ for(let i=0;i<L;i++){const x=Math.floor(a/10**i)%10,y0=i<lb?Math.floor(b/10**i)%10:0,y=y0+m,vorn=Math.floor((a-b)/10**i)===0;// vorn: führende Null des Ergebnisses
+  if(i>=lb&&!m){o.push(`${ST4[i]}: ${x}, schreibe ${x}.`);continue}
+  const yt=m?`${y0} + 1 (gemerkt) = ${y}. `:'';
+  if(x>=y){o.push(`${ST4[i]}: ${yt}${x} − ${y} = ${x-y}, ${vorn?'vorne schreibt man keine 0':`schreibe ${x-y}`}.`);m=0}
+  else{o.push(`${ST4[i]}: ${yt}${x} − ${y} geht nicht, also ${x+10} − ${y} = ${x+10-y}, ${vorn?'vorne schreibt man keine 0':`schreibe ${x+10-y}`}, merke 1.`);m=1}}
+ return o.join('\n')+`\nErgebnis: ${gzf(a-b)}\nProbe: ${gzf(b)} + ${gzf(a-b)} = ${gzf(a)}`}
+function schrMul(a,f){const s=String(a),o=[];let m=0;
+ for(let i=0;i<s.length;i++){const x=Math.floor(a/10**i)%10,p=x*f+m,last=i==s.length-1;
+  o.push(`${f} · ${x}${m?` + ${m} (gemerkt)`:''} = ${p}, schreibe ${last?p:p%10}${!last&&p>=10?`, merke ${Math.floor(p/10)}`:''}.`);m=Math.floor(p/10)}
+ return o.join('\n')+`\nErgebnis: ${gzf(a*f)}`}
+function schrDiv(n,d){const s=String(n),o=[];let r=0,los=0;
+ for(let i=0;i<s.length;i++){const c=r*10+ +s[i];if(!los&&c<d&&i<s.length-1){r=c;continue}
+  const q=Math.floor(c/d);o.push(`${los?`Hole die ${s[i]} herunter: `:''}${c} : ${d} = ${q}, denn ${q} · ${d} = ${q*d}, Rest ${c-q*d}.`);r=c-q*d;los=1}
+ return o.join('\n')+`\nErgebnis: ${gzf(n/d)}\nProbe: ${gzf(n/d)} · ${d} = ${gzf(n)}`}
+const T4=[
+['zr4','Zahlen bis zur Million',d=>{let n,a,b,k;
+ const stelle=()=>P([[100,'Hunderter'],[1000,'Tausender'],[10000,'Zehntausender']]);
+ if(d==1)return P([
+  ()=>{n=R(10000,999999);k=R(0,String(n).length-1);const z=Math.floor(n/10**k)%10;return[`Welche Ziffer steht in der Zahl ${gzf(n)} an der ${ST4[k]}stelle?`,z,'Schreibe die Zahl in eine Stellenwerttafel.',`In der Stellenwerttafel: ${stellenZeile(n)}\nAn der ${ST4[k]}stelle steht die ${z}.`]},
+  ()=>{if(R(0,1)){n=R(2,99)*P([1000,10000]);return[`Welche Zahl kommt direkt vor ${gzf(n)}?`,n-1,'Der Vorgänger ist um 1 kleiner.',`Der Vorgänger ist um 1 kleiner:\n${gzf(n)} − 1 = ${gzf(n-1)}`]}
+   n=R(2,99)*P([1000,10000])-1;return[`Welche Zahl kommt direkt nach ${gzf(n)}?`,n+1,'Der Nachfolger ist um 1 größer.',`Der Nachfolger ist um 1 größer:\n${gzf(n)} + 1 = ${gzf(n+1)}`]},
+  ()=>{const L=R(5,6);do n=R(10**(L-1),10**L-1);while(String(n).includes('0'));const s=String(n);
+   return[`Schreibe als Zahl: ${[...s].map((c,i)=>`${c} ${SK4[L-1-i]}`).join(' ')}`,n,STTIPP,`${[...s].map((c,i)=>`${c} ${SK4[L-1-i]}`).join(' + ')}\nDie Ziffern der Reihe nach: ${gzf(n)}`]}])();
+ if(d==2)return P([
+  ()=>{let ds;do ds=[R(1,9),...[0,0,0,0,0].map(()=>R(0,1)?0:R(1,9))];while(!ds.includes(0)||ds.filter(x=>x).length<3);n=+ds.join('');
+   return[`Schreibe als Zahl: ${ds.map((c,i)=>c?`${c} ${SK4[5-i]}`:'').filter(x=>x).join(' ')}`,n,STTIPP+' Fehlt eine Stelle, steht dort eine 0.',`In der Stellenwerttafel: ${stellenZeile(n)}\nFehlende Stellen bekommen eine 0: ${gzf(n)}`]},
+  ()=>{const t=R(1,999),r=R(0,4)?R(1,999):0;n=t*1000+r;
+   return[`Schreibe als Zahl: ${zahlwort(n).replace(/(tausend|hundert)(?=.)/g,'$1'+String.fromCharCode(0xAD))}`,n,'Suche das Wort „tausend“. Was davor steht, sind die Tausender.',`Vor „tausend“ steht „${zw3(t)}“, das sind ${t} Tausender.\n`+(r?`Danach kommt ${zw3(r,1)}, das ist ${r}. Hinter den Tausendern stehen immer drei Stellen: ${String(r).padStart(3,'0')}.\n`:'Danach kommt nichts mehr, also hinten 000.\n')+`Zusammen: ${gzf(n)}`]},
+  ()=>{const [e,nm]=stelle();k=R(e==10000?2:11,e==100?9999:e==1000?999:99);n=k*e;return[`Wie viele ${nm} sind ${gzf(n)}?`,k,`Wie oft passt ${gzf(e)} in die Zahl?`,`${gzf(n)} : ${gzf(e)} = ${k}\nAlso sind ${gzf(n)} genau ${k} ${nm}.`]}])();
+ if(d==3){n=R(10000,999999);k=P(n>=100000?[1,2,3,4,5]:[1,2,3,4]);const e=10**k,r=Math.round(n/e)*e,z=Math.floor(n/10**(k-1))%10;
+  return[`Runde ${gzf(n)} auf ${ST4[k]}.`,r,'Schau auf die Ziffer rechts neben der Stelle, auf die du rundest.',`Auf ${ST4[k]} runden: Entscheidend ist die Ziffer rechts daneben, an der ${ST4[k-1]}stelle: ${z}.\n`+(z<5?'Bei 0, 1, 2, 3 oder 4 wird abgerundet.':'Bei 5, 6, 7, 8 oder 9 wird aufgerundet.')+`\n${gzf(n)} ≈ ${gzf(r)}`]}
+ if(d==4)return P([
+  ()=>{const [e,nm]=stelle();do n=R(10001,999999);while(n%e==0);const u=Math.floor(n/e)*e,o=u+e,vor=R(0,1),nb='Nachbar'+nm.toLowerCase();
+   return[`Welcher ${nm} liegt direkt ${vor?'vor':'nach'} ${gzf(n)}?`,vor?u:o,`Suche die beiden ${nb}.`,`Die ${nb} von ${gzf(n)} sind ${gzf(u)} und ${gzf(o)}.\nDirekt ${vor?'davor':'danach'} liegt ${gzf(vor?u:o)}.`]},
+  ()=>{n=R(101,9999)*100;const h=Math.ceil(n/100000)*100000,s1=h-n,s2=1e6-h;
+   return[`Wie viel fehlt von ${gzf(n)} bis ${gzf(1e6)}?`,1e6-n,'Ergänze erst bis zum nächsten Hunderttausender.',s1&&s2?`${gzf(n)} + ${gzf(s1)} = ${gzf(h)}\n${gzf(h)} + ${gzf(s2)} = ${gzf(1e6)}\nZusammen fehlen ${gzf(s1)} + ${gzf(s2)} = ${gzf(1e6-n)}`:`${gzf(n)} + ${gzf(1e6-n)} = ${gzf(1e6)}\nEs fehlen ${gzf(1e6-n)}.`]},
+  ()=>{a=R(1,97)*10000;const h=R(1,9)*1000;b=a+2*h;return[`Welche Zahl liegt genau in der Mitte zwischen ${gzf(a)} und ${gzf(b)}?`,a+h,'Berechne den Abstand und nimm die Hälfte davon.',`Abstand: ${gzf(b)} − ${gzf(a)} = ${gzf(2*h)}\nDie Hälfte davon: ${gzf(h)}\n${gzf(a)} + ${gzf(h)} = ${gzf(a+h)}`]}])();
+ return P([
+  ()=>{const ds=[0,1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-.5).slice(0,6),gr=R(0,1),auf=[...ds].sort((x,y)=>x-y),ab=[...ds].sort((x,y)=>y-x),i=auf.findIndex(x=>x>0),z=gr?ab:[auf[i],...auf.filter((_,j)=>j!=i)];n=+z.join('');
+   return[`Lege mit den Ziffernkarten ${ds.join(', ')} die ${gr?'größte':'kleinste'} sechsstellige Zahl. Jede Karte kommt genau einmal dran.`,n,gr?'Die größte Ziffer gehört ganz nach vorn.':'Die kleinste Ziffer gehört nach vorn, aber eine Zahl beginnt nie mit 0.',
+    gr?`Ordne die Ziffern von groß nach klein: ${ab.join(', ')}.\nDie größte Zahl ist ${gzf(n)}.`:`Ordne die Ziffern von klein nach groß: ${auf.join(', ')}.\n`+(auf[0]==0?`Vorne darf keine 0 stehen. Also kommt die ${z[0]} nach vorn und die 0 an die zweite Stelle.\n`:'')+`Die kleinste Zahl ist ${gzf(n)}.`]},
+  ()=>{a=R(0,7)*100000+R(0,9)*10000;const st=P([1000,5000,10000,25000]);k=R(4,9);
+   return[`Auf einem Zahlenstrahl steht am ersten Strich ${gzf(a)}. Von Strich zu Strich geht es ${gzf(st)} weiter. Welche Zahl steht ${k} Striche weiter?`,a+k*st,'Wie viel sind alle Schritte zusammen?',`${k} Schritte zu je ${gzf(st)}: ${k} · ${gzf(st)} = ${gzf(k*st)}\n${gzf(a)} + ${gzf(k*st)} = ${gzf(a+k*st)}`]},
+  ()=>{const [e,nm]=stelle(),plus=R(0,1);k=R(2,9);n=plus?R(100000,999999-k*e):R(100000+k*e,999999);const r=plus?n+k*e:n-k*e;
+   return[`Welche Zahl ist um ${k} ${nm} ${plus?'größer':'kleiner'} als ${gzf(n)}?`,r,`${k} ${nm} sind ${gzf(k*e)}.`,`${k} ${nm} sind ${gzf(k*e)}.\n${gzf(n)} ${plus?'+':'−'} ${gzf(k*e)} = ${gzf(r)}`]}])()}],
+['kopf4','Kopfrechnen',d=>{let a,b,n;
+ if(d==1){const e=P([100,1000]),E=e==100?'H':'T',W=e==100?'Hundertern':'Tausendern';if(e==100){a=R(11,89)*100;b=R(11,89)*100}else{a=R(2,60)*1000;b=R(2,39)*1000}
+  if(R(0,1))return[`${gzf(a)} + ${gzf(b)} = ?`,a+b,`Rechne mit ${W}.`,`Rechne mit ${W}: ${a/e} ${E} + ${b/e} ${E} = ${(a+b)/e} ${E}\nAlso ${gzf(a)} + ${gzf(b)} = ${gzf(a+b)}`];
+  if(a<b)[a,b]=[b,a];if(a==b)a+=e;return[`${gzf(a)} − ${gzf(b)} = ?`,a-b,`Rechne mit ${W}.`,`Rechne mit ${W}: ${a/e} ${E} − ${b/e} ${E} = ${(a-b)/e} ${E}\nAlso ${gzf(a)} − ${gzf(b)} = ${gzf(a-b)}`]}
+ if(d==2){if(R(0,1)){do n=R(1001,4999);while(n%1000==0);const t=Math.floor(n/1000)*1000,r=n-t;
+   return[`Wie viel ist das Doppelte von ${n}?`,2*n,'Verdopple Tausender und Rest getrennt.',`Zerlege ${n} in ${t} + ${r}.\n${t} · 2 = ${2*t} und ${r} · 2 = ${2*r}\nZusammen: ${2*t} + ${2*r} = ${gzf(2*n)}`]}
+  n=2*R(1001,4999);const t=Math.floor(n/2000)*2000,r=n-t;
+  return[`Wie viel ist die Hälfte von ${n}?`,n/2,'Zerlege die Zahl in Teile, die du leicht halbieren kannst.',r?`Zerlege ${n} in ${t} + ${r}.\nDie Hälfte von ${t} ist ${t/2}, die Hälfte von ${r} ist ${r/2}.\nZusammen: ${t/2} + ${r/2} = ${n/2}`:`Die Hälfte von ${n} ist ${n/2}.`]}
+ if(d==3){const x=R(2,9),y=R(2,9),p=R(0,2),q=R(p?0:1,3-p);a=x*10**p;b=y*10**q;const pr=a*b;
+  if(R(0,1))return[`${gzf(a)} · ${gzf(b)} = ?`,pr,'Rechne erst ohne die Nullen und hänge sie dann an.',`Rechne erst ohne Nullen: ${x} · ${y} = ${x*y}\nHänge dann ${p+q==1?'die Null':`die ${p+q} Nullen`} an.\n${gzf(a)} · ${gzf(b)} = ${gzf(pr)}`];
+  return[`${gzf(pr)} : ${gzf(b)} = ?`,a,'Denke an die Umkehraufgabe mit Mal.',`Denke an die Malaufgabe: ? · ${gzf(b)} = ${gzf(pr)}\n${gzf(a)} · ${gzf(b)} = ${gzf(pr)}\nAlso ${gzf(pr)} : ${gzf(b)} = ${gzf(a)}`]}
+ if(d==4){a=R(110,899)*10;b=R(110,899)*10;const plus=R(0,1);if(!plus&&a<b)[a,b]=[b,a];if(!plus&&a==b)a+=10;
+  const teile=[Math.floor(b/1000)*1000,Math.floor(b%1000/100)*100,b%100].filter(x=>x),o=[];let s=a;
+  for(const t of teile){const s2=plus?s+t:s-t;o.push(`${gzf(s)} ${plus?'+':'−'} ${t} = ${gzf(s2)}`);s=s2}
+  return[`${a} ${plus?'+':'−'} ${b} = ?`,plus?a+b:a-b,'Rechne in Schritten: erst die Tausender, dann die Hunderter, dann die Zehner.',`Rechne in Schritten:\n${o.join('\n')}`]}
+ return P([
+  ()=>{do n=R(101,999)*10;while(n%1000==0);const h=Math.ceil(n/100)*100,t=Math.ceil(n/1000)*1000,teile=[h-n,t-h,10000-t],o=[];let s=n;
+   for(const x of teile)if(x){o.push(`${gzf(s)} + ${x} = ${gzf(s+x)}`);s+=x}
+   return[`${n} + ? = ${gzf(10000)}`,10000-n,'Ergänze erst bis zum nächsten Hunderter, dann bis zum nächsten Tausender.',`${o.join('\n')}\nZusammen: ${teile.filter(x=>x).join(' + ')} = ${10000-n}`]},
+  ()=>{const [p,q]=P([[4,25],[2,50],[5,20],[8,125]]),x=R(3,q==125?19:49),[u,v]=R(0,1)?[p,q]:[q,p];
+   return[`${u} · ${x} · ${v} = ?`,p*q*x,'Vertausche die Zahlen so, dass du leicht rechnen kannst.',`Vertausche: ${p} · ${q} = ${p*q}\n${p*q} · ${x} = ${gzf(p*q*x)}`]},
+  ()=>{n=R(12,99)*P([1,10]);const f=P([9,11]);
+   return[`${f} · ${n} = ?`,f*n,`Rechne mit 10 · ${n} und gleiche dann aus.`,`${f} · ${n} = 10 · ${n} ${f==9?'−':'+'} ${n}\n10 · ${n} = ${10*n}\n${10*n} ${f==9?'−':'+'} ${n} = ${gzf(f*n)}`]}])()}],
+['schr4','Schriftlich rechnen',d=>{let a,b,c,f;const T0='Schreibe die Zahlen genau untereinander: Einer unter Einer, Zehner unter Zehner. Fange bei den Einern an.';
+ if(d==1){a=R(1000,8999);b=R(1000,8999);return[`Rechne schriftlich: ${a} + ${b} = ?`,a+b,T0,schrAdd([a,b])]}
+ if(d==2){a=R(5000,99999);b=R(1000,Math.min(a-100,99999));return[`Rechne schriftlich: ${gzf(a)} − ${gzf(b)} = ?`,a-b,T0,schrSub(a,b)]}
+ if(d==3){if(R(0,1)){a=R(1000,49999);b=R(1000,29999);c=R(100,9999);return[`Rechne schriftlich: ${gzf(a)} + ${gzf(b)} + ${c} = ?`,a+b+c,T0,schrAdd([a,b,c])]}
+  a=R(2,9)*10000+R(0,1)*R(1,9)*100;b=R(1000,a-1000);return[`Rechne schriftlich: ${gzf(a)} − ${gzf(b)} = ?`,a-b,T0+' Pass bei den Nullen auf.',schrSub(a,b)]}
+ if(d==4){if(R(0,1)){a=R(1000,9999);f=R(3,9);return[`Rechne schriftlich: ${a} · ${f} = ?`,a*f,'Rechne von rechts nach links und vergiss die gemerkten Zahlen nicht.',schrMul(a,f)]}
+  a=R(120,999);do b=R(12,49);while(b%10==0);const b1=Math.floor(b/10),b2=b%10;
+  return[`Rechne schriftlich: ${a} · ${b} = ?`,a*b,`Rechne ${a} · ${b1*10} und ${a} · ${b2} und zähle beides zusammen.`,`${a} · ${b1} = ${a*b1}, eine Stelle nach links gerückt (mal 10): ${gzf(a*b1*10)}\n${a} · ${b2} = ${a*b2}\n${gzf(a*b1*10)} + ${a*b2} = ${gzf(a*b)}`]}
+ f=R(3,9);const q=R(400,9999);return[`Rechne schriftlich: ${gzf(q*f)} : ${f} = ?`,q,`Fange vorne an: Wie oft passt die ${f} in die ersten Ziffern?`,schrDiv(q*f,f)]}],
+['gr4','Größen',d=>{let n,x,a,b,p,q;const nm=P(NAM4);
+ if(d==1){const [g1,g2,f]=P([['€','ct',100],['m','cm',100],['cm','mm',10],['km','m',1000],['kg','g',1000],['t','kg',1000],['l','ml',1000],['min','s',60],['h','min',60]]);n=R(2,f==10?19:12);
+  return[`${n} ${g1} = ? ${g2}`,n*f,'',`1 ${g1} = ${gzf(f)} ${g2}\n${n} · ${gzf(f)} = ${gzf(n*f)}\nAlso ${n} ${g1} = ${gzf(n*f)} ${g2}`]}
+ if(d==2)return P([
+  ()=>{const [g1,g2,f]=P([['€','ct',100],['m','cm',100],['cm','mm',10],['km','m',1000],['kg','g',1000],['t','kg',1000],['l','ml',1000],['min','s',60],['h','min',60]]);n=R(1,9);x=f==1000?R(1,99)*10:R(1,f-1);
+   return[`${n} ${g1} ${x} ${g2} = ? ${g2}`,n*f+x,`Rechne erst die ${g1} in ${g2} um.`,`${n} ${g1} = ${gzf(n*f)} ${g2}\n${gzf(n*f)} ${g2} + ${x} ${g2} = ${gzf(n*f+x)} ${g2}`]},
+  ()=>{do n=R(101,2999);while(n%100==0);return[`${n} ct = ? €`,n/100,'100 ct = 1 €. Die Cent stehen hinter dem Komma.',`100 ct = 1 €\n${n} ct = ${Math.floor(n/100)} € ${n%100} ct = ${eu2(n)} €`]},
+  ()=>{do n=R(101,999);while(n%100==0);return[`${n} cm = ? m`,n/100,'100 cm = 1 m. Die Zentimeter stehen hinter dem Komma.',`100 cm = 1 m\n${n} cm = ${Math.floor(n/100)} m ${n%100} cm = ${de(String(n/100))} m`]}])();
+ if(d==3)return P([
+  ()=>{const W=[['eine Bürste',70,198],['ein Halfter',240,498],['eine Tüte Möhren',26,60],['Leckerlis',40,100],['einen Striegel',50,138],['ein Pferdebuch',160,300]].sort(()=>Math.random()-.5);
+   p=R(W[0][1],W[0][2])*5;q=R(W[1][1],W[1][2])*5;const s=p+q,g=[1000,2000,5000].find(x=>x>s);
+   return[`${nm} kauft ${W[0][0]} für ${eu2(p)} € und ${W[1][0]} für ${eu2(q)} €. ${nm} bezahlt mit einem ${g/100}-€-Schein. Wie viel Rückgeld gibt es (in €)?`,(g-s)/100,'Rechne zuerst aus, was alles zusammen kostet.',`Zusammen: ${eu2(p)} € + ${eu2(q)} € = ${eu2(s)} €\nRückgeld: ${eu2(g)} € − ${eu2(s)} € = ${eu2(g-s)} €`]},
+  ()=>{a=R(1,5);x=R(1,19)*50;b=R(1,5);const y=R(1,19)*50,h=a*1000+x,r=b*1000+y;
+   return[`Ein Ausritt geht ${a} km ${x} m hin und ${b} km ${y} m zurück. Wie lang ist der Weg zusammen (in m)?`,h+r,'Rechne beide Strecken in Meter um.',`Hinweg: ${a} km ${x} m = ${gzf(h)} m\nRückweg: ${b} km ${y} m = ${gzf(r)} m\nZusammen: ${gzf(h)} m + ${gzf(r)} m = ${gzf(h+r)} m`]},
+  ()=>{const t=R(1,2),r=R(1,9)*100,L=1000*t+r;do{p=R(45,70)*10;q=R(45,70)*10}while(p+q>L-50);
+   return[`Ein Pferdeanhänger darf ${t} t ${r} kg laden. Darin stehen zwei Pferde mit ${p} kg und ${q} kg. Wie viel darf noch dazu (in kg)?`,L-p-q,'Rechne die Tonnen erst in Kilogramm um.',`${t} t ${r} kg = ${L} kg\nPferde zusammen: ${p} kg + ${q} kg = ${p+q} kg\n${L} kg − ${p+q} kg = ${L-p-q} kg`]}])();
+ if(d==4)return P([
+  ()=>{let s,D,e,h;do{s=R(96,216)*5;D=R(3,24)*5;e=s+D;h=Math.ceil(s/60)*60}while(s==h||e<=h);// immer über eine volle Stunde hinweg
+   return[`Die Reitstunde beginnt um ${uhr(s)} Uhr und endet um ${uhr(e)} Uhr. Wie lange dauert sie (in min)?`,D,'Rechne erst bis zur nächsten vollen Stunde.',h>s&&e>h?`Von ${uhr(s)} bis ${uhr(h)} Uhr: ${h-s} min\nVon ${uhr(h)} bis ${uhr(e)} Uhr: ${e-h} min\nZusammen: ${h-s} + ${e-h} = ${D} min`:`Von ${uhr(s)} bis ${uhr(e)} Uhr sind es ${D} min.`]},
+  ()=>{const w=R(2,6),t=R(1,6);return[`${w} Wochen und ${t} Tage = ? Tage`,7*w+t,'1 Woche hat 7 Tage.',`${w} Wochen = ${w} · 7 = ${7*w} Tage\n${7*w} + ${t} = ${7*w+t} Tage`]},
+  ()=>{x=R(2,6)*5;const w=R(1,4);return[`${nm} übt jeden Tag ${x} Minuten Mathe. Wie viele Minuten sind das in ${w==1?'einer Woche':w+' Wochen'} (in min)?`,7*w*x,'Wie viele Tage sind das?',`${w==1?'Eine Woche':w+' Wochen'} = ${7*w} Tage\n${7*w} · ${x} min = ${7*w*x} min`]}])();
+ return P([
+  ()=>{p=R(2,6);const kg=R(8,14),w=R(1,3),wt=w==1?'einer Woche':w+' Wochen';
+   return[`Ein Pferd frisst am Tag ${kg} kg Heu. Wie viel Heu fressen ${p} Pferde in ${wt} (in kg)?`,kg*p*7*w,'Rechne erst aus, wie viel alle Pferde an einem Tag fressen.',`${p} Pferde an einem Tag: ${p} · ${kg} kg = ${p*kg} kg\n${w==1?'Eine Woche':w+' Wochen'} = ${7*w} Tage\n${7*w} · ${p*kg} kg = ${gzf(7*w*p*kg)} kg`]},
+  ()=>{const L=R(2,12),bm=P([100,200,250,500]);return[`In einen Eimer passen ${L} l Wasser. Wie viele Becher mit je ${bm} ml kann man damit füllen?`,1000*L/bm,'Rechne die Liter in Milliliter um.',`${L} l = ${gzf(1000*L)} ml\n${gzf(1000*L)} ml : ${bm} ml = ${1000*L/bm}`]},
+  ()=>{n=R(3,9);p=R(30,300)*5;return[`${n} Säcke Möhren kosten zusammen ${eu2(n*p)} €. Wie viel kostet ein Sack (in €)?`,p/100,'Rechne in Cent.',`${eu2(n*p)} € = ${n*p} ct\n${n*p} ct : ${n} = ${p} ct = ${eu2(p)} €`]},
+  ()=>{const L=R(5,20),s=P([30,40,60,70,75,80]),q=Math.floor(100*L/s),r=100*L-q*s;
+   return[`Ein Seil ist ${L} m lang. ${nm} schneidet davon Stücke mit je ${s} cm ab. Wie viele ganze Stücke werden es?`,q,'Rechne die Meter in Zentimeter um.',`${L} m = ${100*L} cm\n${100*L} : ${s} = ${q} Rest ${r}\nAlso ${q} ganze Stücke.`]}])()}],
+['geo4','Geometrie',d=>{let a,b,n,c,A,B,dd;
+ if(d==1){if(R(0,1)){a=R(3,15);b=R(2,12);if(a==b)a++;return[`Ein Rechteck ist ${a} cm lang und ${b} cm breit. Wie groß ist der Umfang in cm?`,2*(a+b),'Der Umfang ist der Weg einmal ganz außen herum.',`Umfang = ${a} + ${b} + ${a} + ${b} = ${2*(a+b)} cm`,{t:'rechteck',a,b}]}
+  a=R(2,15);return[`Ein Quadrat hat die Seitenlänge ${a} cm. Wie groß ist der Umfang in cm?`,4*a,'Ein Quadrat hat 4 gleich lange Seiten.',`Umfang = 4 · ${a} = ${4*a} cm`,{t:'rechteck',a,b:a}]}
+ if(d==2)return P([
+  ()=>{a=R(2,10);b=R(2,10);return[`Ein Rechteck ist ${a} cm lang und ${b} cm breit. Wie viele Kästchen mit 1 cm Seitenlänge passen hinein?`,a*b,'Wie viele Kästchen passen in eine Reihe, und wie viele Reihen gibt es?',`In eine Reihe passen ${a} Kästchen, es gibt ${b} Reihen.\n${b} · ${a} = ${a*b} Kästchen`,{t:'rechteck',a,b}]},
+  ()=>{a=R(2,15);return[`Ein Quadrat hat den Umfang ${4*a} cm. Wie lang ist eine Seite in cm?`,a,'Ein Quadrat hat 4 gleich lange Seiten.',`${4*a} cm : 4 = ${a} cm`,{t:'rechteck',a,b:a,la:'?',lb:'?'}]},
+  ()=>{a=R(5,15);b=R(2,a-1);return[`Ein Rechteck hat den Umfang ${2*(a+b)} cm und ist ${a} cm lang. Wie breit ist es in cm?`,b,'Länge und Breite zusammen sind der halbe Umfang.',`Länge + Breite = halber Umfang: ${2*(a+b)} cm : 2 = ${a+b} cm\nBreite = ${a+b} cm − ${a} cm = ${b} cm`,{t:'rechteck',a,b,lb:'?'}]}])();
+ if(d==3)return P([
+  ()=>{a=R(2,15);return[`Ein Würfel hat die Kantenlänge ${a} cm. Wie lang sind alle Kanten zusammen (in cm)?`,12*a,'Wie viele Kanten hat ein Würfel?',`Ein Würfel hat 12 gleich lange Kanten.\n12 · ${a} cm = ${12*a} cm`]},
+  ()=>{a=R(2,6);b=R(2,5);const h=R(2,4);return[`Ein Quader ist aus kleinen Würfeln gebaut: ${a} Würfel lang, ${b} Würfel breit und ${h} Würfel hoch. Wie viele kleine Würfel sind es?`,a*b*h,'Wie viele Würfel liegen in einer Schicht?',`Eine Schicht: ${a} · ${b} = ${a*b} Würfel\n${h} Schichten: ${h} · ${a*b} = ${a*b*h} Würfel`]},
+  ()=>{const [w,v]=P([['Ecken',8],['Kanten',12],['Flächen',6]]),k=P(['Würfel','Quader']);n=R(2,9);return[`Wie viele ${w} haben ${n} ${k} zusammen?`,n*v,`Wie viele ${w} hat ein ${k}?`,`Ein ${k} hat ${v} ${w}.\n${n} · ${v} = ${n*v}`]}])();
+ if(d==4){const M=P([100,200,1000]);c=R(2,15);const cm=c*M,m=cm/100;
+  return R(0,1)?[`Auf einem Plan mit dem Maßstab 1 : ${M} ist der Reitplatz ${c} cm lang. Wie lang ist er in Wirklichkeit (in m)?`,m,`1 cm auf dem Plan sind ${M} cm in Wirklichkeit.`,`1 cm auf dem Plan sind ${M} cm in Wirklichkeit.\n${c} · ${M} cm = ${gzf(cm)} cm = ${m} m`]:
+   [`In Wirklichkeit ist eine Koppel ${m} m lang. Wie lang ist sie auf einem Plan mit dem Maßstab 1 : ${M} (in cm)?`,c,'Rechne die Meter erst in Zentimeter um.',`${m} m = ${gzf(cm)} cm\n${gzf(cm)} cm : ${M} = ${c} cm`]}
+ return P([
+  ()=>{A=R(8,15);B=R(8,15);c=R(2,A-4);dd=R(2,B-4);return[`Aus einer Ecke eines Rechtecks (${A} cm lang, ${B} cm breit) wird ein kleines Rechteck herausgeschnitten, ${c} cm lang und ${dd} cm breit. Wie groß ist die Fläche, die übrig bleibt (in cm²)?`,A*B-c*dd,'Große Fläche minus herausgeschnittene Fläche.',`Große Fläche: ${A} · ${B} = ${A*B} cm²\nHerausgeschnitten: ${c} · ${dd} = ${c*dd} cm²\n${A*B} − ${c*dd} = ${A*B-c*dd} cm²`,{t:'ausschnitt',A,B,c,d:dd}]},
+  ()=>{A=R(8,15);B=R(8,15);c=R(2,A-4);dd=R(2,B-4);return[`Aus einer Ecke eines Rechtecks (${A} cm lang, ${B} cm breit) wird ein kleines Rechteck herausgeschnitten, ${c} cm lang und ${dd} cm breit. Wie groß ist der Umfang der Figur, die übrig bleibt (in cm)?`,2*(A+B),'Schiebe die beiden Kanten in der Ecke in Gedanken nach außen.',`Die zwei Kanten in der Ecke sind genauso lang wie die Stücke, die außen fehlen (${c} cm und ${dd} cm).\nDer Umfang bleibt also wie beim ganzen Rechteck: 2 · (${A} + ${B}) = ${2*(A+B)} cm`,{t:'ausschnitt',A,B,c,d:dd}]},
+  ()=>{a=R(10,40);b=R(8,30);n=R(2,4);return[`Eine rechteckige Koppel ist ${a} m lang und ${b} m breit. Der Zaun hat ${n} Latten übereinander. Wie viele Meter Latten braucht man (in m)?`,2*(a+b)*n,'Berechne zuerst den Umfang der Koppel.',`Umfang: 2 · (${a} + ${b}) = ${2*(a+b)} m\n${n} Latten übereinander: ${n} · ${2*(a+b)} m = ${2*(a+b)*n} m`]}])()}],
+['sach4','Sachaufgaben',d=>{const nm=P(NAM4);let a,b,c,n,p,q,r,g;
+ if(d==1)return P([
+  ()=>{a=R(3,9);b=R(3,9);return[`Im Reitstall gibt es ${a} Reihen mit je ${b} Boxen. Wie viele Boxen sind es zusammen?`,a*b,'',`${a} · ${b} = ${a*b} Boxen`]},
+  ()=>{n=R(3,9);q=R(3,12);return[`${n*q} Möhren werden gerecht an ${n} Pferde verteilt. Wie viele Möhren bekommt jedes Pferd?`,q,'',`${n*q} : ${n} = ${q} Möhren`]},
+  ()=>{a=R(12,48);b=R(5,25);return[`Am Montag kommen ${a} Kinder zum Reiten, am Dienstag ${b} mehr. Wie viele Kinder kommen am Dienstag?`,a+b,'',`${a} + ${b} = ${a+b} Kinder`]},
+  ()=>{a=R(30,90);b=R(5,a-10);return[`Im Heulager liegen ${a} Ballen. ${b} Ballen werden verfüttert. Wie viele Ballen bleiben übrig?`,a-b,'',`${a} − ${b} = ${a-b} Ballen`]}])();
+ if(d==2)return P([
+  ()=>{a=R(2,6);p=R(2,5);b=R(4,15);return[`${nm} kauft ${a} Beutel Möhren zu je ${p} € und eine Bürste für ${b} €. Wie viel muss ${nm} bezahlen (in €)?`,a*p+b,'Rechne erst die Möhren aus.',`Möhren: ${a} · ${p} € = ${a*p} €\nMit Bürste: ${a*p} € + ${b} € = ${a*p+b} €`]},
+  ()=>{n=R(3,6);p=R(3,8);g=P([50,100]);return[`${nm} hat ${g} €. ${nm} kauft ${n} Packungen Leckerlis zu je ${p} €. Wie viel Geld bleibt übrig (in €)?`,g-n*p,'Rechne erst aus, was die Leckerlis kosten.',`Leckerlis: ${n} · ${p} € = ${n*p} €\nÜbrig: ${g} € − ${n*p} € = ${g-n*p} €`]},
+  ()=>{a=R(3,8);b=R(6,10);c=R(2,9);return[`In der Reitschule gibt es ${a} Gruppen mit je ${b} Kindern. Heute fehlen ${c} Kinder. Wie viele Kinder sind da?`,a*b-c,'Wie viele Kinder sind es, wenn alle da sind?',`Alle zusammen: ${a} · ${b} = ${a*b} Kinder\nEs fehlen ${c}: ${a*b} − ${c} = ${a*b-c} Kinder`]},
+  ()=>{a=R(4,9);b=R(2,5);c=R(2,5);return[`Jedes der ${a} Pferde bekommt morgens ${b} und abends ${c} Möhren. Wie viele Möhren sind das an einem Tag?`,a*(b+c),'Wie viele Möhren bekommt ein Pferd am Tag?',`Ein Pferd: ${b} + ${c} = ${b+c} Möhren\n${a} Pferde: ${a} · ${b+c} = ${a*(b+c)} Möhren`]}])();
+ if(d==3)return P([
+  ()=>{a=R(12,25);n=R(6,15);const z=a-a%10,e=a%10;return[`Eine Reitstunde kostet ${a} €. Wie viel kosten ${n} Reitstunden (in €)?`,n*a,'Zerlege den Preis in Zehner und Einer.',e?`${n} · ${a} = ${n} · ${z} + ${n} · ${e}\n= ${n*z} + ${n*e} = ${n*a} €`:`${n} · ${a} = ${n*a} €`]},
+  ()=>{a=R(30,150)*10;b=R(5,40)*10;return[`Ein Reitturnier dauert 3 Tage. Am ersten Tag kommen ${a} Zuschauer, am zweiten Tag ${b} mehr und am dritten Tag doppelt so viele wie am ersten. Wie viele Zuschauer sind es zusammen?`,4*a+b,'Rechne jeden Tag einzeln aus.',`1. Tag: ${a}\n2. Tag: ${a} + ${b} = ${a+b}\n3. Tag: 2 · ${a} = ${2*a}\nZusammen: ${a} + ${a+b} + ${2*a} = ${gzf(4*a+b)}`]},
+  ()=>{p=R(150,350);q=R(150,400);return[`Ein Pony wiegt ${p} kg. Ein Pferd ist ${q} kg schwerer. Wie viel wiegen beide zusammen (in kg)?`,2*p+q,'Rechne erst aus, was das Pferd wiegt.',`Pferd: ${p} kg + ${q} kg = ${p+q} kg\nZusammen: ${p} kg + ${p+q} kg = ${2*p+q} kg`]},
+  ()=>{const s=R(2,6),w=R(5,15);return[`${nm} spart jede Woche ${s} €. Ein Reithelm kostet ${s*w} €. Wie viele Wochen muss ${nm} sparen?`,w,'Wie oft passt der Wochenbetrag in den Preis?',`${s*w} € : ${s} € = ${w} Wochen`]}])();
+ if(d==4)return P([
+  ()=>{g=P([4,5,6,8]);do n=R(20,60);while(n%g==0);q=Math.floor(n/g);r=n%g;return[`${n} Kinder wollen ausreiten. In eine Gruppe passen höchstens ${g} Kinder. Wie viele Gruppen braucht man mindestens?`,q+1,'Was passiert mit den Kindern, die übrig bleiben?',`${n} : ${g} = ${q} Rest ${r}\nFür die übrigen ${r} Kinder braucht man noch eine Gruppe: ${q} + 1 = ${q+1}`]},
+  ()=>{const j=R(4,9);let m;do m=R(30,80);while(m%j==0);q=Math.floor(m/j);r=m%j;
+   return R(0,1)?[`In einem Sack sind ${m} Möhren. Jedes Pferd bekommt ${j} Möhren. Wie viele Pferde bekommen ihre ${j} Möhren?`,q,'Teile mit Rest.',`${m} : ${j} = ${q} Rest ${r}\nDie ${r} übrigen Möhren reichen nicht für ein weiteres Pferd. Also ${q} Pferde.`]:
+    [`In einem Sack sind ${m} Möhren. Jedes Pferd bekommt ${j} Möhren, bis es für keins mehr reicht. Wie viele Möhren bleiben übrig?`,r,'Teile mit Rest.',`${m} : ${j} = ${q} Rest ${r}\nEs bleiben ${r} Möhren übrig.`]},
+  ()=>{p=P([40,50,52,60]);let k;do k=R(80,250);while(k%p==0);q=Math.floor(k/p);r=k%p;
+   return[`${k} Kinder fahren zu einem Reitturnier. In einen Bus passen ${p} Kinder. Wie viele Busse braucht man?`,q+1,'Was passiert mit den Kindern, die übrig bleiben?',`${q} Busse haben ${q} · ${p} = ${q*p} Plätze.\n${k} − ${q*p} = ${r} Kinder haben noch keinen Platz.\nAlso braucht man ${q} + 1 = ${q+1} Busse.`]}])();
+ return P([
+  ()=>{n=R(3,6);p=R(4,15);const m=R(n+1,12);return[`${n} Säcke Futter kosten ${n*p} €. Wie viel kosten ${m} Säcke (in €)?`,m*p,'Rechne erst aus, was ein Sack kostet.',`1 Sack: ${n*p} € : ${n} = ${p} €\n${m} Säcke: ${m} · ${p} € = ${m*p} €`]},
+  ()=>{const t=R(5,12)*5,ps=R(2,6)*5;n=R(3,6);return[`Ein Hufschmied braucht für ein Pferd ${t} Minuten. Er beschlägt ${n} Pferde und macht zwischendurch einmal ${ps} Minuten Pause. Wie lange braucht er insgesamt (in min)?`,n*t+ps,'Rechne erst die Zeit für alle Pferde aus.',`${n} Pferde: ${n} · ${t} min = ${n*t} min\nMit Pause: ${n*t} min + ${ps} min = ${n*t+ps} min`]},
+  ()=>{const E=R(6,12),K=R(3,E-2),e=R(1,2),k=R(2,4),s=e*E+k*K,G=s<50?50:100,fam=P(['Müller','Schmidt','Becker','Wagner','Koch']);
+   return[`Beim Reitturnier kostet der Eintritt für Erwachsene ${E} € und für Kinder ${K} €. Familie ${fam} kommt mit ${e==1?'einem Erwachsenen':e+' Erwachsenen'} und ${k} Kindern und bezahlt mit ${G} €. Wie viel Geld gibt es zurück (in €)?`,G-s,'Rechne Erwachsene und Kinder getrennt aus.',`Erwachsene: ${e} · ${E} € = ${e*E} €\nKinder: ${k} · ${K} € = ${k*K} €\nZusammen: ${e*E} € + ${k*K} € = ${s} €\nZurück: ${G} € − ${s} € = ${G-s} €`]},
+  ()=>{const m=R(1,11)*5;n=R(2,4);return[`Ein Ausritt dauert 1 h ${m} min. ${nm} reitet in einer Woche ${n}-mal aus. Wie lange ist ${nm} zusammen unterwegs (in min)?`,n*(60+m),'Rechne die Zeit erst in Minuten um.',`1 h ${m} min = ${60+m} min\n${n} · ${60+m} min = ${n*(60+m)} min`]}])()}]];
 // Drei Themen "Sudoku" (Klasse 5, Klasse 6, Klasse 7 und 8), je Stufe Größe und Denkweise aus SUDST
 const SUDOKU=[['sud5',5],['sud6',6],['sud78',78]].map(([k,g])=>[k,'Sudoku',d=>sudAufgabe(...SUDST[g][d-1])]);
 T[6]=[TB,TD,TS,...T[5].filter(t=>t[0]=='trick'||t[0]=='knob')];
@@ -446,15 +617,18 @@ T[8]=[TL,TG,TP,TY,...T[7].filter(t=>t[0]=='zt')];
 // T[g] bleibt die Liste der Themen einer Klasse (Schulstoff und Olympiade), frühere Klassen kommen in app.js als "Wiederholen" dazu.
 T[7].push(TF7,TZ,TW);// Klasse 7 nach dem Mathebuch (seit 2026-10-24)
 // THEMA enthält auch Themen, die in keiner Klasse mehr gewählt werden können (z. B. "term"), damit alte Fehlerheft-Einträge und Trainingsaufgaben gültig bleiben
-const THEMA={};for(const g of [5,6,7,8])for(const t of T[g])THEMA[t[0]]=t;for(const t of SUDOKU)THEMA[t[0]]=t;THEMA.logik=TLOG;
+T[4]=T4;// Klasse 4 (seit 2026-10-24)
+const THEMA={};for(const g of KL)for(const t of T[g])THEMA[t[0]]=t;for(const t of SUDOKU)THEMA[t[0]]=t;THEMA.logik=TLOG;
 // sud: Sudoku als eigene Kategorie unter "Mathe-Olympiade & Knobeln" (seit 2026-10-20)
-const KAT={5:{schul:['ee','rechnen','groessen','umfl','teil'],oly:['folgen','trick','knob'],sud:['sud5']},
+// Klasse 4: Grundschulstoff, Einmaleins steht auch hier. Olympiade und Sudoku wie Klasse 5.
+const KAT={4:{schul:['zr4','ee','kopf4','schr4','gr4','geo4','sach4'],oly:['folgen','knob'],sud:['sud5']},
+ 5:{schul:['ee','rechnen','groessen','umfl','teil'],oly:['folgen','trick','knob'],sud:['sud5']},
  6:{schul:['bruch','dez','dreisatz'],oly:['trick','knob'],sud:['sud6']},
  // Klasse 7 seit 2026-10-24 in der Reihenfolge des Mathebuchs: Flächen (1), Zuordnungen (2), Prozent (3), Winkel (4), Rationale Zahlen (5),
  // Wahrscheinlichkeit (7), Gleichungen (8). Kap. 6 (Dreiecke konstruieren) geht nicht als Rechenaufgabe. "Terme" steckt in "Gleichungen & Terme".
  7:{schul:['fl7','zuord','pz','winkel','rat','wk','gl'],oly:['zt','wege'],sud:['sud78']},
  8:{schul:['lf','gls','pot','pyth'],oly:['zt'],sud:['sud78']}};
-for(const g of [5,6,7,8])KAT[g].oly.push('logik');// Logik-Rätsel für alle Klassen (seit 2026-10-24)
-for(const g of [5,6,7,8])T[g]=[...KAT[g].schul,...KAT[g].oly,...KAT[g].sud].map(k=>THEMA[k]);
+for(const g of KL)KAT[g].oly.push('logik');// Logik-Rätsel für alle Klassen (seit 2026-10-24)
+for(const g of KL)T[g]=[...KAT[g].schul,...KAT[g].oly,...KAT[g].sud].map(k=>THEMA[k]);
 // Knobel-Themen (Olympiade und Sudoku aller Klassen): höchstens 2 Runden am Stück, dann erst eine Runde Schulstoff mit mindestens 7 von 10
-const KNOBEL=new Set([5,6,7,8].flatMap(g=>[...KAT[g].oly,...KAT[g].sud]));
+const KNOBEL=new Set(KL.flatMap(g=>[...KAT[g].oly,...KAT[g].sud]));

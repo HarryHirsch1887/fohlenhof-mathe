@@ -58,19 +58,21 @@ function trAnim(H){const c=[['sp','jump'],['lo','gal'],['re','wig'],['dr','wig']
  if(!c.length)return{t:'hop',a:8};const [i,t]=P(c),ls=Math.min(5,H.tr[i]);return{t,a:t=='gal'?20+14*ls:8+9*ls}}
 // ---------- Aufgaben fürs Training ----------
 // Kopfrechnen in 15 Sekunden: Schulstoff ohne Zeichnung und ohne lange Texte, eine Stufe leichter als der Stand des Kindes.
-// Bis zum 3. Stern kommen 2 von 5 Aufgaben aus der Klasse darunter, ab dem 4. Stern nur noch 1. Klasse 5 nimmt dafür ihre Stufen 1 und 2.
+// Bis zum 3. Stern kommen 2 von 5 Aufgaben aus der Klasse darunter, ab dem 4. Stern nur noch 1. Die unterste Klasse (seit 2026-10-24 Klasse 4, vorher 5) nimmt dafür ihre Stufen 1 und 2.
 // Seit 2026-10-24: Themen, die die Eltern als "noch nicht im Unterricht" markiert haben (k.nd), kommen im Training nicht dran.
-// Sind alle Themen der eigenen Klasse markiert, nimmt das Training die Klasse darunter (Klasse 5: dann doch alle).
-const trOffen=(k,g)=>{const nd=k.nd||[],L=KAT[g].schul.filter(x=>!nd.includes(x));return L.length?L:g>5?trOffen(k,g-1):KAT[g].schul};
-function trAufgabe(k,unten,seen){const g=k.g,gk=unten&&g>5?g-1:g,alle=trOffen(k,gk),gel=alle.filter(x=>((k.t||{})[x]||{}).r>0),keys=gel.length?gel:alle;let best=null;
- for(let n=0;n<60;n++){const key=P(keys),d0=(k.t[key]||{}).d,d=unten?(g>5?Math.max(1,(d0||3)-1):R(1,2)):Math.max(1,(d0||1)-1),q=THEMA[key][2](d);
+// Sind alle Themen der eigenen Klasse markiert, nimmt das Training die Klasse darunter (unterste Klasse: dann doch alle).
+// Schriftlich rechnen (Klasse 4) braucht Papier und passt nicht in 30 Sekunden, deshalb nie im Training (seit 2026-10-24)
+const TRNICHT=new Set(['schr4']),trSchul=g=>KAT[g].schul.filter(x=>!TRNICHT.has(x));
+const trOffen=(k,g)=>{const nd=k.nd||[],L=trSchul(g).filter(x=>!nd.includes(x));return L.length?L:g>KL[0]?trOffen(k,g-1):trSchul(g)};
+function trAufgabe(k,unten,seen){const g=k.g,gk=unten&&g>KL[0]?g-1:g,alle=trOffen(k,gk),gel=alle.filter(x=>((k.t||{})[x]||{}).r>0),keys=gel.length?gel:alle;let best=null;
+ for(let n=0;n<60;n++){const key=P(keys),d0=(k.t[key]||{}).d,d=unten?(g>KL[0]?Math.max(1,(d0||3)-1):R(1,2)):Math.max(1,(d0||1)-1),q=THEMA[key][2](d);
   if(q[4]||!Number.isFinite(+q[1]))continue;if(!best)best={key,q};
   if(String(q[0]).length<=130&&!seen.includes(q[0])){seen.push(q[0]);return{key,q}}}
  return best||{key:keys[0],q:THEMA[keys[0]][2](1)}}
 // Seit 2026-10-23 (Brain Dump): Das Training fragt nur Aufgaben ab, die das Kind schon einmal richtig gelöst hat (k.gl).
-// "Klasse darunter" sind dabei Themen früherer Klassen, in Klasse 5 Aufgaben der Stufen 1 und 2. Reicht die Liste nicht (neue Kinder, alte Stände),
+// "Klasse darunter" sind dabei Themen früherer Klassen, in der untersten Klasse Aufgaben der Stufen 1 und 2. Reicht die Liste nicht (neue Kinder, alte Stände),
 // kommen frisch erzeugte Aufgaben aus Themen, in denen das Kind schon etwas gelöst hat.
-function trAufgaben(k,ziel){const unten=ziel<=3?2:1,seen=[],gl=(k.gl||[]).filter(x=>THEMA[x.key]&&SCHUL.has(x.key)&&!(k.nd||[]).includes(x.key)&&String(x.q[0]).length<=130),ist=x=>k.g>5?!T[k.g].some(t=>t[0]===x.key):x.d<=2,
+function trAufgaben(k,ziel){const unten=ziel<=3?2:1,seen=[],gl=(k.gl||[]).filter(x=>THEMA[x.key]&&SCHUL.has(x.key)&&!TRNICHT.has(x.key)&&!(k.nd||[]).includes(x.key)&&String(x.q[0]).length<=130),ist=x=>k.g>KL[0]?!T[k.g].some(t=>t[0]===x.key):x.d<=2,
  eig=gl.filter(x=>!ist(x)),unt=gl.filter(ist),zieh=L=>{const c=L.filter(x=>!seen.includes(x.q[0]));if(!c.length)return null;const x=P(c);seen.push(x.q[0]);return{key:x.key,q:x.q,alt:1}};
  return[...Array(TRN)].map((_,i)=>(i<unten?zieh(unt)||zieh(eig):zieh(eig)||zieh(unt))||trAufgabe(k,i<unten,seen)).sort(()=>Math.random()-.5)}
 // ---------- Ablauf ----------
@@ -83,10 +85,10 @@ function trStart(id){const k=kid();if(!k||!k.h)return;const H=hh(k),S=trStatus(k
  TQ={id,i:0,right:0,fb:null,ziel:s+1,auf:trAufgaben(k,s+1),phase:RM?'frage':'lauf',t0:Date.now(),th:Math.PI/2,ph:0,lauf:0,an:1,ende:0};
  save();v='train';ui();scrollTo(0,0)}
 function trFrage(){if(!TQ||TQ.ende)return;TQ.phase='frage';TQ.lauf=0;TQ.t0=Date.now();ui()}
-function trChk(zeitUm){if(!TQ||TQ.ende||TQ.fb||TQ.phase!='frage')return;const k=kid(),el=$('#ans'),raw=el?el.value.trim().replace(',','.').replace('−','-'):'';
+function trChk(zeitUm){if(!TQ||TQ.ende||TQ.fb||TQ.phase!='frage')return;const k=kid(),el=$('#ans'),w=el?eingabe(el.value):[];
  if(!zeitUm&&Date.now()-TQ.t0>TRZEIT*1000)zeitUm=true;
- if(!zeitUm&&(raw===''||isNaN(raw)))return el&&el.focus();
- const q=TQ.auf[TQ.i].q,ok=!zeitUm&&Math.abs(+raw-q[1])<1e-9;k.total++;
+ if(!zeitUm&&!w.length)return el&&el.focus();
+ const q=TQ.auf[TQ.i].q,ok=!zeitUm&&w.some(x=>Math.abs(x-q[1])<1e-9);k.total++;
  if(ok){k.r++;TQ.right++;k.xp+=TRXP;BD.forEach(b=>{if(!k.b.includes(b[0])&&b[2](k))k.b.push(b[0])})}
  TQ.fb={ok,zeit:!!zeitUm};TQ.fts=Date.now();save();ui()}
 function trNx(){if(!TQ||!TQ.fb)return;if(TQ.i>=TRN-1)return trEnde();TQ.i++;TQ.fb=null;TQ.an=1;if(RM)return trFrage();TQ.phase='lauf';TQ.lauf=0;ui()}

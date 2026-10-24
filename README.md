@@ -4,7 +4,7 @@
 
 Eine kleine Lern-App, in der Kinder Mathe üben und dabei ein Pferd großziehen. Wer an mehreren Tagen rechnet, lässt das Fohlen zum ausgewachsenen Pferd wachsen. Für richtig gelöste Aufgaben gibt es Äpfel, mit denen sich Pferderassen, Abzeichen, Hof-Gegenstände und Lieblingspferde kaufen lassen. Was man kaufen darf, schaltet die Erfahrung frei. Pferderassen: Fuchs, Brauner, Rappe, Schimmel, Palomino, Schecke, Falbe (mit dunklen Beinen und Aalstrich) und Windfarben (dunkles Fell, helle Mähne).
 
-Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnasium).
+Die App ist ein privates Familienprojekt für Kinder der Klassen 4 bis 8 (Klasse 4 Grundschule, ab Klasse 5 Gymnasium).
 
 ## Was die App kann
 
@@ -33,7 +33,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 - **Logik-Rätsel (seit 2026-10-24, alle Klassen, unter Mathe-Olympiade & Knobeln):** Zahlenreihen fortsetzen, Würfelnetze („Welches Netz ergibt einen Würfel?“, „Welche Zahl liegt gegenüber?“, mit Zeichnung) und „Welche Zahl passt nicht zu den anderen?“.
 - **Schulstoff „noch nicht dran“ (seit 2026-10-24):** In der Eltern-Ansicht lassen sich Themen der eigenen Klasse abhaken, die im Unterricht noch nicht dran waren. Sie kommen dann im Training nicht vor, geübt werden können sie trotzdem.
 - **Erklärseite für Eltern (seit 2026-10-24):** „Für Eltern“ auf der Startseite (auch bei der Einrichtung und in der Eltern-Ansicht) erklärt, wie geübt wird, was Eltern einstellen können und was mit den Daten passiert.
-- **Einmaleins (seit 2026-10-22):** Kleines und großes Einmaleins im Schulstoff der Klasse 5. Höhere Klassen üben es unter „Wiederholen“. Für Themen früherer Klassen gibt es weniger Äpfel (auf Stufe 4 und 5 einen statt zwei).
+- **Einmaleins (seit 2026-10-22):** Kleines und großes Einmaleins im Schulstoff der Klassen 4 und 5. Höhere Klassen üben es unter „Wiederholen“. Für Themen früherer Klassen gibt es weniger Äpfel (auf Stufe 4 und 5 einen statt zwei).
 - **Tageslimit:** Standardmäßig 30 Minuten pro Kind und Tag, in der Eltern-Ansicht je Kind änderbar (5 bis 180 Minuten oder kein Limit). Eine laufende Runde wird nicht unterbrochen. Danach verabschiedet sich die App bis zum nächsten Tag.
 - **Lieblingspferde aus dem Stall:** Roxeanne (Rappe), Roy (Falbe mit Behang), Bonnie (Schimmel-Pony), Frodo (windfarbenes Pony-Fohlen) und Jacko (falbfarbenes Pony-Fohlen) lassen sich im Wunschbaum mit Äpfeln kaufen und leben dann als Freunde auf dem Hof. Antippen zeigt ihren Namen. Auf dem Hof laufen höchstens 5 Freunde mit, Lieblingspferde zuerst.
 - **Hof ausbauen:** Jedes Pferd braucht einen Platz. Ein Unterstand (25 Äpfel) schafft 2 Plätze, auf der Hauptkoppel lässt er sich zum Stall mit 4 Plätzen ausbauen (15 Äpfel, wenn das eigene Pferd ausgewachsen ist). Beide stehen im Wunschbaum unter „Hof ausbauen“ (Unterstand ab 750, Stall ab 1250 Erfahrung), die rote Scheune ist ein eigener Gegenstand. Ab 7500 bzw. 10000 Erfahrung kommen links und rechts zwei weitere Koppeln dazu (je 30 Äpfel), jede mit eigenem Unterstand (im Bereich „Koppeln“). Dort verteilt man auch die Freunde, Pferde ohne Platz warten.
@@ -48,12 +48,13 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 
 | Klasse | Themen |
 |---|---|
+| 4 | Grundschulstoff (seit 2026-10-24): Zahlen bis zur Million (Stellenwerte, Zahlwörter, Runden, Nachbarzahlen), Einmaleins, Kopfrechnen, Schriftlich rechnen (Plus, Minus, Mal, Geteilt mit Rechenweg Stelle für Stelle), Größen (Geld, Längen, Gewichte, Zeit, Hohlmaße), Geometrie (Umfang, Fläche, Würfel und Quader, Maßstab), Sachaufgaben. Dazu Zahlenfolgen, Knobeln, Logik-Rätsel und Sudoku |
 | 5 | Zahlenfolgen, Teilbarkeit, Rechentricks, Knobeln und Zählen, Rechnen und Rechengesetze, Größen und Einheiten, Umfang und Fläche |
 | 6 | Brüche, Dezimalzahlen, Dreisatz, Rechentricks, Knobeln und Zählen |
 | 7 | Schulstoff in der Reihenfolge des Mathebuchs (seit 2026-10-24): Flächen von Figuren (Dreieck, Parallelogramm, Trapez, Raute, zusammengesetzte Figuren, mit Zeichnungen), Zuordnungen (proportional, antiproportional, Dreisatz), Prozent, Winkel, Rationale Zahlen, Wahrscheinlichkeit, Gleichungen & Terme. Dazu Zahlentheorie, Zählen & Wege und Sudoku |
 | 8 | Lineare Funktionen, Gleichungssysteme, Potenzen und Wurzeln, Pythagoras, Zahlentheorie |
 
-Die Aufgaben werden zufällig erzeugt. Die Themen sind typischer Gymnasialstoff, aber nicht mit einem bestimmten Lehrplan oder Schulbuch abgeglichen.
+Die Aufgaben werden zufällig erzeugt. Große Zahlen dürfen mit Leerzeichen oder Tausenderpunkt eingegeben werden (250 000 oder 250.000). Die Themen sind typischer Grundschul- bzw. Gymnasialstoff, aber nicht mit einem bestimmten Lehrplan oder Schulbuch abgeglichen.
 
 ## Datenschutz
 
