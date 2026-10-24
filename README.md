@@ -29,6 +29,10 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 - **Reitausrüstung & Pflege (seit 2026-10-23):** Sattel mit Sattelgurt, Satteldecke, Trense, Pferdedecke und Pflegekiste lassen sich im Wunschbaum kaufen. Die Pferdedecke trägt das Pferd bei Regen, Schnee und nachts. Höchstens 10 Hufeisen auf Vorrat.
 - **Unterstand und Stall (seit 2026-10-23):** Morgens steht das Pferd drinnen. Mit einem Knopf holt das Kind es heraus und bringt es später wieder hinein, mit kleiner Animation auf dem eigenen Hof. Ist die Zeit für heute um und das Pferd noch draußen, fragt die App, ob das Kind es noch hineinbringen möchte.
 - **Neues Kind mit Eltern-PIN (seit 2026-10-24):** Ist eine PIN gesetzt und gibt es schon ein Kind, muss ein Elternteil jedes weitere Kind mit der PIN bestätigen.
+- **PIN-Sperre (seit 2026-10-24):** Nach 3 falschen PIN-Eingaben ist die App eine Stunde gesperrt: Kein Kind kommt auf den Hof, es lässt sich keine PIN eingeben. Danach gibt es wieder 3 Versuche.
+- **Logik-Rätsel (seit 2026-10-24, alle Klassen, unter Mathe-Olympiade & Knobeln):** Zahlenreihen fortsetzen, Würfelnetze („Welches Netz ergibt einen Würfel?“, „Welche Zahl liegt gegenüber?“, mit Zeichnung) und „Welche Zahl passt nicht zu den anderen?“.
+- **Schulstoff „noch nicht dran“ (seit 2026-10-24):** In der Eltern-Ansicht lassen sich Themen der eigenen Klasse abhaken, die im Unterricht noch nicht dran waren. Sie kommen dann im Training nicht vor, geübt werden können sie trotzdem.
+- **Erklärseite für Eltern (seit 2026-10-24):** „Für Eltern“ auf der Startseite (auch bei der Einrichtung und in der Eltern-Ansicht) erklärt, wie geübt wird, was Eltern einstellen können und was mit den Daten passiert.
 - **Einmaleins (seit 2026-10-22):** Kleines und großes Einmaleins im Schulstoff der Klasse 5. Höhere Klassen üben es unter „Wiederholen“. Für Themen früherer Klassen gibt es weniger Äpfel (auf Stufe 4 und 5 einen statt zwei).
 - **Tageslimit:** Standardmäßig 30 Minuten pro Kind und Tag, in der Eltern-Ansicht je Kind änderbar (5 bis 180 Minuten oder kein Limit). Eine laufende Runde wird nicht unterbrochen. Danach verabschiedet sich die App bis zum nächsten Tag.
 - **Lieblingspferde aus dem Stall:** Roxeanne (Rappe), Roy (Falbe mit Behang), Bonnie (Schimmel-Pony), Frodo (windfarbenes Pony-Fohlen) und Jacko (falbfarbenes Pony-Fohlen) lassen sich im Wunschbaum mit Äpfeln kaufen und leben dann als Freunde auf dem Hof. Antippen zeigt ihren Namen. Auf dem Hof laufen höchstens 5 Freunde mit, Lieblingspferde zuerst.
@@ -46,7 +50,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 5 bis 8 (Gymnas
 |---|---|
 | 5 | Zahlenfolgen, Teilbarkeit, Rechentricks, Knobeln und Zählen, Rechnen und Rechengesetze, Größen und Einheiten, Umfang und Fläche |
 | 6 | Brüche, Dezimalzahlen, Dreisatz, Rechentricks, Knobeln und Zählen |
-| 7 | Gleichungen und Terme, Prozent, Zahlentheorie, Geometrie und Zählen, negative Zahlen, Terme |
+| 7 | Schulstoff in der Reihenfolge des Mathebuchs (seit 2026-10-24): Flächen von Figuren (Dreieck, Parallelogramm, Trapez, Raute, zusammengesetzte Figuren, mit Zeichnungen), Zuordnungen (proportional, antiproportional, Dreisatz), Prozent, Winkel, Rationale Zahlen, Wahrscheinlichkeit, Gleichungen & Terme. Dazu Zahlentheorie, Zählen & Wege und Sudoku |
 | 8 | Lineare Funktionen, Gleichungssysteme, Potenzen und Wurzeln, Pythagoras, Zahlentheorie |
 
 Die Aufgaben werden zufällig erzeugt. Die Themen sind typischer Gymnasialstoff, aber nicht mit einem bestimmten Lehrplan oder Schulbuch abgeglichen.

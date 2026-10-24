@@ -59,7 +59,10 @@ function trAnim(H){const c=[['sp','jump'],['lo','gal'],['re','wig'],['dr','wig']
 // ---------- Aufgaben fürs Training ----------
 // Kopfrechnen in 15 Sekunden: Schulstoff ohne Zeichnung und ohne lange Texte, eine Stufe leichter als der Stand des Kindes.
 // Bis zum 3. Stern kommen 2 von 5 Aufgaben aus der Klasse darunter, ab dem 4. Stern nur noch 1. Klasse 5 nimmt dafür ihre Stufen 1 und 2.
-function trAufgabe(k,unten,seen){const g=k.g,gk=unten&&g>5?g-1:g,alle=KAT[gk].schul,gel=alle.filter(x=>((k.t||{})[x]||{}).r>0),keys=gel.length?gel:alle;let best=null;
+// Seit 2026-10-24: Themen, die die Eltern als "noch nicht im Unterricht" markiert haben (k.nd), kommen im Training nicht dran.
+// Sind alle Themen der eigenen Klasse markiert, nimmt das Training die Klasse darunter (Klasse 5: dann doch alle).
+const trOffen=(k,g)=>{const nd=k.nd||[],L=KAT[g].schul.filter(x=>!nd.includes(x));return L.length?L:g>5?trOffen(k,g-1):KAT[g].schul};
+function trAufgabe(k,unten,seen){const g=k.g,gk=unten&&g>5?g-1:g,alle=trOffen(k,gk),gel=alle.filter(x=>((k.t||{})[x]||{}).r>0),keys=gel.length?gel:alle;let best=null;
  for(let n=0;n<60;n++){const key=P(keys),d0=(k.t[key]||{}).d,d=unten?(g>5?Math.max(1,(d0||3)-1):R(1,2)):Math.max(1,(d0||1)-1),q=THEMA[key][2](d);
   if(q[4]||!Number.isFinite(+q[1]))continue;if(!best)best={key,q};
   if(String(q[0]).length<=130&&!seen.includes(q[0])){seen.push(q[0]);return{key,q}}}
@@ -67,7 +70,7 @@ function trAufgabe(k,unten,seen){const g=k.g,gk=unten&&g>5?g-1:g,alle=KAT[gk].sc
 // Seit 2026-10-23 (Brain Dump): Das Training fragt nur Aufgaben ab, die das Kind schon einmal richtig gelöst hat (k.gl).
 // "Klasse darunter" sind dabei Themen früherer Klassen, in Klasse 5 Aufgaben der Stufen 1 und 2. Reicht die Liste nicht (neue Kinder, alte Stände),
 // kommen frisch erzeugte Aufgaben aus Themen, in denen das Kind schon etwas gelöst hat.
-function trAufgaben(k,ziel){const unten=ziel<=3?2:1,seen=[],gl=(k.gl||[]).filter(x=>THEMA[x.key]&&SCHUL.has(x.key)&&String(x.q[0]).length<=130),ist=x=>k.g>5?!T[k.g].some(t=>t[0]===x.key):x.d<=2,
+function trAufgaben(k,ziel){const unten=ziel<=3?2:1,seen=[],gl=(k.gl||[]).filter(x=>THEMA[x.key]&&SCHUL.has(x.key)&&!(k.nd||[]).includes(x.key)&&String(x.q[0]).length<=130),ist=x=>k.g>5?!T[k.g].some(t=>t[0]===x.key):x.d<=2,
  eig=gl.filter(x=>!ist(x)),unt=gl.filter(ist),zieh=L=>{const c=L.filter(x=>!seen.includes(x.q[0]));if(!c.length)return null;const x=P(c);seen.push(x.q[0]);return{key:x.key,q:x.q,alt:1}};
  return[...Array(TRN)].map((_,i)=>(i<unten?zieh(unt)||zieh(eig):zieh(eig)||zieh(unt))||trAufgabe(k,i<unten,seen)).sort(()=>Math.random()-.5)}
 // ---------- Ablauf ----------
@@ -160,8 +163,8 @@ function trReiter(k){const ko=document.getElementById('tr_koerper'),kf=document.
  kf.parentNode.appendChild(a1);
  const kg=kp&&kp.parentNode;if(kg){const a2=document.createElementNS(ns,'g');a2.id='trtrense';
   a2.innerHTML='<path d="M99 -213L118 -169M110 -180Q123 -183 135 -171M95 -205Q100 -213 107 -213" fill="none" stroke="#3b2414" stroke-width="2.4" stroke-linecap="round"/><circle cx="127" cy="-161" r="2.2" fill="none" stroke="#c9c9c9" stroke-width="1.2"/>';kg.appendChild(a2)}}
-// TRRS: Größe der Reiterin im Verhältnis zum Pferd (1,6: ein Kind im Sattel, Kopf etwa auf Höhe der Ohren)
-const TRRS=1.6;
+// TRRS: Größe der Reiterin im Verhältnis zum Pferd (bis 2026-10-24 1,6, wirkte zu klein; jetzt 2,0)
+const TRRS=2.0;
 let TRRAF=0,TRL=0,TRRIG=null;
 function trSync(){if(v!='train'||!TQ||!$('#trsz')){if(TRRAF)cancelAnimationFrame(TRRAF);TRRAF=0;TRRIG=null;return}
  TRRIG=new PF.Rig('tr_');if(TQ.id=='re')trReiter(kid());trZeichne(0);if(RM)return;if(!TRRAF){TRL=performance.now();TRRAF=requestAnimationFrame(trFrame)}}

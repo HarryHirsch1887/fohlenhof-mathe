@@ -194,7 +194,9 @@ const T={5:[
    x?`${L} Buchstaben lassen sich auf ${kette(L)} = ${fa(L)} Arten anordnen.\nDas ${x} kommt zweimal vor. Tauscht man die beiden ${x}, entsteht dasselbe Wort. Jedes Wort ist also doppelt gezählt.\n${fa(L)} : 2 = ${n}.`:`Alle ${L} Buchstaben sind verschieden.\nFür den ersten Platz gibt es ${L} Buchstaben, dann ${L-1} und so weiter.\n${kette(L)} = ${n}.`]},
   ()=>{const n=R(4,7);return[`${n} Kinder setzen sich an einen runden Tisch. Sitzordnungen, die durch Drehen gleich aussehen, zählen nur einmal. Wie viele verschiedene Sitzordnungen gibt es?`,fa(n-1),'Setze ein Kind fest auf einen Platz.',`Setze ein Kind fest auf einen Platz. Drehen ändert dann nichts mehr.\nDie anderen ${n-1} Kinder verteilen sich auf die übrigen Plätze: ${kette(n-1)} = ${fa(n-1)}.`]}];
  return W[(d-1)*4+R(0,3)]()}],
-['rat','Negative Zahlen',d=>{let a,b,c,e;
+// Seit 2026-10-24 "Rationale Zahlen" wie im Mathebuch (vorher "Negative Zahlen"), Stufe 2 auch mit Zehnteln
+['rat','Rationale Zahlen',d=>{let a,b,c,e;
+ if(d==2&&R(0,1)){a=R(11,99);do{b=R(11,99)}while(b==a);return[`(−${f1(a/10)}) + ${f1(b/10)} = ?`,f1((b-a)/10),'Rechne mit Zehnteln wie mit ganzen Zahlen.',`Rechne in Zehnteln, also ohne Komma: −${a} + ${b} = ${b-a}\n${pn(b-a)} Zehntel = ${f1((b-a)/10)}`]}
  if(d==1){a=R(2,20);b=a+R(1,20);return[`${a} − ${b} = ?`,a-b,'Der Zahlenstrahl hilft.',`Die zweite Zahl ist größer. Der Abstand ist ${b} − ${a} = ${b-a}.\nDas Ergebnis ist negativ: −${b-a}`]}
  if(d==2){a=R(2,25);b=R(2,25);return[`(−${a}) + (−${b}) = ?`,-(a+b),'',`Zwei negative Zahlen addieren: Beträge addieren, das Minus bleibt.\n${a} + ${b} = ${a+b}, also −${a+b}`]}
  if(d==3){a=R(2,12);b=R(2,12);c=R(1,20);return[`(−${a}) · (−${b}) − ${c} = ?`,a*b-c,'Minus mal Minus ergibt Plus.',`Minus mal Minus ergibt Plus: (−${a}) · (−${b}) = ${a*b}\n${a*b} − ${c} = ${a*b-c}`]}
@@ -266,6 +268,132 @@ TY=['pyth','Pythagoras',d=>{let k,a,b,c,t;
  // Schenkel gesucht: nur breite Dreiecke (Höhe höchstens 1,4-mal die halbe Basis), sonst überdecken sich die Beschriftungen
  if(R(0,1)){do{[a,b,c]=dr(TRIK.filter(t=>t[2]<=30),3)}while(b>1.4*a);return[`Ein gleichschenkliges Dreieck hat die Basis ${2*a} cm und die Höhe ${b} cm. Wie lang ist einer der beiden gleichen Schenkel in cm?`,c,'Die Höhe halbiert die Basis.',`Die Höhe halbiert die Basis: ${2*a} : 2 = ${a} cm.\nEs entsteht ein rechtwinkliges Dreieck mit den Katheten ${a} cm und ${b} cm. Der Schenkel ist die Hypotenuse.\ns² = ${a}² + ${b}² = ${a*a} + ${b*b} = ${c*c}\ns = √${c*c} = ${c} cm`,{t:'gleichschenklig',a,b,c,lc:'?',lh:`${b} cm`}]}
  return[`Ein gleichschenkliges Dreieck hat die Basis ${2*a} cm und Schenkel von je ${c} cm. Wie hoch ist das Dreieck (Höhe auf die Basis) in cm?`,b,'Die Höhe halbiert die Basis.',`Die Höhe halbiert die Basis: ${2*a} : 2 = ${a} cm.\nEs entsteht ein rechtwinkliges Dreieck mit Hypotenuse ${c} cm und Kathete ${a} cm.\nh² = ${c}² − ${a}² = ${c*c} − ${a*a} = ${b*b}\nh = √${b*b} = ${b} cm`,{t:'gleichschenklig',a,b,c}]}];
+// ---------- Klasse 7 nach dem Mathebuch (seit 2026-10-24): Flächen von Figuren (Kap. 1), Zuordnungen (Kap. 2), Wahrscheinlichkeit (Kap. 7) ----------
+// Flächen: 1 Dreieck, 2 Parallelogramm (oder Umfang eines Parallelogramms), 3 Trapez, 4 rückwärts (Höhe gesucht) oder Raute,
+// 5 zusammengesetzte Figuren (Giebelwand), Trapez rückwärts, Dreieck im Rechteck
+const TF7=['fl7','Flächen von Figuren',d=>{let g,h,a,c,s,A,e,f,b;
+ if(d==1){g=R(3,14);h=R(2,12);if(g*h%2)g++;s=R(1,g-1);
+  return[`Ein Dreieck hat die Grundseite g = ${g} cm und die Höhe h = ${h} cm. Wie groß ist sein Flächeninhalt (in cm²)?`,g*h/2,'Ein Dreieck ist halb so groß wie ein Rechteck mit derselben Grundseite und Höhe.',`Flächeninhalt Dreieck = g · h : 2\n${g} · ${h} : 2 = ${g*h} : 2 = ${g*h/2} cm²`,{t:'dreieckh',a:g,b:h,c:s,lh:`${h} cm`}]}
+ if(d==2){if(R(0,2)==0){a=R(3,15);b=R(2,12);return[`Ein Parallelogramm hat die Seiten a = ${a} cm und b = ${b} cm. Wie groß ist sein Umfang (in cm)?`,2*(a+b),'Gegenüberliegende Seiten sind gleich lang.',`Gegenüberliegende Seiten sind gleich lang.\nUmfang = 2 · a + 2 · b = 2 · (${a} + ${b}) = ${2*(a+b)} cm`]}
+  g=R(3,14);h=R(2,10);s=R(1,Math.min(5,g-1));
+  return[`Ein Parallelogramm hat die Grundseite g = ${g} cm und die Höhe h = ${h} cm. Wie groß ist sein Flächeninhalt (in cm²)?`,g*h,'Schneide links ein Dreieck ab und setze es rechts an. Dann entsteht ein Rechteck.',`Ein Parallelogramm lässt sich in ein Rechteck mit derselben Grundseite und Höhe umlegen.\nFlächeninhalt = g · h = ${g} · ${h} = ${g*h} cm²`,{t:'parallelogramm',a:g,b:h,c:s,lh:`${h} cm`}]}
+ if(d==3){a=R(5,16);c=R(2,a-2);h=R(2,10);if((a+c)*h%2)h++;e=R(1,a-c-1);A=(a+c)*h/2;
+  return[`Ein Trapez hat die parallelen Seiten a = ${a} cm und c = ${c} cm und die Höhe h = ${h} cm. Wie groß ist sein Flächeninhalt (in cm²)?`,A,'Nimm den Mittelwert der beiden parallelen Seiten und multipliziere ihn mit der Höhe.',`Flächeninhalt Trapez = (a + c) : 2 · h\n(${a} + ${c}) : 2 · ${h} = ${f1((a+c)/2)} · ${h} = ${A} cm²`,{t:'trapez',a,b:h,c,d:e,lh:`${h} cm`}]}
+ if(d==4){const art=R(0,2);
+  if(art==0){g=R(3,12);h=R(2,12);if(g*h%2)g++;A=g*h/2;s=R(1,g-1);return[`Ein Dreieck hat den Flächeninhalt ${A} cm² und die Grundseite g = ${g} cm. Wie lang ist die Höhe h (in cm)?`,h,'Rechne rückwärts: Die Fläche mal 2 ergibt g · h.',`A = g · h : 2, also g · h = 2 · A = ${2*A}\nh = ${2*A} : ${g} = ${h} cm`,{t:'dreieckh',a:g,b:h,c:s}]}
+  if(art==1){g=R(3,14);h=R(2,10);s=R(1,Math.min(5,g-1));return[`Ein Parallelogramm hat den Flächeninhalt ${g*h} cm² und die Grundseite g = ${g} cm. Wie lang ist die Höhe h (in cm)?`,h,'A = g · h, also h = A : g.',`A = g · h, also h = A : g\nh = ${g*h} : ${g} = ${h} cm`,{t:'parallelogramm',a:g,b:h,c:s}]}
+  e=R(3,16);f=R(2,14);if(e*f%2)e++;return[`Eine Raute hat die Diagonalen e = ${e} cm und f = ${f} cm. Wie groß ist ihr Flächeninhalt (in cm²)?`,e*f/2,'Die Raute ist halb so groß wie das Rechteck, das man um sie herum zeichnen kann.',`Zeichne um die Raute ein Rechteck mit den Seiten e und f. Die Raute füllt genau die Hälfte davon.\nA = e · f : 2 = ${e} · ${f} : 2 = ${e*f/2} cm²`]}
+ const art=R(0,2);
+ if(art==0){a=R(4,10);b=R(2,6);h=R(1,5);if(a*h%2)a++;A=a*b+a*h/2;return[`Die Giebelwand eines Stalls besteht aus einem Rechteck (${a} m breit, ${b} m hoch) und einem Dreieck darüber (Grundseite ${a} m, Höhe ${h} m). Wie groß ist die ganze Wand (in m²)?`,A,'Berechne beide Teilflächen und addiere sie.',`Rechteck: ${a} · ${b} = ${a*b} m²\nDreieck: ${a} · ${h} : 2 = ${a*h/2} m²\nZusammen: ${a*b} + ${a*h/2} = ${A} m²`]}
+ if(art==1){a=R(6,16);c=R(2,a-2);h=R(2,10);if((a+c)*h%2)h++;e=R(1,a-c-1);A=(a+c)*h/2;return[`Ein Trapez hat den Flächeninhalt ${A} cm² und die parallelen Seiten a = ${a} cm und c = ${c} cm. Wie lang ist die Höhe h (in cm)?`,h,'Rechne zuerst (a + c) : 2 aus.',`A = (a + c) : 2 · h\n(${a} + ${c}) : 2 = ${f1((a+c)/2)}\nh = ${A} : ${f1((a+c)/2)} = ${h} cm`,{t:'trapez',a,b:h,c,d:e}]}
+ a=2*R(2,8);b=R(3,12);return[`Ein Rechteck ist ${a} cm lang und ${b} cm breit. Aus ihm wird ein Dreieck ausgeschnitten: Grundseite ist die untere Seite, die Spitze liegt auf der oberen Seite. Wie viel cm² bleiben vom Rechteck übrig?`,a*b/2,'Das Dreieck hat dieselbe Grundseite und Höhe wie das Rechteck.',`Das Dreieck hat die Grundseite ${a} cm und die Höhe ${b} cm, also die halbe Fläche des Rechtecks.\nRechteck: ${a} · ${b} = ${a*b} cm²\nDreieck: ${a*b} : 2 = ${a*b/2} cm²\nÜbrig: ${a*b} − ${a*b/2} = ${a*b/2} cm²`]}];
+// Zuordnungen: 1 proportional, 2 antiproportional, 3 Art ist angegeben (Tabelle ergänzen), 4 Art selbst erkennen oder Faktor k, 5 zwei Schritte
+const TZ=['zuord','Zuordnungen',d=>{let a,b,p,T,x1,x2,x3,y1,y2,k,q,s,n,D,r,t,t2,p2;
+ const teil=T=>[...Array(T).keys()].map(i=>i+1).filter(i=>T%i==0&&i>1&&i<T),zwei=L=>{const x=P(L);let y;do{y=P(L)}while(y==x);return[x,y]};
+ if(d==1){a=R(2,8);do{b=R(2,15)}while(b==a);const art=R(0,2);
+  if(art==0){p=R(2,9);return[`${a} kg Hafer kosten ${a*p} €. Wie viel kosten ${b} kg (in €)?`,b*p,'Rechne zuerst aus, was 1 kg kostet.',`Doppelt so viel Hafer kostet doppelt so viel: Die Zuordnung ist proportional.\n1 kg: ${a*p} € : ${a} = ${p} €\n${b} kg: ${b} · ${p} € = ${b*p} €`]}
+  if(art==1){p=P([150,200,250,300]);return[`Ein Pferd trabt in ${a} Minuten ${a*p} m weit. Wie weit kommt es im gleichen Tempo in ${b} Minuten (in m)?`,b*p,'Rechne zuerst aus, wie weit es in 1 Minute kommt.',`Im gleichen Tempo gilt: doppelte Zeit, doppelter Weg. Die Zuordnung ist proportional.\n1 Minute: ${a*p} m : ${a} = ${p} m\n${b} Minuten: ${b} · ${p} m = ${b*p} m`]}
+  p=R(3,12);return[`Für ${a} Ausritte braucht man ${a*p} Äpfel als Belohnung. Wie viele Äpfel braucht man für ${b} Ausritte?`,b*p,'Rechne zuerst auf 1 Ausritt.',`Die Zuordnung ist proportional.\n1 Ausritt: ${a*p} : ${a} = ${p} Äpfel\n${b} Ausritte: ${b} · ${p} = ${b*p} Äpfel`]}
+ if(d==2){T=P([24,36,48,60,72,90,120]);[a,b]=zwei(teil(T));const art=R(0,2);
+  if(art==0)return[`Ein Heuvorrat reicht für ${a} Pferde genau ${T/a} Tage. Wie viele Tage reicht er für ${b} Pferde?`,T/b,'Mehr Pferde fressen den Vorrat schneller auf.',`Doppelt so viele Pferde, halb so viele Tage: Die Zuordnung ist antiproportional, das Produkt bleibt gleich.\n${a} · ${T/a} = ${T} Pferdetage\n${T} : ${b} = ${T/b} Tage`];
+  if(art==1)return[`${a} Kinder misten den Stall in ${T/a} Minuten aus. Wie lange brauchen ${b} Kinder, wenn alle gleich schnell arbeiten (in min)?`,T/b,'Mehr Kinder brauchen weniger Zeit.',`Die Zuordnung ist antiproportional, das Produkt bleibt gleich.\n${a} · ${T/a} = ${T} Minuten für ein Kind allein\n${T} : ${b} = ${T/b} Minuten`];
+  return[`Ein Reitweg wird in ${a} gleich lange Abschnitte zu je ${T/a} m geteilt. Wie lang ist ein Abschnitt, wenn man den Weg stattdessen in ${b} gleich lange Abschnitte teilt (in m)?`,T/b,'Berechne zuerst die Länge des ganzen Wegs.',`Der ganze Weg bleibt gleich lang: ${a} · ${T/a} = ${T} m.\nDie Zuordnung ist antiproportional.\n${T} : ${b} = ${T/b} m`]}
+ if(d==3){if(R(0,1)){k=R(2,12);[x1,x2]=zwei([2,3,4,5,6,7,8,9,10,12,15]);return[`Die Zuordnung ist proportional. Zu x = ${x1} gehört y = ${k*x1}. Welches y gehört zu x = ${x2}?`,k*x2,'Bei proportionalen Zuordnungen bleibt der Quotient y : x gleich.',`Proportional: Der Quotient y : x bleibt gleich.\n${k*x1} : ${x1} = ${k}\ny = ${k} · ${x2} = ${k*x2}`]}
+  T=P([24,36,48,60,72,120]);[x1,x2]=zwei(teil(T));return[`Die Zuordnung ist antiproportional. Zu x = ${x1} gehört y = ${T/x1}. Welches y gehört zu x = ${x2}?`,T/x2,'Bei antiproportionalen Zuordnungen bleibt das Produkt x · y gleich.',`Antiproportional: Das Produkt x · y bleibt gleich.\n${x1} · ${T/x1} = ${T}\ny = ${T} : ${x2} = ${T/x2}`]}
+ if(d==4){const art=R(0,2);
+  if(art==2){k=P([.5,1.5,2.5,3.5,1.2,0.8,0.4]);x1=P([2,4,5,10,20]);if(f1(k*x1)%1)x1=10;return[`Eine Zuordnung ist proportional: y = k · x. Für x = ${x1} ist y = ${f1(k*x1)}. Wie groß ist der Proportionalitätsfaktor k?`,k,'k = y : x',`Bei y = k · x ist k = y : x.\nk = ${f1(k*x1)} : ${x1} = ${k}`]}
+  if(art==0){k=R(2,9);[x1,x2]=zwei([2,3,4,5,6,8,10]);do{x3=P([2,3,4,5,6,7,8,9,10,12])}while(x3==x1||x3==x2);
+   return[`In einer Tabelle gehört zu x = ${x1} der Wert y = ${k*x1} und zu x = ${x2} der Wert y = ${k*x2}. Die Zuordnung ist proportional oder antiproportional. Welches y gehört zu x = ${x3}?`,k*x3,'Prüfe, ob der Quotient y : x oder das Produkt x · y gleich bleibt.',`Quotienten: ${k*x1} : ${x1} = ${k} und ${k*x2} : ${x2} = ${k}. Sie sind gleich, die Zuordnung ist proportional.\n(Die Produkte ${x1*k*x1} und ${x2*k*x2} sind verschieden.)\ny = ${k} · ${x3} = ${k*x3}`]}
+  T=P([24,36,48,60,72,120]);const L=teil(T);[x1,x2]=zwei(L);do{x3=P(L)}while(x3==x1||x3==x2);
+  return[`In einer Tabelle gehört zu x = ${x1} der Wert y = ${T/x1} und zu x = ${x2} der Wert y = ${T/x2}. Die Zuordnung ist proportional oder antiproportional. Welches y gehört zu x = ${x3}?`,T/x3,'Prüfe, ob der Quotient y : x oder das Produkt x · y gleich bleibt.',`Produkte: ${x1} · ${T/x1} = ${T} und ${x2} · ${T/x2} = ${T}. Sie sind gleich, die Zuordnung ist antiproportional.\ny = ${T} : ${x3} = ${T/x3}`]}
+ if(R(0,1)){p=R(2,6);do{p2=R(2,8)}while(p2==p);t=R(2,7);do{t2=R(2,10)}while(t2==t);r=R(3,8);
+  return[`${p} Pferde fressen in ${t} Tagen zusammen ${p*t*r} kg Heu. Wie viel Heu fressen ${p2} Pferde in ${t2} Tagen (in kg)?`,p2*t2*r,'Rechne zuerst aus, wie viel 1 Pferd an 1 Tag frisst.',`1 Pferd in ${t} Tagen: ${p*t*r} : ${p} = ${t*r} kg\n1 Pferd an 1 Tag: ${t*r} : ${t} = ${r} kg\n${p2} Pferde in ${t2} Tagen: ${p2} · ${t2} · ${r} = ${p2*t2*r} kg`]}
+ a=R(2,6);n=R(1,3);q=R(1,3);s=R(2,6);D=s+(a+n)*q;
+ return[`Ein Heuvorrat reicht für ${a} Pferde genau ${D} Tage. Nach ${s} Tagen ${n==1?'kommt 1 Pferd':`kommen ${n} Pferde`} dazu. Wie viele Tage reicht das restliche Heu noch?`,a*q,'Rechne in Pferdetagen: Pferde mal Tage.',`Der Vorrat reicht für ${a} · ${D} = ${a*D} Pferdetage.\nNach ${s} Tagen sind ${a} · ${s} = ${a*s} verbraucht, es bleiben ${a*D-a*s} Pferdetage.\nJetzt fressen ${a+n} Pferde: ${a*D-a*s} : ${a+n} = ${a*q} Tage.`]}];
+// Wahrscheinlichkeit (Antworten in Prozent, nur glatte Werte): 1 Glücksrad, 2 Kugeln in drei Farben, 3 Gegenereignis oder relative Häufigkeit,
+// 4 Voraussagen, 5 Glücksrad mit Winkel, zwei Münzen, Würfel mit 20 Flächen
+const TW=['wk','Wahrscheinlichkeit',d=>{let N,k,r,g,b,w,n,p,m,c;
+ if(d==1){N=P([4,5,10,20]);k=R(1,N-1);return[`Ein Glücksrad hat ${N} gleich große Felder, ${k} davon ${k==1?'ist':'sind'} rot. Wie groß ist die Wahrscheinlichkeit, dass der Zeiger auf Rot stehen bleibt (in %)?`,k*100/N,'Wahrscheinlichkeit = günstige Ergebnisse : mögliche Ergebnisse.',`Günstige Ergebnisse (rot): ${k}, mögliche Ergebnisse: ${N}.\nP(rot) = ${k}/${N} = ${k*100/N} %`]}
+ if(d==2){N=P([10,20,25,50]);do{r=R(1,N-2);g=R(1,N-r-1);b=N-r-g}while(b<1);const [fa,z]=P([['rote',r],['grüne',g],['gelbe',b]]);
+  return[`In einem Beutel liegen ${r} rote, ${g} grüne und ${b} gelbe Kugeln. Lia zieht ohne hinzuschauen eine Kugel. Wie groß ist die Wahrscheinlichkeit für eine ${fa} Kugel (in %)?`,z*100/N,'Zähle zuerst alle Kugeln zusammen.',`Alle Kugeln: ${r} + ${g} + ${b} = ${N}\nGünstig sind die ${z} ${fa}n Kugeln.\nP = ${z}/${N} = ${z*100/N} %`]}
+ if(d==3){if(R(0,1)){N=P([20,25,50,100]);w=R(1,N/2);return[`In einer Lostrommel sind ${N} Lose, ${w} davon sind Gewinne. Wie groß ist die Wahrscheinlichkeit, eine Niete zu ziehen (in %)?`,(N-w)*100/N,'Nieten sind alle Lose, die kein Gewinn sind.',`Nieten: ${N} − ${w} = ${N-w}\nP(Niete) = ${N-w}/${N} = ${(N-w)*100/N} %\n(Oder: 100 % − P(Gewinn) = 100 % − ${w*100/N} % = ${(N-w)*100/N} %)`]}
+  n=P([20,25,50,100,200]);p=5*R(2,18);k=n*p/100;if(k%1){n=100;k=p}return[`Lena wirft eine Reißzwecke ${n}-mal. Sie landet ${k}-mal auf dem Rücken. Wie groß ist die relative Häufigkeit für „Rücken“ (in %)?`,p,'Relative Häufigkeit = Anzahl : Anzahl aller Würfe.',`Relative Häufigkeit = ${k} : ${n} = ${k}/${n} = ${p} %`]}
+ if(d==4){p=P([10,20,25,30,40,60,75]);m=P([40,80,100,200,400,500]);if(m*p%100)m=200;
+  if(R(0,1)){n=P([20,40,100,200]);k=n*p/100;if(k%1){n=100;k=p}return[`Eine Reißzwecke landete bei ${n} Würfen ${k}-mal auf der Spitze. Wie oft wird sie ungefähr bei ${m} Würfen auf der Spitze landen?`,m*p/100,'Berechne zuerst die relative Häufigkeit.',`Relative Häufigkeit: ${k} : ${n} = ${p} %\nVoraussage: ${p} % von ${m} = ${m} · ${p} : 100 = ${m*p/100}`]}
+  return[`Bei einem Spiel gewinnt man mit einer Wahrscheinlichkeit von ${p} %. Wie viele Gewinne erwartet man ungefähr bei ${m} Spielen?`,m*p/100,'Rechne p % von der Anzahl der Spiele.',`${p} % von ${m} = ${m} · ${p} : 100 = ${m*p/100}`]}
+ const art=R(0,2);
+ if(art==0){k=R(1,19);w=18*k;return[`Auf einem Glücksrad ist das blaue Feld ${w}° groß. Wie groß ist die Wahrscheinlichkeit, dass der Zeiger auf Blau stehen bleibt (in %)?`,5*k,'Ein ganzer Kreis hat 360°.',`Ein ganzer Kreis hat 360°.\nP(blau) = ${w}/360 = ${5*k} %\n(36° sind 10 %, 18° sind 5 %.)`]}
+ if(art==1){const [txt,z,wie]=P([['zweimal Kopf',1,'KK'],['genau einmal Kopf',2,'KZ und ZK'],['mindestens einmal Kopf',3,'KK, KZ und ZK'],['zweimal Zahl',1,'ZZ']]);
+  return[`Zwei Münzen werden gleichzeitig geworfen. Wie groß ist die Wahrscheinlichkeit für ${txt} (in %)?`,z*25,'Schreibe alle Ergebnisse auf: KK, KZ, ZK, ZZ (K = Kopf, Z = Zahl).',`Mögliche Ergebnisse: KK, KZ, ZK, ZZ, das sind 4.\nGünstig: ${wie}, das ${z==1?'ist 1':`sind ${z}`}.\nP = ${z}/4 = ${z*25} %`]}
+ const E=[['eine gerade Zahl',n=>n%2==0],['eine Zahl, die durch 4 teilbar ist',n=>n%4==0],['eine Zahl, die durch 5 teilbar ist',n=>n%5==0],['eine Zahl größer als 15',n=>n>15],['eine Primzahl',isP],['eine Zahl kleiner als 7',n=>n<7]],[txt,fn]=P(E),L=[...Array(20).keys()].map(i=>i+1).filter(fn);
+ return[`Ein Würfel hat 20 gleich große Flächen mit den Zahlen 1 bis 20. Wie groß ist die Wahrscheinlichkeit für ${txt} (in %)?`,L.length*5,'Zähle die günstigen Zahlen. Jede Zahl hat 5 %.',`Günstige Zahlen: ${L.join(', ')}. Das sind ${L.length}.\nP = ${L.length}/20 = ${L.length*5} %`]}];
+// ---------- Logik-Rätsel (seit 2026-10-24, Brain Dump: Mathe-Olympiade für alle Klassen erweitern) ----------
+// Je Stufe eine von drei Arten: Zahlenreihe fortsetzen, Würfelnetz (welches Netz ergibt einen Würfel bzw. welche Zahl liegt gegenüber),
+// welche Zahl passt nicht zu den anderen.
+// Würfelnetz: Zellen [x, y] auf Karopapier. netzFalten klappt das Netz von Zelle 0 aus zusammen (jede Fläche merkt sich ihre Richtung im Raum:
+// n = Außenseite, ex/ey = Richtung von "rechts" und "unten" im Netz). Ein Würfel entsteht, wenn alle 6 Flächen in verschiedene Richtungen zeigen.
+// Rückgabe: Richtungen je Zelle oder null.
+function netzFalten(C){const k=c=>c[0]+','+c[1],ix=new Map(C.map((c,i)=>[k(c),i])),neg=v=>v.map(x=>-x),st=[{n:[0,0,-1],ex:[1,0,0],ey:[0,1,0]}],Q=[0];
+ while(Q.length){const i=Q.shift(),[x,y]=C[i],s=st[i];
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const j=ix.get(k([x+dx,y+dy]));if(j==null||st[j])continue;let n,ex=s.ex,ey=s.ey;
+   if(dx==1){n=s.ex;ex=neg(s.n)}else if(dx==-1){n=neg(s.ex);ex=s.n}else if(dy==1){n=s.ey;ey=neg(s.n)}else{n=neg(s.ey);ey=s.n}
+   st[j]={n,ex,ey};Q.push(j)}}
+ if(st.filter(Boolean).length!==C.length)return null;const ns=st.map(s=>s.n.join());return new Set(ns).size===6?ns:null}
+// Zufälliges zusammenhängendes Netz aus 6 Quadraten, liegend (höchstens 5 breit, 4 hoch), gut: true = ergibt einen Würfel, false = nicht
+function netzZufall(gut){for(let v=0;v<2000;v++){const C=[[0,0]];while(C.length<6){const [x,y]=P(C),[dx,dy]=P([[1,0],[-1,0],[0,1],[0,-1]]),n=[x+dx,y+dy];if(!C.some(c=>c[0]==n[0]&&c[1]==n[1]))C.push(n)}
+  const mx=Math.min(...C.map(c=>c[0])),my=Math.min(...C.map(c=>c[1]));let D=C.map(([x,y])=>[x-mx,y-my]);
+  if(Math.max(...D.map(c=>c[1]))>Math.max(...D.map(c=>c[0])))D=D.map(([x,y])=>[y,x]);
+  if(Math.max(...D.map(c=>c[0]))>4||Math.max(...D.map(c=>c[1]))>3)continue;D.sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
+  if(!!netzFalten(D)===gut)return D}return gut?[[0,1],[1,1],[2,1],[3,1],[1,0],[1,2]]:[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]]}
+const netzCode=C=>C.map(c=>c.join('')).join('');
+// Form eines Netzes ohne Drehen und Spiegeln (kleinster Code aller 8 Lagen), damit die beiden falschen Netze verschieden aussehen
+const netzForm=C=>{const L=[];for(let r=0;r<4;r++)for(const m of [0,1]){let D=C.map(([x,y])=>{let a=x,b=y;for(let i=0;i<r;i++)[a,b]=[-b,a];return[m?-a:a,b]});
+ const mx=Math.min(...D.map(c=>c[0])),my=Math.min(...D.map(c=>c[1]));D=D.map(([x,y])=>[x-mx,y-my]).sort((p,q)=>p[1]-q[1]||p[0]-q[0]);L.push(D.map(c=>c.join(',')).join(' '))}return L.sort()[0]};
+// Rätselnummer aus dem Code der Zeichnung (wie beim Sudoku), damit gleich lautende Fragen als verschiedene Aufgaben zählen (Runde, Fehlerheft)
+const netzNr=s=>1000+[...s].reduce((h,ch)=>(h*31+ch.charCodeAt(0))%8999,7);
+// Zahlenreihen je Stufe (Liste der Typen, zufällig gewählt): [gezeigte Zahlen, Lösung, Lösungsweg]
+function logikFolge(d){let a,b,p,q,k,c,L=[],w,s;
+ const T={1:['wechsel','plus2'],2:['quadrat','mal2','mal2plus1'],3:['zwei','wechsel3'],4:['diffdoppelt','dreieck','prim'],5:['malminus','fibo','kubik']}[d],t=P(T);
+ if(t=='wechsel'){a=R(1,20);do{p=R(1,9);q=R(1,9)}while(p==q);L=[a];for(let i=0;i<6;i++)L.push(L[i]+(i%2?q:p));s=L.pop();w=`Die Abstände wechseln sich ab: +${p}, +${q}, +${p}, …\nAls Nächstes kommt +${q}: ${L[5]} + ${q} = ${s}`}
+ else if(t=='plus2'){a=R(2,30);p=R(2,9);q=R(1,p-1);L=[a];for(let i=0;i<6;i++)L.push(L[i]+(i%2?-q:p));s=L.pop();w=`Abwechselnd +${p} und −${q}.\nAls Nächstes kommt −${q}: ${L[5]} − ${q} = ${s}`}
+ else if(t=='quadrat'){a=R(1,6);L=[...Array(7)].map((_,i)=>(a+i)**2);s=L.pop();w=`Das sind Quadratzahlen: ${a}·${a}, ${a+1}·${a+1}, …\nAls Nächstes: ${a+6} · ${a+6} = ${s}`}
+ else if(t=='mal2'){a=R(1,5);k=P([2,3]);L=[...Array(6)].map((_,i)=>a*k**i);if(L[5]>999){k=2;L=[...Array(6)].map((_,i)=>a*k**i)}s=L.pop();w=`Jede Zahl ist das ${k}-Fache der Zahl davor.\n${L[4]} · ${k} = ${s}`}
+ else if(t=='mal2plus1'){a=R(1,4);c=P([1,2]);L=[a];for(let i=0;i<5;i++)L.push(2*L[i]+c);s=L.pop();w=`Jede Zahl ist das Doppelte der Zahl davor plus ${c}.\n2 · ${L[4]} + ${c} = ${s}`}
+ else if(t=='zwei'){a=R(1,10);b=R(30,60);p=R(2,5);q=R(2,6);L=[...Array(8)].map((_,i)=>i%2?b-q*(i-1)/2:a+p*i/2);s=L.pop();w=`Zwei Reihen sind ineinander geschoben:\nan den Plätzen 1, 3, 5, 7: ${L.filter((_,i)=>i%2==0).join(', ')} (immer +${p})\nan den Plätzen 2, 4, 6: ${L.filter((_,i)=>i%2).join(', ')} (immer −${q})\nAls Nächstes kommt die zweite Reihe: ${L[5]} − ${q} = ${s}`}
+ else if(t=='wechsel3'){a=R(1,10);[p,q,c]=[R(1,5),R(2,7),R(3,9)];L=[a];for(let i=0;i<6;i++)L.push(L[i]+[p,q,c][i%3]);s=L.pop();w=`Die Abstände wiederholen sich in Dreiergruppen: +${p}, +${q}, +${c}, +${p}, …\nAls Nächstes kommt +${c}: ${L[5]} + ${c} = ${s}`}
+ else if(t=='diffdoppelt'){a=R(1,20);c=P([1,2,3]);L=[a];for(let i=0;i<6;i++)L.push(L[i]+c*2**i);s=L.pop();w=`Schau auf die Abstände: ${L.slice(1).map((x,i)=>x-L[i]).join(', ')}.\nSie verdoppeln sich jedes Mal. Der nächste Abstand ist ${c*32}.\n${L[5]} + ${c*32} = ${s}`}
+ else if(t=='dreieck'){a=R(1,4);L=[...Array(7)].map((_,i)=>(a+i)*(a+i+1)/2);s=L.pop();w=`Schau auf die Abstände: ${L.slice(1).map((x,i)=>x-L[i]).join(', ')}.\nSie werden jedes Mal um 1 größer. Der nächste Abstand ist ${a+6}.\n${L[5]} + ${a+6} = ${s}`}
+ else if(t=='prim'){const PR=[2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71];a=R(0,PR.length-7);L=PR.slice(a,a+7);s=L.pop();w=`Das sind Primzahlen: Zahlen, die nur durch 1 und sich selbst teilbar sind.\nDie nächste Primzahl nach ${L[5]} ist ${s}.`}
+ else if(t=='malminus'){k=P([2,3]);c=R(1,3);a=R(c+1,c+4);L=[a];for(let i=0;i<5;i++)L.push(k*L[i]-c);s=L.pop();w=`Jede Zahl ist das ${k}-Fache der Zahl davor minus ${c}.\n${k} · ${L[4]} − ${c} = ${s}`}
+ else if(t=='fibo'){a=R(1,6);b=R(1,9);L=[a,b];for(let i=0;i<5;i++)L.push(L[i]+L[i+1]);s=L.pop();w=`Jede Zahl ist die Summe der beiden Zahlen davor.\n${L[4]} + ${L[5]} = ${s}`}
+ else{a=R(1,3);L=[...Array(6)].map((_,i)=>(a+i)**3);s=L.pop();w=`Das sind Kubikzahlen: ${a}·${a}·${a}, ${a+1}·${a+1}·${a+1}, …\nAls Nächstes: ${a+5} · ${a+5} · ${a+5} = ${s}`}
+ return['Welche Zahl kommt als Nächstes?\n'+L.join(', ')+', …',s,'Schau dir die Abstände zwischen den Zahlen an, manchmal auch jede zweite Zahl.',w]}
+// Welche Zahl passt nicht? Fünf Zahlen mit einer Eigenschaft und eine ohne. Stufe 1 gerade/ungerade, 2 Vielfache, 3 Quadratzahlen, 4 Primzahlen, 5 Quersumme
+// Eindeutig (Code-Prüfung 2026-10-24): Es wird neu gewürfelt, solange eine andere Zahl bei einer einfachen Eigenschaft allein dasteht
+// (gerade/ungerade, Anzahl der Stellen, teilbar durch 3, 4, 5 oder 10, Quadratzahl). Sonst gäbe es zwei richtige Antworten.
+const PASSEIG=[n=>n%2,n=>String(n).length,n=>n%3==0,n=>n%5==0,n=>n%10==0,n=>Number.isInteger(Math.sqrt(n)),n=>n%4==0];
+const passtEindeutig=(A,x)=>PASSEIG.every(p=>{const w=A.map(p),allein=A.filter((_,i)=>w.filter(v=>v===w[i]).length===1);return!(A.length-allein.length===5&&allein.length===1&&allein[0]!==x)});
+function logikPasst(d){for(let v=0;v<300;v++){const q=logikPasst1(d);if(passtEindeutig(q[0].split('\n')[1].split(', ').map(Number),q[1])||v==299)return q}}
+function logikPasst1(d){const mische=a=>{for(let i=a.length-1;i>0;i--){const j=R(0,i);[a[i],a[j]]=[a[j],a[i]]}return a},fuenf=f=>{const s=new Set();while(s.size<5)s.add(f());return[...s]};let L,x,eig,nicht,tipp;
+ if(d==1){const ger=R(0,1);L=fuenf(()=>2*R(5,49)+(ger?0:1));x=2*R(5,49)+(ger?1:0);eig=ger?'gerade':'ungerade';nicht=ger?'ungerade':'gerade';tipp='Schau auf die letzte Ziffer.'}
+ else if(d==2){const k=R(3,9);L=fuenf(()=>k*R(2,12));do{x=k*R(2,12)+R(1,k-1)}while(L.includes(x));eig=`durch ${k} teilbar (in der ${k}er-Reihe)`;nicht=`nicht durch ${k} teilbar`;tipp='Suche eine Einmaleins-Reihe, in der fast alle Zahlen stehen.'}
+ else if(d==3){L=mische([...Array(13)].map((_,i)=>(i+3)**2)).slice(0,5);do{x=R(10,200)}while(Number.isInteger(Math.sqrt(x)));eig='Quadratzahlen (eine Zahl mal sich selbst)';nicht='keine Quadratzahl';tipp='Welche Zahlen bekommt man, wenn man eine Zahl mit sich selbst malnimmt?'}
+ else if(d==4){const PR=[11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97];L=mische([...PR]).slice(0,5);x=P([21,27,33,39,49,51,57,63,69,77,81,87,91,93]);eig='Primzahlen (nur durch 1 und sich selbst teilbar)';nicht=`keine Primzahl, denn ${x} = ${(()=>{for(let i=3;i<x;i++)if(x%i==0)return`${i} · ${x/i}`})()}`;tipp='Prüfe, ob sich eine Zahl in ein Malproblem zerlegen lässt.'}
+ // Stufe 5: nur dreistellige Zahlen, sonst fiele die Anzahl der Stellen auf
+ else{const qs=n=>String(n).split('').reduce((s,c)=>s+ +c,0),z=R(8,12);L=fuenf(()=>{let n;do{n=R(100,399)}while(qs(n)!=z);return n});do{x=R(100,399)}while(qs(x)!=z+1);eig=`Zahlen mit der Quersumme ${z}`;nicht=`Quersumme ${z+1}`;tipp='Addiere die Ziffern jeder Zahl.'}
+ const A=mische([...L,x]);
+ return[`Welche Zahl passt nicht zu den anderen?\n${A.join(', ')}`,x,tipp,`Alle Zahlen außer ${x} sind ${eig}.\n${x} ist ${nicht}.`]}
+// Würfelnetz: Stufe 1 und 2 "Welches Netz ergibt einen Würfel?" (drei Netze, eins passt), ab Stufe 3 "Welche Zahl liegt gegenüber?"
+function logikNetz(d){
+ if(d<=2){const g=netzZufall(true),f1n=netzZufall(false);let f2n;do{f2n=netzZufall(false)}while(netzForm(f2n)===netzForm(f1n));const N=[g,f1n,f2n];for(let i=2;i>0;i--){const j=R(0,i);[N[i],N[j]]=[N[j],N[i]]}const r=N.indexOf(g)+1,code=N.map(netzCode).join('|');
+  return[`Würfelrätsel ${netzNr(code)}: Welches Netz ergibt beim Zusammenklappen einen Würfel? Gib die Nummer des Netzes ein.`,r,'Klappe in Gedanken eine Fläche als Boden fest und falte die anderen hoch. Keine zwei Flächen dürfen aufeinander landen.',
+   `Netz ${r} lässt sich zu einem Würfel falten: Jede der 6 Flächen landet auf einer anderen Seite.\nDie anderen Netze lassen sich nicht ohne Überlappung oder Lücke zu einem Würfel falten.`,{t:'netz',g:code}]}
+ const C=netzZufall(true),ns=netzFalten(C),Z=[1,2,3,4,5,6];for(let i=5;i>0;i--){const j=R(0,i);[Z[i],Z[j]]=[Z[j],Z[i]]}
+ const i=R(0,5),gn=ns[i].split(',').map(v=>-v+0).join(),j=ns.findIndex(n=>n===gn.replace(/-0/g,'0')),a=Z[i],b=Z[j],[x1,y1]=C[i],[x2,y2]=C[j];
+ const gerade=(x1==x2&&Math.abs(y1-y2)==2)||(y1==y2&&Math.abs(x1-x2)==2);
+ return[`Würfelrätsel ${netzNr(netzCode(C)+Z.join(''))}: Das Netz wird zu einem Würfel gefaltet. Welche Zahl liegt dann der ${a} gegenüber?`,b,'Zwei Flächen, die in einer geraden Reihe genau eine Fläche zwischen sich haben, liegen sich gegenüber.',
+  (gerade?`Die ${a} und die ${b} liegen in einer geraden Reihe mit genau einer Fläche dazwischen. Solche Flächen liegen sich gegenüber.`:`Lege die ${a} in Gedanken als Boden hin und klappe die Nachbarflächen als Wände hoch. Die Fläche, die dann oben als Deckel landet, ist die ${b}.`)+`\nDer ${a} gegenüber liegt die ${b}.`,{t:'netz',g:netzCode(C),z:C.map((_,k)=>Z[k]).join('')}]}
+const TLOG=['logik','Logik-Rätsel',d=>{const art=R(0,2);return art==0?logikFolge(d):art==1?logikNetz(d):logikPasst(d)}];
 // ---------- Sudoku (seit 2026-10-19) ----------
 // Je Aufgabe ein Sudoku mit einem markierten Feld ("Welche Zahl gehört hierhin?"). Beim Erzeugen wird geprüft, dass sich das Feld
 // mit der Denkweise der Stufe sicher lösen lässt (das ganze Sudoku muss dafür nicht eindeutig sein). Denkweisen:
@@ -316,12 +444,17 @@ T[6]=[TB,TD,TS,...T[5].filter(t=>t[0]=='trick'||t[0]=='knob')];
 T[8]=[TL,TG,TP,TY,...T[7].filter(t=>t[0]=='zt')];
 // Alle Themen nach Schlüssel und Kategorien je Klasse (seit 2026-10-18; Schulstoff vorläufig, wird an die Mathebücher angepasst).
 // T[g] bleibt die Liste der Themen einer Klasse (Schulstoff und Olympiade), frühere Klassen kommen in app.js als "Wiederholen" dazu.
-const THEMA={};for(const g of [5,6,7,8])for(const t of T[g])THEMA[t[0]]=t;for(const t of SUDOKU)THEMA[t[0]]=t;
+T[7].push(TF7,TZ,TW);// Klasse 7 nach dem Mathebuch (seit 2026-10-24)
+// THEMA enthält auch Themen, die in keiner Klasse mehr gewählt werden können (z. B. "term"), damit alte Fehlerheft-Einträge und Trainingsaufgaben gültig bleiben
+const THEMA={};for(const g of [5,6,7,8])for(const t of T[g])THEMA[t[0]]=t;for(const t of SUDOKU)THEMA[t[0]]=t;THEMA.logik=TLOG;
 // sud: Sudoku als eigene Kategorie unter "Mathe-Olympiade & Knobeln" (seit 2026-10-20)
 const KAT={5:{schul:['ee','rechnen','groessen','umfl','teil'],oly:['folgen','trick','knob'],sud:['sud5']},
  6:{schul:['bruch','dez','dreisatz'],oly:['trick','knob'],sud:['sud6']},
- 7:{schul:['gl','term','pz','rat','winkel'],oly:['zt','wege'],sud:['sud78']},
+ // Klasse 7 seit 2026-10-24 in der Reihenfolge des Mathebuchs: Flächen (1), Zuordnungen (2), Prozent (3), Winkel (4), Rationale Zahlen (5),
+ // Wahrscheinlichkeit (7), Gleichungen (8). Kap. 6 (Dreiecke konstruieren) geht nicht als Rechenaufgabe. "Terme" steckt in "Gleichungen & Terme".
+ 7:{schul:['fl7','zuord','pz','winkel','rat','wk','gl'],oly:['zt','wege'],sud:['sud78']},
  8:{schul:['lf','gls','pot','pyth'],oly:['zt'],sud:['sud78']}};
+for(const g of [5,6,7,8])KAT[g].oly.push('logik');// Logik-Rätsel für alle Klassen (seit 2026-10-24)
 for(const g of [5,6,7,8])T[g]=[...KAT[g].schul,...KAT[g].oly,...KAT[g].sud].map(k=>THEMA[k]);
 // Knobel-Themen (Olympiade und Sudoku aller Klassen): höchstens 2 Runden am Stück, dann erst eine Runde Schulstoff mit mindestens 7 von 10
 const KNOBEL=new Set([5,6,7,8].flatMap(g=>[...KAT[g].oly,...KAT[g].sud]));

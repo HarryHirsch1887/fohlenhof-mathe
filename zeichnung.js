@@ -1,12 +1,15 @@
 // Pferdehof Mathe: kleine Zeichnungen zu Geometrie-Aufgaben (nur Code, SVG), maßstabsgetreu zu den Zahlen der Aufgabe.
 // Eine Aufgabe bringt die Zeichnung als 5. Eintrag mit: [Text, Antwort, Tipp, Lösungsweg, Zeichnung].
-// Zeichnung = {t: Art, ...Werte}. Arten: rechteck, ausschnitt, dreieck, rechtwinklig, leiter, gleichschenklig, vieleck, gitter, nebenwinkel.
+// Zeichnung = {t: Art, ...Werte}. Arten: rechteck, ausschnitt, dreieck, rechtwinklig, leiter, gleichschenklig, vieleck, gitter, nebenwinkel,
+// sudoku, seit 2026-10-24 dreieckh, parallelogramm, trapez (Figuren mit Höhe).
 // Gesuchte Größen werden mit "?" in Rot beschriftet. Farben kommen aus den CSS-Variablen (hell und dunkel).
 // Bildgröße; px/py: Rand links/rechts bzw. oben/unten für Beschriftungen (seitliche Beschriftungen brauchen mehr Platz)
 const ZB={w:300,h:200,px:52,py:32};
 // Prüft eine gespeicherte Zeichnungsangabe (Fehlerheft, Import): nur bekannte Arten, Zahlen und kurze Texte. Liefert eine saubere Kopie oder null.
-const ZARTEN=['rechteck','ausschnitt','dreieck','rechtwinklig','leiter','gleichschenklig','vieleck','gitter','nebenwinkel','sudoku'];
+const ZARTEN=['rechteck','ausschnitt','dreieck','rechtwinklig','leiter','gleichschenklig','vieleck','gitter','nebenwinkel','sudoku','dreieckh','parallelogramm','trapez','netz'];
 function zCheck(z){if(!z||typeof z!=='object'||!ZARTEN.includes(z.t))return null;const o={t:z.t};
+ // Würfelnetz (seit 2026-10-24): g = 1 bis 3 Netze aus je 6 Zellen "xy" (getrennt mit |), z = Zahlen auf den Flächen (optional)
+ if(z.t=='netz')return typeof z.g==='string'&&/^[0-4]{12}(\|[0-4]{12}){0,2}$/.test(z.g)&&(z.z==null||(typeof z.z==='string'&&/^[1-6]{6}$/.test(z.z)))?{t:'netz',g:z.g,...(z.z?{z:z.z}:{})}:null;
  // Sudoku (seit 2026-10-19): n Größe (4, 6 oder 9), g Ziffern zeilenweise (0 = leer), z markiertes Feld
  if(z.t=='sudoku')return[4,6,9].includes(z.n)&&typeof z.g=='string'&&new RegExp(`^[0-${z.n}]{${z.n*z.n}}$`).test(z.g)&&Number.isInteger(z.z)&&z.z>=0&&z.z<z.n*z.n&&z.g[z.z]=='0'?{t:'sudoku',n:z.n,g:z.g,z:z.z}:null;
  for(const k of ['a','b','c','d','A','B','al','be','n','zerlegt','einzeln','diag','la','lb','lc','lh','innen','w','lal','lbe','lga','nn','gleich']){const v=z[k];
@@ -52,6 +55,24 @@ function zeichnung(z){if(!z||typeof z!=='object')return'';try{
  if(z.t=='dreieck'){const al=z.al*Math.PI/180,be=z.be*Math.PI/180,ac=Math.sin(be)/Math.sin(al+be),pts=[[0,0],[1,0],[ac*Math.cos(al),ac*Math.sin(al)]],m=zAbb(pts),[A,B,C]=pts.map(m),
    lab=(v,s)=>v==null?s:v,strich=(P,Q)=>{const mx=P[0]+(Q[0]-P[0])*.35,my=P[1]+(Q[1]-P[1])*.35,dx=Q[0]-P[0],dy=Q[1]-P[1],l=Math.hypot(dx,dy)||1;return`<path d="M${zf(mx-dy/l*6)} ${zf(my+dx/l*6)}L${zf(mx+dy/l*6)} ${zf(my-dx/l*6)}" class="zl zdick"/>`};
   return zSvg(`<path d="${zPfad([A,B,C])}Z" class="zf"/>`+(z.gleich?strich(A,C)+strich(B,C):'')+zWinkel(A,B,C,lab(z.lal,`${z.al}°`),0,z.nn?'':'α')+zWinkel(B,C,A,lab(z.lbe,`${z.be}°`),0,z.nn?'':'β')+zWinkel(C,A,B,lab(z.lga,'?'),0,z.nn?'':'γ'),'Dreieck')}
+ // Figuren mit Höhe (seit 2026-10-24, Klasse 7 "Flächen"): Grundseite a unten, Höhe b (gestrichelt, mit rechtem Winkel), Beschriftungen la (Grundseite),
+ // lc (obere Seite beim Trapez), lh (Höhe, Standard "?"). dreieckh: Spitze über der Stelle c der Grundseite. parallelogramm: oben um c nach rechts versetzt.
+ // trapez: obere Seite c lang, links um d eingerückt.
+ if(z.t=='dreieckh'||z.t=='parallelogramm'||z.t=='trapez'){const a=z.a,h=z.b,
+   pts=z.t=='dreieckh'?[[0,0],[a,0],[z.c,h]]:z.t=='parallelogramm'?[[0,0],[a,0],[a+z.c,h],[z.c,h]]:[[0,0],[a,0],[z.d+z.c,h],[z.d,h]],
+   hx=z.t=='trapez'?z.d:z.c,m=zAbb(pts),P=pts.map(m),C=zMitte(P),top=P[P.length-1],F=m([hx,0]),lh=z.lh||'?',
+   hoehe=Math.abs(top[0]-P[0][0])<4?'':`<path d="${zPfad([top,F])}" class="zl zd"/>`+zRecht(F,P[1],top,9);
+  // Beschriftung der Höhe mit Rand in Flächenfarbe (zh), falls sie eine schräge Seite berührt
+  return zSvg(`<path d="${zPfad(P)}Z" class="zf"/>`+hoehe+zSeite(P[0],P[1],C,z.la||`${a} cm`)+(z.t=='trapez'?zSeite(P[3],P[2],C,z.lc||`${z.c} cm`):'')+
+   zText(F[0]+8+String(lh).length*3.4,(F[1]+top[1])/2,lh).replace('class="','class="zh '),{dreieckh:'Dreieck mit Höhe',parallelogramm:'Parallelogramm mit Höhe',trapez:'Trapez mit Höhe'}[z.t])}
+ // Würfelnetze (seit 2026-10-24, Logik-Rätsel): ein Netz mit Zahlen auf den Flächen oder drei Netze nebeneinander, darunter "Netz 1" bis "Netz 3".
+ // Alle Netze einer Aufgabe haben dieselbe Kästchengröße, damit keins größer wirkt.
+ if(z.t=='netz'){const N=z.g.split('|').map(s=>[...Array(6)].map((_,i)=>[+s[2*i],+s[2*i+1]])),k=N.length,slot=ZB.w/k,unten=k>1?24:0,
+   cs=Math.min(k>1?(slot-14)/5:52,(ZB.h-unten-16)/4);let s='';
+  N.forEach((C,i)=>{const w=Math.max(...C.map(c=>c[0]))+1,h=Math.max(...C.map(c=>c[1]))+1,x0=slot*i+(slot-w*cs)/2,y0=(ZB.h-unten-h*cs)/2;
+   C.forEach(([x,y],j)=>{s+=`<rect x="${zf(x0+x*cs)}" y="${zf(y0+y*cs)}" width="${zf(cs)}" height="${zf(cs)}" class="zf"/>`+(z.z?zText(x0+(x+.5)*cs,y0+(y+.5)*cs+5,z.z[j]):'')});
+   if(k>1)s+=zText(slot*i+slot/2,ZB.h-8,`Netz ${i+1}`)});
+  return zSvg(s,k>1?`${k} Würfelnetze`:'Würfelnetz mit Zahlen')}
  // Nebenwinkel: gerade Linie mit einem Strahl, rechts der bekannte Winkel w, links der gesuchte
  if(z.t=='nebenwinkel'){const w=z.w*Math.PI/180,pts=[[-1,0],[1,0],[0,0],[.85*Math.cos(w),.85*Math.sin(w)]],m=zAbb([...pts,[0,.85],[0,-.05]]),[L,Rr,O,S]=pts.map(m);
   // Beschriftung in festem Abstand (46 Pixel) auf der Winkelhalbierenden, damit sie auch bei 30° frei steht

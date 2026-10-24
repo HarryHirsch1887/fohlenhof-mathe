@@ -18,6 +18,8 @@ const LIMMAX=180,limS=k=>k.lm==null?LIMIT:k.lm*60,limM=k=>limS(k)/60;
 // Hof-Sperre: Nach 3 Minuten auf dem Hof (Kind-Ansicht, Wunschbaum, Rundflug) läuft ein Countdown von 10 Sekunden,
 // danach muss erst wieder eine Runde mit mindestens 75 % (8 von 10) geschafft werden. Gespeichert: hz = Hofzeit in Sekunden, hl = gesperrt
 const HOFZEIT=180,FREI=7;// FREI: seit 2026-10-18 reichen 7 von 10 (vorher 8)
+// PIN-Sperre (seit 2026-10-24): nach PINMAX falschen PIN-Eingaben PINSPERRE Millisekunden gesperrt (hier oben, weil clean() sie beim Laden braucht)
+const PINMAX=3,PINSPERRE=36e5;
 // Neue Kinder erstellen zuerst ihre Figur (figur.js) und dürfen nach 5 richtigen Aufgaben ihr Fohlen aussuchen
 const FOHLEN=5;
 // Körperformen (BR): seit 2026-10-19 nicht mehr wählbar oder kaufbar. Sie dienen nur noch den Lieblingspferden (Pony, Behang) und dem Zeichnen.
@@ -88,7 +90,11 @@ const nn=(x,lo=0,hi=1e9)=>{x=+x;return Number.isFinite(x)?Math.min(hi,Math.max(l
 const ct=(x,n)=>String(x==null?'':x).slice(0,n);
 function clean(d){
  if(!d||typeof d!=='object'||!Array.isArray(d.kids))return null;
- const o={pin:ct(d.pin,8),kids:[]};if(d.np&&!o.pin)o.np=1;if(d.snd===0)o.snd=0;if(d.calm)o.calm=1;if(d.mo==='e'||d.mo==='k')o.mo=d.mo;// mo: Startabfrage beantwortet (Elternteil/Kind)
+ const o={pin:ct(d.pin,8),kids:[]};if(d.np&&!o.pin)o.np=1;
+ // pf = falsche PIN-Eingaben seit der letzten richtigen, ps = gesperrt bis (Zeitstempel, höchstens eine Stunde ab jetzt, abgelaufen fällt weg).
+ // Obergrenze für nn ausdrücklich angeben, sonst begrenzt nn auf 1e9 und ein Zeitstempel wäre immer abgelaufen.
+ if(o.pin){const jetzt=Date.now(),pf=nn(d.pf,0,PINMAX-1),ps=nn(d.ps,0,jetzt+PINSPERRE);if(pf)o.pf=pf;if(ps>jetzt)o.ps=ps}
+ if(d.snd===0)o.snd=0;if(d.calm)o.calm=1;if(d.mo==='e'||d.mo==='k')o.mo=d.mo;// mo: Startabfrage beantwortet (Elternteil/Kind)
  for(const k of d.kids.slice(0,20)){if(!k||typeof k!=='object')continue;
   const c={id:nn(k.id,1,Number.MAX_SAFE_INTEGER),name:ct(k.name,20)||'Kind',g:[5,6,7,8].includes(+k.g)?+k.g:5,xp:nn(k.xp),ap:nn(k.ap),s:nn(k.s),best:nn(k.best),total:nn(k.total),r:nn(k.r),perfect:nn(k.perfect),b:[],t:{},mist:[]};
   // st = Wachstumsstufe, sd = gesammelte Tage für die nächste Stufe, ld = letzter gezählter Tag, zd/zt = Spielzeit (Sekunden) an diesem Tag
@@ -113,9 +119,13 @@ function clean(d){
   if(k.t&&typeof k.t==='object')for(const key of Object.keys(k.t)){const s=k.t[key];if(s&&typeof s==='object'&&/^[a-z0-9]{1,12}$/.test(key))c.t[key]={d:nn(s.d,1,5),n:nn(s.n),r:nn(s.r),run:Math.max(-9,Math.min(9,Math.trunc(+s.run)||0))}}
   // Altes Thema "Geometrie & Zählen" (bis 2026-10-18): Fortschritt geht an "Winkel & Vielecke"
   if(c.t.geo){if(!c.t.winkel)c.t.winkel=c.t.geo;delete c.t.geo}
+  // "Terme" ist seit 2026-10-24 nicht mehr wählbar (Klasse 7 nach dem Mathebuch): Fortschritt, Fehlerheft und Trainingsaufgaben gehen an "Gleichungen & Terme"
+  if(c.t.term){if(!c.t.gl)c.t.gl=c.t.term;delete c.t.term}
+  // nd = Schulstoff-Themen, die im Unterricht noch nicht dran waren (seit 2026-10-24, Eltern-Ansicht): kommen im Training nicht dran
+  if(Array.isArray(k.nd)){const nd=[...new Set(k.nd.filter(x=>typeof x==='string'&&SCHUL.has(x)))].slice(0,40);if(nd.length)c.nd=nd}
   // gl: gelöste Aufgaben fürs Training (seit 2026-10-22), Prüfung wie beim Fehlerheft, ohne Zeichnung
-  if(Array.isArray(k.gl)){c.gl=[];for(const m of k.gl.slice(-GLMAX))if(m&&typeof m.key==='string'&&/^[a-z0-9]{1,12}$/.test(m.key)&&Array.isArray(m.q)&&typeof m.q[0]==='string'&&Number.isFinite(+m.q[1]))c.gl.push({key:m.key,d:nn(m.d,1,5),q:[ct(m.q[0],400),+m.q[1],ct(m.q[2],200),ct(m.q[3],800)]});if(!c.gl.length)delete c.gl}
-  if(Array.isArray(k.mist))for(const m of k.mist.slice(0,30)){if(m&&typeof m.key==='string'&&Array.isArray(m.q)&&typeof m.q[0]==='string'&&Number.isFinite(+m.q[1]))c.mist.push({key:m.key==='geo'?(m.q[4]&&(m.q[4].t=='gitter'||m.q[4].diag||/Diagonale|Weg führt/.test(m.q[0]))?'wege':'winkel'):ct(m.key,12),q:[ct(m.q[0],400),+m.q[1],ct(m.q[2],200),ct(m.q[3],800),...(zCheck(m.q[4])?[zCheck(m.q[4])]:[])]})}
+  if(Array.isArray(k.gl)){c.gl=[];for(const m of k.gl.slice(-GLMAX))if(m&&typeof m.key==='string'&&/^[a-z0-9]{1,12}$/.test(m.key)&&Array.isArray(m.q)&&typeof m.q[0]==='string'&&Number.isFinite(+m.q[1]))c.gl.push({key:m.key==='term'?'gl':m.key,d:nn(m.d,1,5),q:[ct(m.q[0],400),+m.q[1],ct(m.q[2],200),ct(m.q[3],800)]});if(!c.gl.length)delete c.gl}
+  if(Array.isArray(k.mist))for(const m of k.mist.slice(0,30)){if(m&&typeof m.key==='string'&&Array.isArray(m.q)&&typeof m.q[0]==='string'&&Number.isFinite(+m.q[1]))c.mist.push({key:m.key==='geo'?(m.q[4]&&(m.q[4].t=='gitter'||m.q[4].diag||/Diagonale|Weg führt/.test(m.q[0]))?'wege':'winkel'):m.key==='term'?'gl':ct(m.key,12),q:[ct(m.q[0],400),+m.q[1],ct(m.q[2],200),ct(m.q[3],800),...(zCheck(m.q[4])?[zCheck(m.q[4])]:[])]})}
   if(k.h&&typeof k.h==='object'){c.h=pclean(k.h);
    // Gekaufte Rassen (bis 2026-10-18, 40 Äpfel) gibt es nicht mehr: Die Äpfel werden zurückgegeben, die Rassen-Freunde verschwinden vom Hof
    if(Array.isArray(k.h.brs))c.ap+=40*new Set(k.h.brs.filter(x=>BR[x]&&x!='std')).size;
@@ -185,10 +195,11 @@ function ui(){let h='';PZ=0;
  if(v!='bye'&&v!='done')REIN=0;// "steht jetzt im Unterstand" nur auf der Abschiedsseite bzw. am Rundenende
  if(!S.mo&&v=='besuch')v='home';// Besuchs-Link auf einem neuen Gerät: erst die Startabfrage, der Besuch (BES) wartet
  if(v=='home'&&(!S.mo||EIN=='kinder')){h=startAbfrage()}
- else if(v=='home'){h=`<h1>Pferdehof Mathe</h1><p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[stg(k)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
+ else if(v=='home'){const zu=pinZu();// PIN-Sperre (seit 2026-10-24): Hinweis oben, Kinder-Knöpfe aus
+ h=`<h1>Pferdehof Mathe</h1>${zu?pinZuKarte():''}<p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"${zu?' disabled':''}><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[stg(k)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
  // Neues Kind: Gibt es schon ein Kind und ist eine PIN gesetzt, muss ein Elternteil mit der PIN bestätigen (seit 2026-10-24)
  `<div class="card"><b>Neues Kind</b><div class="row"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name" value="${esc(NKN)}"><select id="gr" aria-label="Klasse">${[5,6,7,8].map(c=>`<option value="${c}"${NKG==c?' selected':''}>Klasse ${c}</option>`).join('')}</select>${nkPin()?'':'<button onclick="add()">Hinzufügen</button>'}</div>`+
- (nkPin()?`<p class="small">Ein weiteres Kind muss ein Elternteil mit der PIN bestätigen.</p><div class="row"><input id="nkpin" type="password" inputmode="numeric" maxlength="8" placeholder="Eltern-PIN" aria-label="Eltern-PIN" onkeydown="if(event.key=='Enter')add()"><button onclick="add()">Hinzufügen</button></div>`:'')+`<p class="no">${NKW}</p></div><p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button></p>`}
+ (nkPin()&&zu?`<p class="small">Neue Kinder lassen sich ab ${pinUhr()} Uhr wieder anlegen.</p>`:nkPin()?`<p class="small">Ein weiteres Kind muss ein Elternteil mit der PIN bestätigen.</p><div class="row"><input id="nkpin" type="password" inputmode="numeric" maxlength="8" placeholder="Eltern-PIN" aria-label="Eltern-PIN" onkeydown="if(event.key=='Enter')add()"><button onclick="add()">Hinzufügen</button></div>`:'')+`<p class="no">${NKW}</p></div><p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button><button class="alt" onclick="infoAuf()">Für Eltern</button></p>`}
  // Figur erstellen oder ändern (FE: Entwurf, wird erst mit "Fertig" bzw. "Speichern" übernommen)
  // Koppeln, Unterstände und Stall: bauen, ausbauen, Pferde verteilen
  // Leggings- und Shirtfarben: anprobieren kostenlos, beim Speichern werden neue Farben gekauft
@@ -302,15 +313,42 @@ function ui(){let h='';PZ=0;
  if(v=='train')h=trSeite();
  // Abschied: Mit Unterstand oder Stall steht oben der Hof (statt des kleinen Bilds), damit das Pferd noch hineingebracht werden kann (seit 2026-10-24)
  if(v=='bye'){let k=kid(),rf=reinFrage(k);h=`<h1>Bis morgen, ${esc(k.name)}!</h1><div class="card">${k.h&&!byeHof()?scene(k):''}<p>Für heute sind deine ${limM(k)} Minuten auf dem Hof um.${k.h?` ${esc(k.h.name)} freut sich, wenn du morgen wiederkommst.`:''}</p>${k.h&&stg(k)<3&&heute(k)?'<p class="small">Heute hast du gerechnet, der Tag zählt fürs Wachstum.</p>':''}</div>${rf}<button class="${rf.includes('reinfrage')?'alt':'go'}" onclick="v='home';ui()">${rf.includes('reinfrage')?'Nein, tschüss':'Tschüss'}</button>`}
+ // Erklärseite für Eltern (seit 2026-10-24, Brain Dump): offen für alle, ohne Hof im Hintergrund, Zahlen kommen aus den Konstanten
+ if(v=='info'){const li=a=>`<ul class="info">${a.map(x=>`<li>${x}</li>`).join('')}</ul>`,zur=`<button class="alt" onclick="infoZu()">Zurück</button>`;
+  h=zur+`<h1>Pferdehof Mathe für Eltern</h1><p>Kurz erklärt: was die App macht, was du als Elternteil einstellen kannst und was mit den Daten passiert.</p>`+
+  `<div class="card"><b>Worum es geht</b>`+li([`Mathe üben für die Klassen 5 bis 8 (Gymnasium). Jedes Kind hat ein eigenes Pferd, das vom Fohlen zum Pferd heranwächst, und einen eigenen Hof.`,
+   `Für richtige Antworten gibt es Äpfel. Damit kauft das Kind Dinge für Pferd und Hof. Äpfel gibt es nur fürs Rechnen, nie für Geld.`,
+   `Das Pferd wächst mit den Tagen, an denen gerechnet wurde (ein Tag zählt einmal), nicht mit der Spielzeit.`])+`</div>`+
+  `<div class="card"><b>So wird geübt</b>`+li([`Eine Runde hat 10 Aufgaben. Jedes Thema hat 5 Stufen: Nach 3 richtigen Antworten in Folge geht es eine Stufe hoch, nach 2 falschen eine Stufe runter.`,
+   `Viele Aufgaben haben einen Tipp. Nach einer falschen Antwort zeigt die App den Lösungsweg.`,
+   `Falsch gelöste Aufgaben kommen ins Fehlerheft und tauchen in späteren Runden wieder auf, bis sie sitzen.`,
+   `Themen: der Schulstoff der eigenen Klasse (Klasse 7 nach dem Mathebuch), Mathe-Olympiade & Knobeln und Sudoku. Frühere Klassen lassen sich unter „Wiederholen“ üben.`,
+   `Im Training übt das Kind mit Aufgaben, die es schon einmal richtig gelöst hat.`])+`</div>`+
+  `<div class="card"><b>Was du als Elternteil im Griff hast</b><p class="small">In der Eltern-Ansicht, geschützt mit deiner PIN:</p>`+li([`Zeitlimit pro Kind und Tag: standardmäßig ${LIMIN} Minuten, einstellbar von 5 bis ${LIMMAX} Minuten oder ohne Limit. Eine laufende Runde wird nicht unterbrochen.`,
+   `Erst rechnen, dann spielen: Nach ${HOFZEIT/60} Minuten auf dem Hof braucht das Kind eine Runde mit mindestens ${FREI} von 10 richtig, bevor es weiterspielen kann.`,
+   `Knobeln geht höchstens ${KNMAX} Runden am Stück. Danach ist erst wieder eine Runde Schulstoff mit mindestens ${FREI} von 10 dran.`,
+   `Statistik für jedes Kind: je Thema Stufe, Anzahl der Aufgaben und Anteil richtig, dazu die offenen Aufgaben im Fehlerheft.`,
+   `Schulstoff, der im Unterricht noch nicht dran war, nimmst du aus dem Training heraus. Üben kann das Kind ihn trotzdem.`,
+   `Klasse ändern, Fortschritt zurücksetzen, Kind löschen. Ab dem zweiten Kind braucht jedes neue Kind deine PIN.`,
+   `Nach ${PINMAX} falschen PIN-Eingaben kann ${PINSPERRE/36e5==1?'eine Stunde':PINSPERRE/36e5+' Stunden'} lang kein Kind auf den Hof und keine PIN eingegeben werden.`,
+   `Sicherung als Datei exportieren und auf einem anderen Gerät wieder importieren. Der bewegte Hintergrund lässt sich hier abschalten, den Ton schaltet das Kind auf seinem Hof aus.`])+`</div>`+
+  `<div class="card"><b>Daten und Sicherheit</b>`+li([`Keine Werbung, keine Käufe in der App, keine Abos.`,`Kein Konto, keine Anmeldung, keine E-Mail-Adresse.`,`Keine Cookies, kein Tracking, keine Analyse-Dienste.`,
+   `Alle Spielstände liegen nur im Browser auf diesem Gerät. Die App schickt nichts an einen Server. Beim Aufrufen der Seite sieht nur der Webserver (GitHub Pages) die üblichen technischen Daten, wie bei jeder Webseite.`,
+   `Die App lädt keine fremden Inhalte nach und sperrt das auch selbst ab.`,
+   `„Freundin einladen“: Der QR-Code bzw. Link enthält nur den Vornamen, den Namen des Pferds und das Aussehen von Pferd und Figur. Diese Angaben stehen hinter dem „#“ im Link und gehen beim Öffnen nicht an den Webserver. Den QR-Code scannt die Freundin direkt, einen Link schickt ihr zum Beispiel per Messenger.`,
+   `Die PIN ist eine Kindersicherung. Sie liegt unverschlüsselt im Browser und schützt nicht vor jemandem, der das Gerät technisch untersucht.`])+`</div>`+
+  `<div class="card"><b>Installieren und offline nutzen</b>`+li([`Im Browser „Zum Startbildschirm hinzufügen“ bzw. „App installieren“ wählen. Danach läuft die App auch ohne Internet.`,
+   `Der Spielstand gehört zu Gerät und Browser. Für einen Gerätewechsel die Sicherung exportieren und auf dem neuen Gerät importieren.`])+`</div>`+zur}
  if(v=='parent'){h=`<button class="alt" onclick="v='home';lock()">Zurück</button><h1>${S.pin?'Eltern-Ansicht':'Einstellungen'}</h1>`;
- if(S.pin&&!open)h+=`<div class="card pinkarte"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p>${pinI()}</div>`+pinResetKarte();
+ if(S.pin&&!open&&pinZu())h+=pinZuKarte();// PIN-Sperre (seit 2026-10-24)
+ else if(S.pin&&!open)h+=`<div class="card pinkarte"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p>${pinI()}</div>`+pinResetKarte();
  else{h+=S.kids.map(k=>`<div class="card"><div class="row sp"><b>${esc(k.name)}</b><span>Klasse <select onchange="gr(${k.id},this.value)" aria-label="Klasse">${[5,6,7,8].map(c=>`<option ${k.g==c?'selected':''}>${c}</option>`).join('')}</select></span></div>
  <p class="small">${k.h?esc(k.h.name)+' · '+GS[stg(k)].n+' · ':''}${k.h2?'zweites Pferd '+esc(k.h2.name)+' · '+GS[k.h2.st||0].n+' · ':''}${k.h&&stg(k)<3?`Tag ${serie(k)} von ${TAGE[stg(k)]} bis „${GS[stg(k)+1].n}“ · `:''}heute ${limS(k)?`${Math.min(limM(k),Math.floor(zeit(k)/60))} von ${limM(k)} Minuten`:`${Math.floor(zeit(k)/60)} Minuten (kein Limit)`} · ${k.xp} Erfahrung · ${k.ap||0} Äpfel · ${k.hu||0} Hufeisen · ${k.r} von ${k.total} Aufgaben richtig (${k.total?Math.round(k.r/k.total*100):0} %) · Rekordserie ${k.best} · Fehlerheft ${mcount(k)} offen</p>
- <p class="small" style="margin:6px 0"><label>Zeit pro Tag: <select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></label></p>
+ <p class="small" style="margin:6px 0"><label>Zeit pro Tag: <select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></label></p>${ndListe(k)}
  <table><tr><th>Thema</th><th>Stufe</th><th>Aufgaben</th><th>Richtig</th></tr>${elternThemen(k).map(t=>{let s=ts(k,t[0]);return`<tr><td>${t[1]}</td><td>${s.d}</td><td>${s.n}</td><td>${s.n?Math.round(s.r/s.n*100)+' %':'–'}</td></tr>`}).join('')}</table>
  <p class="small">Ein Thema wechselt hoch nach 3 richtigen Antworten in Folge und runter nach 2 falschen.</p><div class="row"><button class="alt" onclick="rst(${k.id})">Fortschritt zurücksetzen</button><button class="alt" onclick="del(${k.id})">Kind löschen</button></div></div>`).join('')||'<p>Noch keine Kinder angelegt.</p>';
  h+=`<div class="card"><b>Spielzeit und Wachstum</b><p class="small">Jedes Kind kann standardmäßig ${LIMIN} Minuten pro Tag auf den Hof. Bei jedem Kind lässt sich die Zeit im 5-Minuten-Raster ändern (5 bis ${LIMMAX} Minuten oder kein Limit). Eine laufende Runde wird nicht unterbrochen. Das Pferd wächst mit Tagen, an denen mindestens eine Runde gerechnet wurde (einmal pro Tag): Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten.</p><p class="small">Knobeln (Mathe-Olympiade und Sudoku) geht höchstens ${KNMAX} Runden am Stück. Danach muss erst eine Runde Schulstoff mit mindestens ${FREI} von 10 geschafft werden.</p></div><div class="card"><b>Anzeige</b><p class="small">Der animierte Hintergrund kann ruhig gestellt werden, zum Beispiel bei älteren Geräten oder um den Akku zu schonen. Dann stehen die Pferde still.</p><button class="alt" onclick="S.calm=S.calm?0:1;save();ui()">Ruhiger Hintergrund: ${S.calm?'an':'aus'}</button></div><div class="card"><b>Sicherung</b><p class="small">Der Stand liegt nur in diesem Browser. Exportiere ihn regelmäßig als Datei, besonders vor dem Löschen von Browserdaten oder bei einem Gerätewechsel.</p><div class="row"><button onclick="exp()">Exportieren</button><input type="file" accept=".json" onchange="imp(this)" aria-label="Sicherung importieren"></div><p class="no">${warn}</p></div>
- <div class="card"><b>PIN-Schutz</b>${S.pin?`<p class="small">Diese Ansicht ist mit einer PIN geschützt. Ohne PIN heißt sie „Einstellungen“ und ist für alle offen, zum Beispiel auf dem eigenen Handy eines Kindes.</p><button class="alt" onclick="npin()">PIN entfernen</button>`:`<p class="small">Ohne PIN kann jeder hier die Klasse ändern, Fortschritt zurücksetzen und Kinder löschen. Mit einer PIN (mindestens 4 Zeichen) wird daraus die geschützte Eltern-Ansicht.</p><input id="pin1" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp('pin1')"> <button onclick="sp('pin1')">PIN festlegen</button>`}<p class="no">${pw}</p></div>`+(S.pin?`<button class="alt" onclick="lock()">Sperren</button>`:'')}}
+ <div class="card"><b>PIN-Schutz</b>${S.pin?`<p class="small">Diese Ansicht ist mit einer PIN geschützt. Ohne PIN heißt sie „Einstellungen“ und ist für alle offen, zum Beispiel auf dem eigenen Handy eines Kindes.</p><button class="alt" onclick="npin()">PIN entfernen</button>`:`<p class="small">Ohne PIN kann jeder hier die Klasse ändern, Fortschritt zurücksetzen und Kinder löschen. Mit einer PIN (mindestens 4 Zeichen) wird daraus die geschützte Eltern-Ansicht.</p><input id="pin1" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp('pin1')"> <button onclick="sp('pin1')">PIN festlegen</button>`}<p class="no">${pw}</p></div>`+(S.pin?`<button class="alt" onclick="lock()">Sperren</button> `:'')+`<button class="alt" onclick="infoAuf()">So funktioniert die App</button>`}}
  $('#app').innerHTML='<div class="in">'+h+'</div>';if(v!='kid'&&v!='wish'&&v!='rassen')countdown(0);hofSync();d3Sync();trSync();nachZeichnen();itBilder();setTimeout(()=>{let a=$('#ans')||$('#pin')||$('#hn')||$('#pin0');a&&(v!='home'||a.id=='pin0')&&a.focus({preventScroll:a.id=='hn'})})}
 // ---------- Besuch per Code (seit 2026-10-20, siehe Notiz "Ideen Besuch per Code") ----------
 // Ein Kind lädt eine Freundin ein: Link mit QR-Code (qr.js). Hinter "#b=" stehen nur Vorname, Pferdename und das Aussehen von Pferd
@@ -392,19 +430,24 @@ function d3Sync(){const el=$('#d3');
 // NKN/NKG/NKW: eingegebener Name, Klasse und Hinweis bleiben bei falscher PIN stehen.
 const nkPin=()=>!!S.pin&&S.kids.length>0&&v=='home'&&!EIN;
 function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();
- if(nkPin()){const p=($('#nkpin')||{}).value||'';if(p!==S.pin){NKN=n;NKG=+$('#gr').value;NKW=p?'Falsche PIN.':'Bitte gib die Eltern-PIN ein.';ui();NKW='';const f=$('#nkpin');if(f)f.focus();return}}
+ if(nkPin()){const p=($('#nkpin')||{}).value||'',r=p||pinZu()?pinPruef(p):'Bitte gib die Eltern-PIN ein.';if(r!==true){NKN=n;NKG=+$('#gr').value;NKW=r;ui();NKW='';const f=$('#nkpin');if(f)f.focus();return}}
  NKN='';NKG=5;S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},neu:1});save();ui()}
 // PIN festlegen: ohne id beim ersten Start (Feld pin0), mit id='pin1' nachträglich in den Einstellungen
-function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=p;delete S.np;S.mo='e';if(id)open=true;save();ui()}
+function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=p;delete S.np;delete S.pf;delete S.ps;S.mo='e';if(id)open=true;save();ui()}
 function nopin(){S.np=1;S.mo='k';save();ui()}
-function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellungen öffnen.'))return;S.pin='';S.np=1;S.mo='k';open=false;save();ui()}
+function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellungen öffnen.'))return;S.pin='';delete S.pf;delete S.ps;S.np=1;S.mo='k';open=false;save();ui()}
 // ---------- Startabfrage (seit 2026-10-21, siehe Notiz "Ideen Elternbereich und Startabfrage") ----------
 // Kommt einmal pro Gerät, auch bei bestehenden Spielständen: Elternteil (PIN festlegen bzw. bestätigen, dann Kinder anlegen)
 // oder Kind (ohne PIN, Einstellungen offen, wie bisher "ohne Eltern-Ansicht"). Gespeichert als S.mo = 'e' oder 'k'.
 // Ist schon eine PIN gesetzt, braucht auch der Kind-Modus die PIN (sie wird dabei entfernt), damit ein Kind die Sperre nicht umgeht.
 // EIN = aktueller Schritt: '' Auswahl, 'e' PIN, 'k' Kind, 'kinder' Kinder anlegen (nach dem Eltern-Schritt).
 let EIN='',EINPIN=false;// EINPIN: Kind-Modus auf Gerät mit PIN, PIN wurde richtig eingegeben (entfernt wird sie erst am Ende)
-const VORTEILE=`<div class="card small vorteile"><b>Pferdehof Mathe für Eltern</b><ul style="margin:6px 0 0;padding-left:20px"><li>Keine Werbung, keine Käufe durch Kinder</li><li>Kein Konto, keine Anmeldung: Alle Daten bleiben auf diesem Gerät</li><li>Zeitlimit für jedes Kind, Standard ${LIMIN} Minuten am Tag</li><li>Eltern-Ansicht mit PIN: Statistik, Klasse, Zeitlimit, Sicherung</li><li>Aufgaben für Klasse 5 bis 8 mit Tipps und Lösungswegen</li></ul></div>`;
+const VORTEILE=`<div class="card small vorteile"><b>Pferdehof Mathe für Eltern</b><ul style="margin:6px 0 0;padding-left:20px"><li>Keine Werbung, keine Käufe durch Kinder</li><li>Kein Konto, keine Anmeldung: Alle Daten bleiben auf diesem Gerät</li><li>Zeitlimit für jedes Kind, Standard ${LIMIN} Minuten am Tag</li><li>Eltern-Ansicht mit PIN: Statistik, Klasse, Zeitlimit, Sicherung</li><li>Aufgaben für Klasse 5 bis 8 mit Tipps und Lösungswegen</li></ul><button class="alt" style="margin-top:8px" onclick="infoAuf()">Alles für Eltern ansehen</button></div>`;
+// Erklärseite für Eltern öffnen und wieder zurück (seit 2026-10-24). Gemerkt werden Ansicht und Schritt der Startabfrage
+// (nur Auswahl, Elternteil oder Kind, nie "Kinder anlegen": Der Schritt gilt nur direkt nach der PIN).
+let INFOZ=null;
+function infoAuf(){INFOZ={v,EIN:['','e','k'].includes(EIN)?EIN:''};v='info';ui();scrollTo(0,0)}
+function infoZu(){const z=INFOZ||{v:'home',EIN:''};INFOZ=null;v=z.v=='info'?'home':z.v;ui();if(v=='home'&&z.EIN){EIN=z.EIN;ui()}scrollTo(0,0)}
 const klassenWahl=()=>`<select id="gr" aria-label="Klasse">${[5,6,7,8].map(c=>`<option value="${c}">Klasse ${c}</option>`).join('')}</select>`;
 function startAbfrage(){
  const kopf='<h1>Pferdehof Mathe</h1>',zur=`<button class="alt" onclick="EIN='';EINPIN=false;warn='';ui()">Zurück</button>`,
@@ -412,6 +455,7 @@ function startAbfrage(){
  if(EIN=='kinder')return kopf+`<div class="card"><b>Kinder anlegen</b><p class="small">Jedes Kind bekommt einen eigenen Hof. Name, Klasse und Zeit pro Tag lassen sich später in der Eltern-Ansicht ändern.</p>`+
   S.kids.map(k=>`<div class="row sp" style="align-items:center"><span>${esc(k.name)} <span class="small">Klasse ${k.g}</span></span><select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></div>`).join('')+
   `<div class="row" style="margin-top:8px"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name" onkeydown="if(event.key=='Enter')add()">${klassenWahl()}<button onclick="add()">Hinzufügen</button></div></div><button class="go" onclick="einFertig()">${S.kids.length?'Fertig, auf zum Hof':'Später anlegen'}</button>`;
+ if((EIN=='e'||(EIN=='k'&&!EINPIN))&&pinZu())return kopf+pinZuKarte()+zur;// PIN-Sperre: keine PIN-Eingabe (seit 2026-10-24)
  if(EIN=='e')return kopf+VORTEILE+`<div class="card${S.pin?' pinkarte':''}">${S.pin?'<b>PIN eingeben</b><p class="small">Auf diesem Gerät gibt es schon eine PIN. Gib sie einmal ein, um den Eltern-Modus zu bestätigen.</p>'
   :'<b>PIN festlegen</b><p class="small">Mit der PIN öffnest du später die Eltern-Ansicht. Mindestens 4 Zeichen. Die Kinder sollten sie nicht kennen.</p>'}${pinFeld('einEltern','Weiter')}${pinI()}</div>`+pinResetKarte()+zur;
  if(EIN=='k')return kopf+(S.pin&&!EINPIN?`<div class="card pinkarte"><b>Kind-Modus</b><p>Auf diesem Gerät schützt eine PIN die Eltern-Ansicht. Für den Kind-Modus muss ein Elternteil sie einmal eingeben. Danach wird die PIN entfernt und die Einstellungen sind für alle offen.</p>${pinFeld('einKind','Weiter')}${pinI()}</div>${pinResetKarte()}`
@@ -421,18 +465,19 @@ function startAbfrage(){
   `<button class="big" onclick="EIN='e';warn='';ui()"><span><b>Ich bin ein Elternteil</b><br><span class="small">und richte die App für meine Kinder ein (mit PIN)</span></span></button>`+
   `<button class="big" onclick="EIN='k';warn='';ui()"><span><b>Ich bin das Kind</b><br><span class="small">und darf selbst entscheiden (ohne PIN)</span></span></button></div>`+(S.kids.length?'':VORTEILE)}
 function einEltern(){const el=$('#pin0'),p=el?el.value.trim():'';
- if(S.pin){if(p!==S.pin){warn='Falsche PIN.';ui();warn='';return}}
+ if(S.pin){if(!p)return;const r=pinPruef(p);if(r!==true){warn=r;ui();warn='';return}}// leeres Feld zählt nicht als Fehlversuch
  else{if(p.length<4){warn='Die PIN braucht mindestens 4 Zeichen.';ui();warn='';return}S.pin=p}
  delete S.np;S.mo='e';EIN='kinder';save();ui();scrollTo(0,0)}
 function einKind(){
- if(S.pin&&!EINPIN){const el=$('#pin0'),p=el?el.value.trim():'';if(p!==S.pin){warn='Falsche PIN.';ui();warn='';return}EINPIN=true;ui();return}
+ if(S.pin&&!EINPIN){const el=$('#pin0'),p=el?el.value.trim():'';if(!p)return;const r=pinPruef(p);if(r!==true){warn=r;ui();warn='';return}EINPIN=true;ui();return}
  const frisch=!S.kids.length;
  if(frisch){const n=$('#nm');if(!n||!n.value.trim()){warn='Bitte gib deinen Namen ein.';ui();warn='';return}add()}
  if(EINPIN){S.pin='';open=false}S.np=1;S.mo='k';EIN='';EINPIN=false;save();
  if(frisch&&!BES)sel(S.kids[0].id);else einWeiter()}
 function einFertig(){EIN='';einWeiter()}
 function einWeiter(){v=BES?'besuch':'home';ui();scrollTo(0,0)}
-function sel(id){cur=id;ZW=0;TRNOTE='';const k=kid();if(!k)return;if(!k.h&&!k.f)FE={...FIGUR0};v=ausZeit(k)?'bye':!k.h&&!k.f?'figur':'kid';ui();scrollTo(0,0)}
+function sel(id){if(pinZu()){v='home';ui();return}// PIN-Sperre: kein Kind auf den Hof (seit 2026-10-24)
+ cur=id;ZW=0;TRNOTE='';const k=kid();if(!k)return;if(!k.h&&!k.f)FE={...FIGUR0};v=ausZeit(k)?'bye':!k.h&&!k.f?'figur':'kid';ui();scrollTo(0,0)}
 // Figur: Entwurf FE bearbeiten und übernehmen
 let FE={...FIGUR0};
 function figurEdit(){FE={...FIGUR0,...(kid().f||{})};note='';v='figur';ui();scrollTo(0,0)}
@@ -629,7 +674,19 @@ function lock(){open=false;ui()}
 // "Kind" auf einem Gerät mit PIN), erscheint nach 5 schnellen Tipps (innerhalb von 3 Sekunden, irgendwo auf den Bildschirm) oben rechts
 // ein kleines "i". Damit lässt sich eine neue PIN festlegen. Danach (oder beim Verlassen der Seite) ist das "i" wieder unsichtbar.
 let PINI=0,PINR=0,PINT=[],PINL=0,PINMSG='';
-const pinSeite=()=>!!S.pin&&((v=='parent'&&!open)||(v=='home'&&(EIN=='e'||(EIN=='k'&&!EINPIN))));
+// PIN-Sperre (seit 2026-10-24, Brain Dump): Nach PINMAX falschen Eingaben (alle PIN-Felder zusammen: Eltern-Ansicht, Startabfrage, neues Kind)
+// ist die App eine Stunde gesperrt. Kein Kind kommt auf den Hof, es lässt sich keine PIN eingeben, das "i" erscheint nicht.
+// Danach gibt es wieder PINMAX Versuche. Eine richtige PIN setzt den Zähler zurück. Gespeichert in S.pf (Fehlversuche) und S.ps (gesperrt bis).
+const pinZu=()=>!!S.pin&&!!S.ps&&Date.now()<S.ps;
+const pinUhr=()=>{const d=new Date(S.ps);return pd(d.getHours())+':'+pd(d.getMinutes())};
+const pinZuKarte=()=>`<div class="card pinzu"><b>Gesperrt bis ${pinUhr()} Uhr</b><p class="small">Die Eltern-PIN wurde ${PINMAX}-mal falsch eingegeben. Deshalb kann bis dahin kein Kind auf den Hof und es lässt sich keine PIN eingeben. Danach gibt es wieder ${PINMAX} Versuche.</p></div>`;
+// Prüft eine eingegebene PIN: true, wenn sie stimmt, sonst der Hinweistext (mit den verbleibenden Versuchen bzw. der Sperre)
+function pinPruef(p){if(pinZu())return`Gesperrt bis ${pinUhr()} Uhr.`;if(p===S.pin){if(S.pf){delete S.pf;save()}return true}
+ S.pf=(S.pf||0)+1;if(S.pf>=PINMAX){delete S.pf;S.ps=Date.now()+PINSPERRE;PINI=0;PINR=0;save();return`Die PIN wurde ${PINMAX}-mal falsch eingegeben. Gesperrt bis ${pinUhr()} Uhr.`}
+ save();const r=PINMAX-S.pf;return`Falsche PIN. Noch ${r} ${r==1?'Versuch':'Versuche'}.`}
+// Sperre abgelaufen: aufräumen und die Startseite bzw. Eltern-Ansicht neu zeichnen
+setInterval(()=>{if(S.ps&&Date.now()>=S.ps){delete S.ps;save();if(v=='home'||v=='parent')ui()}},5000);
+const pinSeite=()=>!!S.pin&&!pinZu()&&((v=='parent'&&!open)||(v=='home'&&(EIN=='e'||(EIN=='k'&&!EINPIN))));
 const pinI=()=>PINI&&!PINR?`<button class="pini" onclick="PINR=1;ui()" aria-label="PIN zurücksetzen">i</button>`:'';
 const pinResetKarte=()=>PINR?`<div class="card"><b>PIN vergessen?</b><p class="small">Lege eine neue PIN fest (mindestens 4 Zeichen).${v=='parent'?' Danach ist die Eltern-Ansicht offen.':' Danach gibst du sie oben ein.'}</p><input id="pinr" type="password" inputmode="numeric" maxlength="8" aria-label="Neue PIN" onkeydown="if(event.key=='Enter')pinReset()"> <button onclick="pinReset()">Neue PIN speichern</button> <button class="alt" onclick="PINI=0;PINR=0;ui()">Abbrechen</button><p class="no">${pw}</p></div>`:'';
 // Tipps zählen: Touch, Stift und Maus (ein Tipp kann mehrere Ereignisse auslösen, deshalb höchstens eins je 60 ms)
@@ -637,11 +694,21 @@ let PINTOUCH=0;
 function pinTipp(e){if(e&&e.type=='touchstart')PINTOUCH=Date.now();if(e&&e.type=='mousedown'&&Date.now()-PINTOUCH<800)return;if(!pinSeite()||PINI)return;const t=Date.now();if(t-PINL<60)return;PINL=t;PINT=[...PINT.filter(x=>t-x<3000),t];
  if(PINT.length>=5){PINT=[];PINI=1;const el=$('#pin')||$('#pin0'),w=el?el.value:'',id=el&&el.id;ui();const nn2=id&&$('#'+id);if(nn2)nn2.value=w}}
 (window.PointerEvent?['pointerdown']:['touchstart','mousedown']).forEach(e=>document.addEventListener(e,pinTipp,{passive:true}));
-function pinReset(){const el=$('#pinr'),p=el?el.value.trim():'';if(p.length<4){pw='Die PIN braucht mindestens 4 Zeichen.';ui();pw='';return}
- S.pin=p;delete S.np;PINI=0;PINR=0;
+function pinReset(){if(pinZu())return ui();const el=$('#pinr'),p=el?el.value.trim():'';if(p.length<4){pw='Die PIN braucht mindestens 4 Zeichen.';ui();pw='';return}
+ S.pin=p;delete S.np;delete S.pf;delete S.ps;PINI=0;PINR=0;// neue PIN: alte Fehlversuche zählen nicht mehr
  if(v=='parent'){S.mo='e';open=true;warn='';save();ui()}else{save();PINMSG='Neue PIN gespeichert. Gib sie jetzt oben ein.';ui();PINMSG=''}}
-function unl(){let p=$('#pin').value;if(!p)return;if(p==S.pin)open=true;else{warn='Falsche PIN.';ui();warn='';return}ui()}
-function gr(id,g){let k=S.kids.find(x=>x.id==id);k.g=+g;save();ui()}
+function unl(){const el=$('#pin');let p=el?el.value:'';if(!p)return;const r=pinPruef(p);if(r===true)open=true;else{warn=r;ui();warn='';return}ui()}
+function gr(id,g){let k=S.kids.find(x=>x.id==id);k.g=+g;
+ // Haken "noch nicht dran" gelten nur für die eigene Klasse: beim Klassenwechsel fallen die alten weg (seit 2026-10-24)
+ if(k.nd){k.nd=k.nd.filter(x=>KAT[k.g].schul.includes(x));if(!k.nd.length)delete k.nd}save();ui()}
+// Schulstoff "im Unterricht schon dran" (seit 2026-10-24, Brain Dump): In der Eltern-Ansicht je Kind ein Haken pro Thema der eigenen Klasse.
+// Nicht angehakte Themen (k.nd) kommen im Training nicht dran, üben kann das Kind sie trotzdem. NDAUF: die Liste dieses Kinds bleibt aufgeklappt.
+let NDAUF=null;
+function ndListe(k){const L=KAT[k.g].schul,nd=k.nd||[],dran=L.filter(x=>!nd.includes(x)).length;
+ return`<details class="ndl"${NDAUF==k.id?' open':''}><summary>Schulstoff im Unterricht: ${dran} von ${L.length} Themen schon dran</summary><p class="small">Nimm den Haken weg bei Themen, die in der Schule noch nicht dran waren. Sie kommen dann im Training nicht vor. Üben kann ${esc(k.name)} sie trotzdem.</p>`+
+  L.map(x=>`<label class="ndz"><input type="checkbox" data-nd="${x}"${nd.includes(x)?'':' checked'} onchange="ndSetz(${k.id},'${x}',this.checked)"> ${THEMA[x][1]}</label>`).join('')+`</details>`}
+function ndSetz(id,key,dran){const k=S.kids.find(x=>x.id==id);if(!k||!KAT[k.g].schul.includes(key))return;const nd=new Set(k.nd||[]);if(dran)nd.delete(key);else nd.add(key);
+ if(nd.size)k.nd=[...nd];else delete k.nd;NDAUF=id;save();ui()}
 // Tageslimit je Kind (Eltern-Ansicht): 0 = kein Limit, sonst 5 bis LIMMAX Minuten in 5er-Schritten. Wirkt sofort, auch am selben Tag.
 const limOptionen=k=>[0,...Array.from({length:LIMMAX/5},(_,i)=>(i+1)*5)].map(m=>`<option value="${m}"${limM(k)==m?' selected':''}>${m?m+' Minuten':'kein Limit'}</option>`).join('');
 function lim(id,m){let k=S.kids.find(x=>x.id==id);m=+m;if(!k||!Number.isInteger(m)||m<0||m>LIMMAX||m%5)return;k.lm=m;save();ui()}

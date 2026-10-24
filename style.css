@@ -156,3 +156,9 @@ body.fly #hwetter{height:100%;z-index:61}body.nohof #hwetter{visibility:hidden}
 .trinfo{font-size:17px;margin:10px 0 4px}
 /* PIN vergessen (seit 2026-10-22): kleines "i" auf der PIN-Seite, erst nach 5 schnellen Tipps sichtbar */
 .pinkarte{position:relative}.pini{position:absolute;right:10px;top:10px;width:28px;height:28px;min-height:0;padding:0;border-radius:50%;font:italic bold 15px Georgia,serif;line-height:26px}
+/* Erklärseite für Eltern und PIN-Sperre (seit 2026-10-24) */
+ul.info{margin:6px 0 0;padding-left:20px}ul.info li{margin:5px 0}
+.pinzu{border-color:#c0392b}.pinzu b{color:#c0392b}
+button.big:disabled{opacity:.5}
+/* Schulstoff "im Unterricht schon dran" in der Eltern-Ansicht (seit 2026-10-24) */
+details.ndl{margin:6px 0}details.ndl summary{cursor:pointer;font-size:15px}.ndz{display:block;margin:4px 0;font-size:15px}.ndz input{width:auto;min-height:0;margin-right:6px}
