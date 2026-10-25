@@ -107,7 +107,9 @@ const stirnschopf = f => [0, 1, 2].map(i => straehne(96 + i * 2.2, -214 + i * .8
 const DRECKF = '#6b4b2e';
 function vorderbein(id, fern, so = 0, dr = 0) {
   const o = fern ? 'bOf' : 'bO', u = fern ? 'bUf' : 'bU', h = fern ? 'hf' : 'hu', w = fern ? 'sockF' : 'sock';
-  return `<g id="${id}1"><path class="${o}" d="M-11 -16C-12 8 -8 28 -5.6 40L5.6 40C8 26 13 6 13 -16Z"/><circle class="${o}" cx="0" cy="42" r="6"/>` +
+  // Oberarm seit 2026-10-25 hinten breiter (Muskel), damit das Bein weich aus dem Körper wächst statt hart unter der Bauchlinie anzusetzen.
+  // Vorn bleibt er schmal wie früher, sonst ragt beim weit nach hinten gestreckten Bein (Galopp) eine Ecke unter der Brust heraus.
+  return `<g id="${id}1"><path class="${o}" d="M-20 -20C-14 -4 -11 16 -5.6 40L5.6 40C9 18 13 6 13 -16Z"/><circle class="${o}" cx="0" cy="42" r="6"/>` +
     `<g id="${id}2"><path class="${u}" d="M-5.4 42L-4.6 76L4.4 76L5.4 42Z"/><circle class="${u}" cx="-.2" cy="76" r="5.5"/>` +
     (so >= 3 ? `<path class="${w}" d="M-5.4 42L-4.6 76L4.4 76L5.4 42Z"/>` : so == 2 ? `<path class="${w}" d="M-5 59L-4.6 76L4.4 76L4.9 59Z"/>` : '') +
     (so >= 2 ? `<circle class="${w}" cx="-.2" cy="76" r="5.5"/>` : '') +
@@ -118,7 +120,8 @@ function vorderbein(id, fern, so = 0, dr = 0) {
 }
 function hinterbein(id, fern, so = 0, dr = 0) {
   const o = fern ? 'bOf' : 'bO', u = fern ? 'bUf' : 'bU', h = fern ? 'hf' : 'hu', w = fern ? 'sockF' : 'sock';
-  return `<g id="${id}1"><path class="${o}" d="M-18 -18C-25 8 -19 32 -16 46L-4 49C-2 30 6 10 17 -14Z"/><circle class="${o}" cx="-10" cy="48" r="6.4"/><circle class="${o}" cx="-15.5" cy="45.5" r="4"/>` +
+  // Oberschenkel seit 2026-10-25 hinten runder (Hinterbacke), damit kein Knick zwischen Körper und Bein entsteht
+  return `<g id="${id}1"><path class="${o}" d="M-21 -20C-29 10 -20 32 -16 46L-4 49C-2 30 6 10 18 -16Z"/><circle class="${o}" cx="-10" cy="48" r="6.4"/><circle class="${o}" cx="-15.5" cy="45.5" r="4"/>` +
     (dr ? `<g class="dreck"><ellipse cx="-8" cy="20" rx="5" ry="3.6" fill="${DRECKF}" opacity=".32"/></g>` : '') +
     `<g id="${id}2"><path class="${u}" d="M-15.2 48L-12.8 80L-3.6 80L-4.8 48Z"/><circle class="${u}" cx="-8.2" cy="80" r="5.5"/>` +
     (so >= 3 ? `<path class="${w}" d="M-15.2 48L-12.8 80L-3.6 80L-4.8 48Z"/>` : so == 2 ? `<path class="${w}" d="M-14 64L-12.8 80L-3.6 80L-4.2 64Z"/>` : '') +
@@ -244,15 +247,16 @@ function bild(P, sp, opt = {}) {
 // ---------- Bewegung ----------
 const rot = (el, a, p) => el.setAttribute('transform', `rotate(${r1(a)} ${p[0]} ${p[1]})`);
 const GANG = {
-  walk: { duty: .62, A: { v: 21, h: 19 }, flex: { v: 64, h: 36 }, off: { hn: 0, vn: .25, hf: .5, vf: .75 }, halt: [6, 0, 0] },
-  trot: { duty: .5, A: { v: 26, h: 23 }, flex: { v: 80, h: 46 }, off: { hn: 0, vf: 0, hf: .5, vn: .5 }, halt: [10, -3, 4] },
-  gallop: { duty: .4, A: { v: 36, h: 31 }, flex: { v: 100, h: 58 }, off: { hf: 0, hn: .12, vf: .45, vn: .57 }, halt: [20, -4, 10] }
+  walk: { duty: .62, A: { v: 21, h: 19 }, flex: { v: 64, h: 36 }, lift: 20, off: { hn: 0, vn: .25, hf: .5, vf: .75 }, halt: [6, 0, 0] },
+  trot: { duty: .5, A: { v: 26, h: 23 }, flex: { v: 86, h: 46 }, lift: 42, off: { hn: 0, vf: 0, hf: .5, vn: .5 }, halt: [10, -3, 4] },
+  gallop: { duty: .4, A: { v: 36, h: 31 }, flex: { v: 100, h: 58 }, lift: 40, off: { hf: 0, hn: .12, vf: .45, vn: .57 }, halt: [20, -4, 10] }
 };
+// Seit 2026-10-25: Beim Vorschwingen hebt das Vorderbein das Knie nach vorn (lift), statt nur das Unterbein waagerecht nach hinten zu klappen
 function beinWinkel(g, typ, q) {
   const A = g.A[typ], d = g.duty; let a, s = 0;
   if (q < d) a = -A + 2 * A * (q / d); else { s = (q - d) / (1 - d); a = A - 2 * A * (.5 - .5 * Math.cos(Math.PI * s)); }
-  const fl = Math.sin(Math.PI * s) * g.flex[typ];
-  return typ === 'v' ? [a, fl, fl * .45] : [a * .9, -fl, fl * .6];
+  const sw = Math.sin(Math.PI * s), fl = sw * g.flex[typ];
+  return typ === 'v' ? [a - (g.lift || 0) * Math.pow(sw, .8), fl, fl * .35] : [a * .9, -fl, fl * .6];
 }
 const RUHE = { vn: [0, 0, 0], vf: [2, 0, 0], hn: [0, 0, 0], hf: [-3, 0, 0] };
 const GRASEN = { vn: [-13, 6, 2], vf: [6, 0, 0], hn: [4, 0, 0], hf: [-6, 0, 0] }, GRAS_HALS = [55, 50, -66];

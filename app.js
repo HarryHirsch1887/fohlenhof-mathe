@@ -90,9 +90,27 @@ const KEY='fohlenhof1',OLDKEY='mathegipfel1';
 // Prüft und bereinigt einen Spielstand (aus dem Browser oder einer importierten Datei). Gibt null zurück, wenn er unbrauchbar ist.
 const nn=(x,lo=0,hi=1e9)=>{x=+x;return Number.isFinite(x)?Math.min(hi,Math.max(lo,Math.floor(x))):lo};
 const ct=(x,n)=>String(x==null?'':x).slice(0,n);
+// PIN nur als Prüfsumme speichern (seit 2026-10-25, Brain Dump): "h1:" + Salz + ":" + SHA-256(Salz + ":" + PIN).
+// So lässt sich die PIN weder im Browser-Speicher noch in einer Sicherung im Klartext lesen (Eltern nehmen oft dieselbe PIN wie anderswo).
+// Es bleibt eine Kindersicherung: Wer an die Entwicklerwerkzeuge des Browsers kommt, kann den Speicher trotzdem ändern.
+// Alte Stände mit PIN im Klartext werden beim Laden umgestellt (pinLaden). SHA-256 ist hier selbst geschrieben, damit es auch per Doppelklick (file:) und ohne await läuft.
+function shaKonst(){const P=[];for(let n=2;P.length<64;n++)if(P.every(p=>n%p))P.push(n);const f=x=>(x-Math.floor(x))*4294967296|0;return{K:P.map(p=>f(Math.cbrt(p))),H:P.slice(0,8).map(p=>f(Math.sqrt(p)))}}
+function sha256(str){const {K,H}=sha256.k||(sha256.k=shaKonst()),b=new TextEncoder().encode(str),l=b.length,n=((l+9+63)>>6)<<6,m=new Uint8Array(n);m.set(b);m[l]=128;
+ const dv=new DataView(m.buffer);dv.setUint32(n-4,l*8);const w=new Int32Array(64);let h=H.slice();
+ for(let i=0;i<n;i+=64){for(let t=0;t<16;t++)w[t]=dv.getInt32(i+t*4);
+  for(let t=16;t<64;t++){const a=w[t-15],c=w[t-2];w[t]=(w[t-16]+((a>>>7|a<<25)^(a>>>18|a<<14)^(a>>>3))+w[t-7]+((c>>>17|c<<15)^(c>>>19|c<<13)^(c>>>10)))|0}
+  let [A,B,C,Dd,E,F,G,Hh]=h;
+  for(let t=0;t<64;t++){const t1=(Hh+((E>>>6|E<<26)^(E>>>11|E<<21)^(E>>>25|E<<7))+((E&F)^(~E&G))+K[t]+w[t])|0,t2=(((A>>>2|A<<30)^(A>>>13|A<<19)^(A>>>22|A<<10))+((A&B)^(A&C)^(B&C)))|0;
+   Hh=G;G=F;F=E;E=(Dd+t1)|0;Dd=C;C=B;B=A;A=(t1+t2)|0}
+  h=[A,B,C,Dd,E,F,G,Hh].map((x,j)=>(x+h[j])|0)}
+ return h.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('')}
+const PINH=/^h1:[0-9a-f]{16}:[0-9a-f]{64}$/;
+function pinHash(p){const salz=[...crypto.getRandomValues(new Uint8Array(8))].map(x=>x.toString(16).padStart(2,'0')).join('');return'h1:'+salz+':'+sha256(salz+':'+p)}
+function pinGleich(p){const s=S.pin||'';if(!s||!p)return false;if(!PINH.test(s))return p===s;const [,salz,h]=s.split(':');return sha256(salz+':'+p)===h}
+function pinLaden(x){if(typeof x==='string'&&PINH.test(x))return x;const p=ct(x,8);return p?pinHash(p):''}
 function clean(d){
  if(!d||typeof d!=='object'||!Array.isArray(d.kids))return null;
- const o={pin:ct(d.pin,8),kids:[]};if(d.np&&!o.pin)o.np=1;
+ const o={pin:pinLaden(d.pin),kids:[]};if(d.np&&!o.pin)o.np=1;
  // pf = falsche PIN-Eingaben seit der letzten richtigen, ps = gesperrt bis (Zeitstempel, höchstens eine Stunde ab jetzt, abgelaufen fällt weg).
  // Obergrenze für nn ausdrücklich angeben, sonst begrenzt nn auf 1e9 und ein Zeitstempel wäre immer abgelaufen.
  if(o.pin){const jetzt=Date.now(),pf=nn(d.pf,0,PINMAX-1),ps=nn(d.ps,0,jetzt+PINSPERRE);if(pf)o.pf=pf;if(ps>jetzt)o.ps=ps}
@@ -167,6 +185,10 @@ let S={pin:'',kids:[]},v='home',cur=null,Q=null,open=false,warn='',note='',pw=''
 let NKN='',NKG=5,NKW='',REIN=0;
 try{S=clean(JSON.parse(localStorage.getItem(KEY)||localStorage.getItem(OLDKEY)||'null'))||S}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));warn=''}catch(e){warn='Speichern im Browser nicht möglich. Bitte Sicherung exportieren.'}};
+// Stand mit PIN im Klartext (vor 2026-10-25): gleich als Prüfsumme speichern, auch unter dem alten Schlüssel keinen Klartext stehen lassen
+// (nur, wenn das Laden geklappt hat, damit ein kaputter Stand nicht sofort überschrieben wird)
+try{const roh=JSON.parse(localStorage.getItem(KEY)||'null');if(roh&&roh.pin&&!PINH.test(roh.pin)&&PINH.test(S.pin))save()}catch(e){}
+try{const alt=JSON.parse(localStorage.getItem(OLDKEY)||'null');if(alt&&alt.pin&&!PINH.test(alt.pin)){alt.pin=pinLaden(alt.pin);localStorage.setItem(OLDKEY,JSON.stringify(alt))}}catch(e){}
 const $=s=>document.querySelector(s),kid=()=>S.kids.find(k=>k.id==cur);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ts=(k,key)=>k.t[key]||(k.t[key]={d:1,n:0,r:0,run:0});
@@ -304,7 +326,7 @@ function ui(){let h='';PZ=0;
  if(Q.fb)Q.af=Q.i;else Q.az=Q.i;Q.bw=bw;ANI={apfel:fliegt};
  h=`<div class="row sp qkopf"><button class="alt" onclick="if(ausZeit(kid()))bye();else{v='kid';ui()}">Beenden</button><span class="qthema">${t[1]} ${dots(s.d)}</span><span class="ap" id="apz">${(k.ap||0)-(fliegt?Q.fb.a:0)} ${AP}</span></div><div class="bar" style="margin:12px 0"><b style="width:${ba}%" data-w="${bw}"></b></div><p class="small">Aufgabe ${Q.i+1} von 10${Q.rp?' · <b>Nochmal versuchen:</b> Die kennst du schon aus dem Fehlerheft':''}</p><div class="${neuQ?'rein':''}">${zeichnung(q[4])}<div class="q">${esc(ft)}</div></div>`+
  (Q.hint&&q[2]?`<p class="small">Tipp: ${esc(de(q[2]))}</p>`:'')+
- (Q.fb?`${Q.fb.ok&&k.h?`<div style="max-width:300px">${scene(k,Q.fb.an)}</div>`:''}<p class="${Q.fb.ok?'ok':'no'}${neuF?(Q.fb.ok?' funkeln':' wackel'):''}">${neuF&&Q.fb.ok&&!RM?STERNE:''}<b>${Q.fb.ok?'Richtig! +'+Q.fb.g+' Erfahrung, +'+Q.fb.a+' Äpfel':'Leider falsch. Richtig ist '+mitEinheit(q[1],fe)+'.'}</b>${Q.fb.m?' '+Q.fb.m:''}</p>${!Q.fb.ok&&q[3]?`<div class="card${neuF?' rein2':''}" style="white-space:pre-line;font-size:16px"><b>So geht’s:</b>\n${esc(de(q[3]))}</div>`:''}<button class="go" onclick="nx()">${Q.i==9?'Fertig':'Weiter'} (Enter)</button>`:
+ (Q.fb?`${Q.fb.ok&&k.h?`<div style="max-width:300px">${scene(k,Q.fb.an)}</div>`:''}<p class="${Q.fb.ok?'ok':'no'}${neuF?(Q.fb.ok?' funkeln':' wackel'):''}">${neuF&&Q.fb.ok&&!RM?STERNE:''}<b>${Q.fb.ok?'Richtig! +'+Q.fb.g+' Erfahrung, +'+Q.fb.a+(Q.fb.a==1?' Apfel':' Äpfel'):'Leider falsch. Richtig ist '+mitEinheit(q[1],fe)+'.'}</b>${Q.fb.m?' '+Q.fb.m:''}</p>${!Q.fb.ok&&q[3]?`<div class="card${neuF?' rein2':''}" style="white-space:pre-line;font-size:16px"><b>So geht’s:</b>\n${esc(de(q[3]))}</div>`:''}${Q.fb.ok&&q[3]?(warumOffen()?`<div class="card warum" style="white-space:pre-line;font-size:16px"><b>Darum ist es richtig:</b>\n${esc(de(q[3]))}</div>`:`<button class="tipp" onclick="Q.warum=1;ui()">Warum ist das richtig?</button>`):''}<button class="go" onclick="nx()">${Q.i==9?'Fertig':'Weiter'} (Enter)</button>`:
  // Eingabe (seit 2026-10-19): Feld mit Einheit und "Prüfen" in einer Zeile, der Tipp als unauffälliger Link darunter
  `<div class="antwort${neuQ?' rein2':''}"><span class="antw"><input id="ans" autocomplete="off" aria-label="Antwort${fe?' in '+esc(fe):''}" onkeydown="if(event.key=='Enter')chk()">${fe?`<span class="einheit">${esc(fe)}</span>`:''}</span><button class="go pruefen" onclick="chk()">Prüfen</button></div>${q[2]&&!Q.hint?'<button class="tipp" onclick="tip()">Tipp anzeigen (halbe Punkte)</button>':''}`)}
  // Rundenende: Konfetti und Hufeisen bei 10 von 10, neue Abzeichen und Wachstum ploppen auf (nur beim ersten Anzeigen)
@@ -341,7 +363,7 @@ function ui(){let h='';PZ=0;
    `Alle Spielstände liegen nur im Browser auf diesem Gerät. Die App schickt nichts an einen Server. Beim Aufrufen der Seite sieht nur der Webserver (GitHub Pages) die üblichen technischen Daten, wie bei jeder Webseite.`,
    `Die App lädt keine fremden Inhalte nach und sperrt das auch selbst ab.`,
    `„Freundin einladen“: Der QR-Code bzw. Link enthält nur den Vornamen, den Namen des Pferds und das Aussehen von Pferd und Figur. Diese Angaben stehen hinter dem „#“ im Link und gehen beim Öffnen nicht an den Webserver. Den QR-Code scannt die Freundin direkt, einen Link schickt ihr zum Beispiel per Messenger.`,
-   `Die PIN ist eine Kindersicherung. Sie liegt unverschlüsselt im Browser und schützt nicht vor jemandem, der das Gerät technisch untersucht.`])+`</div>`+
+   `Die PIN ist eine Kindersicherung. Sie wird nicht im Klartext gespeichert, sondern als Prüfsumme. Man sieht sie also nicht einfach im Browser-Speicher oder in der Sicherung. Vor jemandem, der das Gerät technisch untersucht, schützt sie trotzdem nicht: Eine kurze PIN lässt sich mit Technik herausfinden, und der Speicher lässt sich ändern.`])+`</div>`+
   `<div class="card"><b>Installieren und offline nutzen</b>`+li([`Im Browser „Zum Startbildschirm hinzufügen“ bzw. „App installieren“ wählen. Danach läuft die App auch ohne Internet.`,
    `Der Spielstand gehört zu Gerät und Browser. Für einen Gerätewechsel die Sicherung exportieren und auf dem neuen Gerät importieren.`])+`</div>`+zur}
  if(v=='parent'){h=`<button class="alt" onclick="v='home';lock()">Zurück</button><h1>${S.pin?'Eltern-Ansicht':'Einstellungen'}</h1>`;
@@ -438,7 +460,7 @@ function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();
  if(nkPin()){const p=($('#nkpin')||{}).value||'',r=p||pinZu()?pinPruef(p):'Bitte gib die Eltern-PIN ein.';if(r!==true){NKN=n;NKG=+$('#gr').value;NKW=r;ui();NKW='';const f=$('#nkpin');if(f)f.focus();return}}
  NKN='';NKG=5;S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},neu:1});save();ui()}
 // PIN festlegen: ohne id beim ersten Start (Feld pin0), mit id='pin1' nachträglich in den Einstellungen
-function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=p;delete S.np;delete S.pf;delete S.ps;S.mo='e';if(id)open=true;save();ui()}
+function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=pinHash(p);delete S.np;delete S.pf;delete S.ps;S.mo='e';if(id)open=true;save();ui()}
 function nopin(){S.np=1;S.mo='k';save();ui()}
 function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellungen öffnen.'))return;S.pin='';delete S.pf;delete S.ps;S.np=1;S.mo='k';open=false;save();ui()}
 // ---------- Startabfrage (seit 2026-10-21, siehe Notiz "Ideen Elternbereich und Startabfrage") ----------
@@ -471,7 +493,7 @@ function startAbfrage(){
   `<button class="big" onclick="EIN='k';warn='';ui()"><span><b>Ich bin das Kind</b><br><span class="small">und darf selbst entscheiden (ohne PIN)</span></span></button></div>`+(S.kids.length?'':VORTEILE)}
 function einEltern(){const el=$('#pin0'),p=el?el.value.trim():'';
  if(S.pin){if(!p)return;const r=pinPruef(p);if(r!==true){warn=r;ui();warn='';return}}// leeres Feld zählt nicht als Fehlversuch
- else{if(p.length<4){warn='Die PIN braucht mindestens 4 Zeichen.';ui();warn='';return}S.pin=p}
+ else{if(p.length<4){warn='Die PIN braucht mindestens 4 Zeichen.';ui();warn='';return}S.pin=pinHash(p)}
  delete S.np;S.mo='e';EIN='kinder';save();ui();scrollTo(0,0)}
 function einKind(){
  if(S.pin&&!EINPIN){const el=$('#pin0'),p=el?el.value.trim():'';if(!p)return;const r=pinPruef(p);if(r!==true){warn=r;ui();warn='';return}EINPIN=true;ui();return}
@@ -659,6 +681,8 @@ function glMerken(k,key,d,q){if(q[4]||!Number.isFinite(+q[1])||!SCHUL.has(key)||
 // Sieht die Eingabe wie eine Zahl mit Tausenderpunkten aus ("250.000"), gilt sie zusätzlich auch so. Ergebnis: Liste der möglichen Werte, leer = keine Zahl.
 function eingabe(v){const t=String(v).trim().replace(/(\d)\s+(?=\d{3}(?!\d))/g,'$1').replace(/−/g,'-'),d=t.replace(',','.'),w=[];// \s erfasst auch geschützte und schmale Leerzeichen
  if(d!==''&&!isNaN(d))w.push(+d);if(/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(t))w.push(+t.replace(/\./g,''));return w}
+// Erklärung auch bei richtiger Antwort (Brain Dump 2026-10-25, falls geraten): auf Knopfdruck, bei Logik-Rätseln gleich offen
+const warumOffen=()=>!!(Q&&(Q.warum||Q.key==='logik'));
 function chk(){let k=kid(),s=ts(k,Q.key),w=eingabe($('#ans').value);if(!w.length)return $('#ans').focus();
  let ok=w.some(x=>Math.abs(x-Q.q[1])<1e-9),g=0,a=0,m='';k.total++;s.n++;
  if(ok){s.r++;k.r++;k.s++;k.best=Math.max(k.best,k.s);Q.right++;g=Math.round((8+3*s.d)*(Q.hint?.5:1))+(k.s>=5?5:0);a=1+(s.d>=4?1:0);if(frueherThema(k,Q.key))a=Math.ceil(a/2);k.xp+=g;k.ap=(k.ap||0)+a;Q.gain+=g;Q.ap+=a;s.run=s.run>0?s.run+1:1;
@@ -679,7 +703,7 @@ function nx(){Q.i++;if(Q.i>=10){let k=kid();if(Q.right==10){k.perfect++;BD.forEa
   if(KNOBEL.has(Q.key))k.kn=(k.kn||0)+1;else if(Q.right>=FREI){if((k.kn||0)>=KNMAX)Q.knfrei=1;k.kn=0}else if((k.kn||0)>=KNMAX)Q.knzu=1;
   const w=tagZaehlt(k),st=stg(k);Q.grow=w.grow||'';
   Q.tg=w.neu&&k.h&&st<3?(w.grow?`Bis „${GS[st+1].n}“ braucht es jetzt ${TAGE[st]} Tage mit Mathe.`:`Heute zählt fürs Wachstum: Tag ${k.sd} von ${TAGE[st]} bis „${GS[st+1].n}“.`):'';
-  save();v='done'}else{Q.q=gen();Q.fb=null;Q.hint=0}ui()}
+  save();v='done'}else{Q.q=gen();Q.fb=null;Q.hint=0;Q.warum=0}ui()}
 // Sperren: muss eine Funktion sein. In onclick-Attributen würde "open=false" sonst document.open überschreiben statt diese Variable.
 function lock(){open=false;ui()}
 // PIN vergessen (seit 2026-10-22, Brain Dump): Auf jeder Seite, die nach der PIN fragt (Eltern-Ansicht, Startabfrage "Elternteil" und
@@ -693,7 +717,7 @@ const pinZu=()=>!!S.pin&&!!S.ps&&Date.now()<S.ps;
 const pinUhr=()=>{const d=new Date(S.ps);return pd(d.getHours())+':'+pd(d.getMinutes())};
 const pinZuKarte=()=>`<div class="card pinzu"><b>Gesperrt bis ${pinUhr()} Uhr</b><p class="small">Die Eltern-PIN wurde ${PINMAX}-mal falsch eingegeben. Deshalb kann bis dahin kein Kind auf den Hof und es lässt sich keine PIN eingeben. Danach gibt es wieder ${PINMAX} Versuche.</p></div>`;
 // Prüft eine eingegebene PIN: true, wenn sie stimmt, sonst der Hinweistext (mit den verbleibenden Versuchen bzw. der Sperre)
-function pinPruef(p){if(pinZu())return`Gesperrt bis ${pinUhr()} Uhr.`;if(p===S.pin){if(S.pf){delete S.pf;save()}return true}
+function pinPruef(p){if(pinZu())return`Gesperrt bis ${pinUhr()} Uhr.`;if(pinGleich(p)){if(S.pf){delete S.pf;save()}return true}
  S.pf=(S.pf||0)+1;if(S.pf>=PINMAX){delete S.pf;S.ps=Date.now()+PINSPERRE;PINI=0;PINR=0;save();return`Die PIN wurde ${PINMAX}-mal falsch eingegeben. Gesperrt bis ${pinUhr()} Uhr.`}
  save();const r=PINMAX-S.pf;return`Falsche PIN. Noch ${r} ${r==1?'Versuch':'Versuche'}.`}
 // Sperre abgelaufen: aufräumen und die Startseite bzw. Eltern-Ansicht neu zeichnen
@@ -707,7 +731,7 @@ function pinTipp(e){if(e&&e.type=='touchstart')PINTOUCH=Date.now();if(e&&e.type=
  if(PINT.length>=5){PINT=[];PINI=1;const el=$('#pin')||$('#pin0'),w=el?el.value:'',id=el&&el.id;ui();const nn2=id&&$('#'+id);if(nn2)nn2.value=w}}
 (window.PointerEvent?['pointerdown']:['touchstart','mousedown']).forEach(e=>document.addEventListener(e,pinTipp,{passive:true}));
 function pinReset(){if(pinZu())return ui();const el=$('#pinr'),p=el?el.value.trim():'';if(p.length<4){pw='Die PIN braucht mindestens 4 Zeichen.';ui();pw='';return}
- S.pin=p;delete S.np;delete S.pf;delete S.ps;PINI=0;PINR=0;// neue PIN: alte Fehlversuche zählen nicht mehr
+ S.pin=pinHash(p);delete S.np;delete S.pf;delete S.ps;PINI=0;PINR=0;// neue PIN: alte Fehlversuche zählen nicht mehr
  if(v=='parent'){S.mo='e';open=true;warn='';save();ui()}else{save();PINMSG='Neue PIN gespeichert. Gib sie jetzt oben ein.';ui();PINMSG=''}}
 function unl(){const el=$('#pin');let p=el?el.value:'';if(!p)return;const r=pinPruef(p);if(r===true)open=true;else{warn=r;ui();warn='';return}ui()}
 function gr(id,g){let k=S.kids.find(x=>x.id==id);k.g=+g;

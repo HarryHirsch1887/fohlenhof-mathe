@@ -12,7 +12,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 4 bis 8 (Klasse
 - **Zeichnungen** bei allen Aufgaben mit Figur (Umfang & Fläche, Geometrie, Pythagoras): maßstabsgetreu, das Gesuchte als rotes „?“.
 - **Themen in Kategorien:** Schulstoff der eigenen Klasse, Mathe-Olympiade & Knobeln und aufklappbar der Schulstoff früherer Klassen zum Wiederholen.
 - 10 Aufgaben pro Runde, 5 Schwierigkeitsstufen pro Thema. Die Stufe steigt nach 3 richtigen Antworten in Folge und sinkt nach 2 falschen.
-- Tipps (kosten halbe Punkte) und bei falschen Antworten ein **Lösungsweg** zum Nachvollziehen.
+- Tipps (kosten halbe Punkte) und bei falschen Antworten ein **Lösungsweg** zum Nachvollziehen. Bei richtigen Antworten zeigt „Warum ist das richtig?“ den Lösungsweg (bei Logik-Rätseln gleich offen), falls man nur geraten hat.
 - **Fehlerheft:** Falsch beantwortete Aufgaben kommen in späteren Runden desselben Themas erneut dran.
 - Mehrere Kinder mit eigenem Fortschritt und eigenem Pferd.
 - **Eigene Figur:** Neue Kinder gestalten zuerst ihre Figur (Mädchen oder Junge, Hautfarbe, Haarfarbe, immer mit schwarzem Reithelm und Reitstiefeln). Reitshirt (Standard Blau) und Reitleggings (Standard Schwarz) gibt es in weiteren Farben gegen Äpfel: Im Editor lassen sie sich kostenlos anprobieren, bezahlt wird beim Speichern. Nach 5 richtigen Aufgaben dürfen sie ihr Fohlen aussuchen. Die eigene Figur steht auf dem Hof, die Figuren der anderen Kinder stehen hinter dem Zaun und schauen den Pferden zu. Kinder mit Pferd aus älteren Ständen bekommen einen Hinweis, dass sie eine Figur erstellen können.
@@ -20,7 +20,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 4 bis 8 (Klasse
 - **Persönlicher Hof:** Nach der Anmeldung zeigt der Hintergrund das Pferd des Kindes. Mit Äpfeln lassen sich Gegenstände bauen (Apfelbaum, Eiche, Blumenwiese, Heuballen, Wassertrog, Scheune, Teich, Windrad, Regenbogen, Unterstand und Stall).
 - **Motto (seit 2026-10-23):** Solange ein Motto läuft (Halloween vom 20.10. bis 02.11.), lässt es sich im Wunschbaum für 5 Hufeisen kaufen. Dann sieht auch der eigene Hof so aus, jedes Jahr wieder. Ein- und ausschalten ist kostenlos. Die Startseite zeigt das Motto immer.
 - **Rundflug:** Eine ruhige Fahrt über den ganzen Hof. Wischen zum Umschauen, Tippen auf ein Pferd zeigt den Namen.
-- Die Animation lässt sich in der Eltern-Ansicht ruhigstellen und stoppt bei "Bewegung reduzieren". Bei langsamen Geräten schaltet sie selbst um: zuerst ohne Umriss, dann auf die halbe Bildrate.
+- Die Animation lässt sich in der Eltern-Ansicht ruhigstellen und stoppt bei "Bewegung reduzieren". Sie läuft mit bis zu 60 Bildern pro Sekunde. Bei langsamen Geräten schaltet sie selbst schrittweise herunter: auf 30 Bilder pro Sekunde, dann ohne Umriss, zuletzt auf 15.
 - **Abzeichen individuell:** Blesse in 5 Formen (Stern, Flocke, Strich, Blesse, breite Blesse), weiße Socken in 4 Höhen je Bein und eigene Schecken-Flecken. Der Knopf „Neu anordnen“ im Wunschbaum würfelt sie kostenlos neu aus.
 - **Mähne und Zöpfe:** Ab der Stufe „Jährling“ lässt sich die Mähne kostenlos auf Kurz, Mittel oder Lang stellen. Zöpfe kosten 10 Äpfel (mit rosa Haargummi), weitere Gummifarben je 3 Äpfel.
 - **Wachstum über Tage mit Mathe:** Ein Tag zählt, wenn mindestens eine Runde fertig gerechnet wurde (höchstens einmal pro Tag). Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten.
@@ -60,8 +60,9 @@ Die Aufgaben werden zufällig erzeugt. Große Zahlen dürfen mit Leerzeichen ode
 ## Datenschutz
 
 - Die App hat **keine Server, kein Konto, keine Cookies, kein Tracking und keine Werbung**.
+- Die PIN der Eltern-Ansicht wird nicht im Klartext gespeichert, sondern nur als Prüfsumme (SHA-256 mit Zufallssalz). Sie ist eine Kindersicherung und kein Schutz vor jemandem, der den Browser-Speicher mit Entwicklerwerkzeugen ändert.
 - Namen, Fortschritt und PIN werden ausschließlich im **Browser des jeweiligen Geräts** gespeichert (`localStorage`). Sie werden nirgendwohin gesendet.
-- Der Spielstand gilt pro Gerät und Browser. Wer das Gerät wechselt oder die Browserdaten löscht, verliert ihn. Deshalb gibt es in der Eltern-Ansicht den Export. Die Sicherungsdatei enthält auch die PIN im Klartext und sollte nicht weitergegeben werden.
+- Der Spielstand gilt pro Gerät und Browser. Wer das Gerät wechselt oder die Browserdaten löscht, verliert ihn. Deshalb gibt es in der Eltern-Ansicht den Export. Die Sicherungsdatei enthält die PIN nur als Prüfsumme, sollte aber trotzdem sicher aufbewahrt werden.
 
 ## Ausprobieren
 

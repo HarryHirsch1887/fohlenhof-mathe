@@ -528,11 +528,12 @@ function hofFrame(ts){
  // Ruhiger Hintergrund: nur kurz nach einer Interaktion animieren
  // Katze und Mäuse laufen immer zu Ende (seit 2026-10-21), auch wenn die Bilder auf langsamen Geräten länger brauchen
  if(!HF.run&&ts>HF.bis&&!HF.katze&&!HF.maeuse&&!HF.fuehr){hofStop();return}
- const dt=(ts-HF.last)/1000;if(dt<(HF.iv||.033))return;HF.last=ts;const d=Math.min(dt,.1);HF.t+=d;
- // Sparmodus für langsame Geräte: kommen die Bilder dauerhaft zu spät (unter etwa 24 pro Sekunde),
- // zuerst den Umriss der Pferde weglassen, danach nur noch die halbe Bildrate zeichnen
- HF.sl=dt>(HF.iv||.033)*1.25?(HF.sl||0)+1:Math.max(0,(HF.sl||0)-1);
- if(HF.sl>40){HF.sl=0;if(!HF.spar){HF.spar=1;document.getElementById('hof').classList.add('ohneUmriss')}else if(!HF.iv)HF.iv=.066}
+ // Bildrate (seit 2026-10-25, vorher höchstens 30): bis zu 60 Bilder pro Sekunde, HF.iv = Mindestabstand zwischen zwei Bildern
+ const iv=HF.iv||.0166,dt=(ts-HF.last)/1000;if(dt<iv-.004)return;HF.last=ts;const d=Math.min(dt,.1);HF.t+=d;
+ // Sparmodus für langsame Geräte: kommen die Bilder dauerhaft zu spät, stuft die Weide schrittweise herunter:
+ // zuerst 30 Bilder pro Sekunde (wie früher), dann ohne Umriss der Pferde, zuletzt 15 Bilder pro Sekunde
+ HF.sl=dt>iv*1.3?(HF.sl||0)+1:Math.max(0,(HF.sl||0)-1);
+ if(HF.sl>40){HF.sl=0;if(iv<.03)HF.iv=.033;else if(!HF.spar){HF.spar=1;document.getElementById('hof').classList.add('ohneUmriss')}else if(iv<.06)HF.iv=.066}
  const span=HF.WW-HF.W;
  if(HF.mode=='fly'){if(HF.drag){}else if(HF.idle>0)HF.idle-=d;else{HF.cam+=HF.cv*d;if(HF.cam<=0){HF.cam=0;HF.cv=Math.abs(HF.cv)}if(HF.cam>=span){HF.cam=span;HF.cv=-Math.abs(HF.cv)}}}
  // Während Pflege, Tierarzt und Hufschmied (pflege.js) schwenkt die Kamera weich zum Geschehen (camX) und danach zurück
