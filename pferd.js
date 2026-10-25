@@ -161,7 +161,8 @@ const fleckSvg = L => L.map(([x, y, rx, ry, w]) => `<ellipse cx="${r1(x)}" cy="$
 const beinLage = m => ({ vn: [50 * m.bx, -100 * m.ls], vf: [42 * m.bx, -100 * m.ls - 2], hn: [-58 * m.bx, -104 * m.ls], hf: [-66 * m.bx, -104 * m.ls - 2] });
 
 const KOERPER = 'M40 -160C28 -156 16 -153 4 -153C-12 -153 -22 -157 -36 -158C-50 -160 -62 -161 -74 -157C-84 -154 -92 -146 -95 -132C-97 -120 -95 -108 -88 -98C-82 -90 -72 -86 -60 -88C-50 -90 -42 -92 -34 -90C-16 -86 12 -84 30 -88C40 -90 46 -94 52 -98C62 -100 74 -106 80 -116C85 -124 86 -134 80 -144C72 -154 56 -161 40 -160Z';
-const HALS1 = 'M36 -152Q43 -177 64 -185L96 -164C94 -150 90 -136 86 -124C70 -120 46 -134 36 -152Z';
+// Seit 2026-10-25 läuft die vordere Halskante tangential in die Brustlinie (Körper-Kontur bei 84 / -130) statt in einer Ecke bei 86 / -124 darüber hinauszuragen
+const HALS1 = 'M36 -152Q43 -177 64 -185L96 -164C94.5 -153 86 -142 84.3 -130C68 -122 46 -134 36 -152Z';
 const HALS2 = 'M64 -185Q67 -211 92 -219L106 -205C102 -190 99 -176 96 -164Z';
 const KOPF = 'M90 -212C98 -219 110 -213 117 -203C124 -191 132 -178 138 -167C142 -160 141 -152 135 -150C130 -149 126 -152 121 -154C115 -158 110 -163 104 -168C96 -173 89 -182 89 -193C89 -201 87 -207 90 -212Z';
 const linie = (d, o = .12, w = 1.6) => `<path class="det" d="${d}" fill="none" stroke="#000" stroke-opacity="${o}" stroke-width="${w}" stroke-linecap="round"/>`;
@@ -194,7 +195,7 @@ function bild(P, sp, opt = {}) {
   const flHals = fl.map(([x, y, rx, ry, w]) => { const X = x * m.bx, Y = m.by * (y + 100) - 100 * m.ls; return [(X - nx) / ns + 62, (Y - ny) / ns - 132, rx * m.bx / ns, ry * m.by / ns, w]; });
   const roh = `<g id="pferd"><defs>
 <linearGradient id="gK" gradientUnits="userSpaceOnUse" x1="0" y1="-232" x2="0" y2="-84"><stop offset="0" ${sv('k1')}/><stop offset=".46" ${sv('k1')}/><stop offset=".76" ${sv('k2')}/><stop offset="1" ${sv('k3')}/></linearGradient>
-<linearGradient id="gN" gradientUnits="userSpaceOnUse" x1="44" y1="-178" x2="94" y2="-140"><stop offset=".15" ${sv('k1')}/><stop offset="1" ${sv('k2')}/></linearGradient>
+<linearGradient id="gN" gradientUnits="userSpaceOnUse" x1="44" y1="-190" x2="84" y2="-128"><stop offset=".1" ${sv('k1')}/><stop offset="1" ${sv('k2')}/></linearGradient>
 <linearGradient id="gN2" gradientUnits="userSpaceOnUse" x1="70" y1="-200" x2="104" y2="-178"><stop offset=".1" ${sv('k1')}/><stop offset="1" ${sv('k2')}/></linearGradient>
 <linearGradient id="gH" gradientUnits="userSpaceOnUse" x1="96" y1="-214" x2="122" y2="-158"><stop offset=".2" ${sv('k1')}/><stop offset="1" ${sv('k2')}/></linearGradient>
 <linearGradient id="gB" gradientUnits="userSpaceOnUse" x1="0" y1="-2" x2="0" y2="48"><stop offset="0" ${sv('k3')}/><stop offset=".45" ${sv('k2')}/><stop offset="1" ${sv('k3')}/></linearGradient>

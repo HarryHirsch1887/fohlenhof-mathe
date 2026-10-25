@@ -114,9 +114,11 @@ button:disabled{opacity:.55;cursor:not-allowed}.pick.gesperrt svg{filter:graysca
 .hu{fill:var(--huf)}.hf{fill:var(--fhuf)}.ha1{fill:var(--h1);stroke:#000;stroke-opacity:.22;stroke-width:.8}.ha2{fill:var(--h2);stroke:#000;stroke-opacity:.18;stroke-width:.8}
 .glanz{fill:var(--k1);opacity:.55}.maul{fill:var(--maul);opacity:.8}.beh{fill:var(--h1);opacity:calc(var(--beh) * .85)}.aal{fill:none;stroke:var(--u);stroke-width:3.4;stroke-linecap:round;opacity:var(--aal)}
 .fleck{fill:#f4f1ea;opacity:var(--sch)}.blesse{fill:#f4f1ea;opacity:var(--bl)}.gummi2d{fill:var(--gu);stroke:#0004;stroke-width:.6}.schatten2d{fill:#2d4a1f;opacity:.22}
-.umriss{stroke:#2a1d14;stroke-opacity:.6;stroke-width:3.8;stroke-linejoin:round;--ohneUm:none}.fuell{stroke:none}
+.umriss{stroke:#2a1d14;stroke-width:3.8;stroke-linejoin:round;opacity:.6;--ohneUm:none}.fuell{stroke:none}/* Deckkraft am ganzen Umriss statt je Teil (seit 2026-10-25): überlappende Striche werden nicht mehr dunkler (Kehle, Brust, Beinansätze) */
 .ha1,.ha2,.glanz,.maul,.aal,.beh,.det,.fleck,.blesse,.gummi2d{display:var(--ohneUm,inline)}
 .hinten .umriss,.ohneUmriss .umriss{display:none}
+/* Umriss der Hofgegenstände (hof.js, umrGruppe): .umr ist die Kopie mit dickem Strich unter der Zeichnung, .ufuell die Zeichnung ohne Strich, .uin mit feinen Innenlinien. Im Sparmodus fällt der Umriss weg. */
+.umr{stroke:#2a1d14;stroke-width:1.7;stroke-linejoin:round;opacity:.6}.ufuell{stroke:none}.uin{stroke:#3a261466;stroke-width:.55;stroke-linejoin:round}.ohneUmriss .umr{display:none}
 /* 3D-Fenster (nur ausgewachsene Pferde); im Wunschbaum bleibt es beim Scrollen oben stehen */
 .d3{position:relative;height:220px;border-radius:14px;overflow:hidden;margin:10px 0;background:linear-gradient(#cfe5ef 0%,#e6f2ea 70%,#d8ebcc 100%);border:1px solid var(--line)}
 .d3.kleb{position:sticky;top:6px;z-index:3;box-shadow:0 4px 14px #0003}

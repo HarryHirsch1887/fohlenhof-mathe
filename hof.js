@@ -20,7 +20,7 @@ function buschel(x,y,h,seed,c){let d='';for(let k=0;k<5;k++){const bx=x+(k-2)*1.
 function grasStreifen(ww,n,y0,y1,h0,h1,seed,farben,frei){let s='';const p=[...Array(n)].map((_,i)=>[sr(seed+i)*ww,y0+sr(seed+i*7)*(y1-y0),i]).sort((a,b)=>a[1]-b[1]);for(const[x,y,i]of p){if(frei&&!frei(x,y))continue;s+=buschel(x,y,h0+sr(seed+i*3)*(h1-h0),seed+i,farben[i%farben.length])}return s}
 // Baum: Stamm mit Ästen, Krone aus Kreisen mit Licht oben links; Äpfel auf Wunsch
 function baum(x,y,s,dunkel,hell,apfel){
- let g=`<ellipse cx="${x}" cy="${y+1}" rx="${r1(22*s)}" ry="${r1(3*s)}" fill="#000" opacity=".13"/><path d="M${r1(x-3.4*s)} ${y}L${r1(x-2*s)} ${r1(y-26*s)}L${r1(x+2*s)} ${r1(y-26*s)}L${r1(x+3.4*s)} ${y}Z" fill="#6b4a2b"/><path d="M${r1(x-1)} ${r1(y-20*s)}L${r1(x-9*s)} ${r1(y-31*s)}M${r1(x+1)} ${r1(y-22*s)}L${r1(x+8*s)} ${r1(y-33*s)}" stroke="#6b4a2b" stroke-width="${r1(2.2*s)}" stroke-linecap="round"/>`;
+ let g=`<ellipse cx="${x}" cy="${y+1}" rx="${r1(22*s)}" ry="${r1(3*s)}" fill="#000" opacity=".13" stroke="none"/><path d="M${r1(x-3.4*s)} ${y}L${r1(x-2*s)} ${r1(y-26*s)}L${r1(x+2*s)} ${r1(y-26*s)}L${r1(x+3.4*s)} ${y}Z" fill="#6b4a2b"/><path d="M${r1(x-1)} ${r1(y-20*s)}L${r1(x-9*s)} ${r1(y-31*s)}M${r1(x+1)} ${r1(y-22*s)}L${r1(x+8*s)} ${r1(y-33*s)}" stroke="#6b4a2b" stroke-width="${r1(2.2*s)}" stroke-linecap="round"/>`;
  [[0,-40,17],[-13,-31,12],[13,-32,12],[-6,-50,11],[7,-48,10]].forEach(([a,b,r])=>g+=`<circle cx="${r1(x+a*s)}" cy="${r1(y+b*s)}" r="${r1(r*s)}" fill="${dunkel}"/>`);
  [[-4,-45,9],[-14,-34,6],[6,-51,6]].forEach(([a,b,r])=>g+=`<circle cx="${r1(x+a*s)}" cy="${r1(y+b*s)}" r="${r1(r*s)}" fill="${hell}" opacity=".75"/>`);
  if(apfel)[[-8,-44],[6,-36],[-14,-30],[12,-45],[0,-30],[-2,-52],[14,-33]].forEach(([a,b])=>g+=`<circle cx="${r1(x+a*s)}" cy="${r1(y+b*s)}" r="${r1(1.9*s)}" fill="#c0392b"/><circle cx="${r1(x+a*s-.5)}" cy="${r1(y+b*s-.6)}" r=".5" fill="#fff" opacity=".6"/>`);
@@ -87,7 +87,7 @@ DR.unterstand=x=>{const B=GY+12,L=x-24,R=x+24,yl=B-36,yr=B-28,y=t=>yl+(yr-yl)*(t
 DR.pferdestall=x=>{const B=GY+12,L=x-38,R=x+38,T=B-32,F=B-62;
  let s=`<ellipse cx="${x}" cy="${B+1}" rx="48" ry="4" fill="#000" opacity=".14" stroke="none"/><rect x="${L}" y="${T}" width="76" height="32" fill="#c99a5e"/>`+
   [...Array(9)].map((_,i)=>`<path d="M${L+(i+1)*7.6} ${T}V${B}" stroke="#a87a45" stroke-width=".55"/>`).join('')+
-  `<rect x="${L}" y="${T}" width="76" height="3" fill="#000" opacity=".18"/><rect x="${L}" y="${T}" width="2.6" height="32" fill="#f1e4c8"/><rect x="${R-2.6}" y="${T}" width="2.6" height="32" fill="#f1e4c8"/>`+
+  `<rect x="${L}" y="${T}" width="76" height="3" fill="#000" opacity=".18" stroke="none"/><rect x="${L}" y="${T}" width="2.6" height="32" fill="#f1e4c8"/><rect x="${R-2.6}" y="${T}" width="2.6" height="32" fill="#f1e4c8"/>`+
   [x-27,x+5].map(a=>`<rect x="${a}" y="${B-27}" width="22" height="27" fill="#f1e4c8"/><rect x="${a+1.6}" y="${B-25.5}" width="18.8" height="11" fill="#3a2a1c"/>`+
    `<path d="M${a+3} ${B-15}q3 -5 6 -1q2 -4 5 0q2 -3 4.5 1Z" fill="#e2b24a"/><rect x="${a+1.6}" y="${B-13}" width="18.8" height="13" fill="#9b6b40"/>`+
    `<path d="M${a+1.6} ${B-13}L${a+20.4} ${B}M${a+20.4} ${B-13}L${a+1.6} ${B}" stroke="#f1e4c8" stroke-width="1.4"/><rect x="${a+1.6}" y="${B-14.2}" width="18.8" height="1.6" fill="#f1e4c8"/>`).join('')+
@@ -102,13 +102,19 @@ function trennzaun(x){const P=[[x,GY],[x-6,GY+22],[x-13,GY+44],[x-21,GY+68]],h=y
  return`<g class="trennzaun">${s}</g>`}
 // Gebäude und Trennzäune eines Hofs: Hauptkoppel-Gebäude auf der freien Stelle zwischen Trog und Heuballen (.477),
 // auf Koppel 2 und 3 in der Mitte. Liefert SVG und die Flächen, auf denen kein Gras wachsen soll.
-function gebaeude(H,OX,WK,WW){let s='';const belegt=[],g=(u,x)=>{if(!u)return'';belegt.push([x-(u==2?40:27),x+(u==2?40:27),GY+12]);return`<g class="gebaeude" data-art="${u==2?'stall':'unterstand'}">${u==2?DR.pferdestall(x):DR.unterstand(x)}</g>`};
- s+=g(H.ko.u[0],Math.round(OX+.477*WK));
- if(H.ko.n>=2)s+=trennzaun(OX)+g(H.ko.u[1],Math.round(OX/2));
- if(H.ko.n>=3)s+=trennzaun(OX+WK)+g(H.ko.u[2],Math.round(OX+WK+(WW-OX-WK)/2));
+function gebaeude(H,OX,WK,WW){let s='';const belegt=[],g=(u,x,n)=>{if(!u)return'';belegt.push([x-(u==2?40:27),x+(u==2?40:27),GY+12]);return`<g class="gebaeude" data-art="${u==2?'stall':'unterstand'}">${umrGruppe('g'+n,u==2?DR.pferdestall(x):DR.unterstand(x))}</g>`};
+ s+=g(H.ko.u[0],Math.round(OX+.477*WK),0);
+ if(H.ko.n>=2)s+=trennzaun(OX)+g(H.ko.u[1],Math.round(OX/2),1);
+ if(H.ko.n>=3)s+=trennzaun(OX+WK)+g(H.ko.u[2],Math.round(OX+WK+(WW-OX-WK)/2),2);
  return{s,belegt}}
-// Fläche je Gegenstand für das Gras: [halbe Breite, Fußlinie]; UMR: Gegenstände mit feinem Umriss
+// Fläche je Gegenstand für das Gras: [halbe Breite, Fußlinie]; UMR: Gegenstände mit feinen Innenlinien
 const FUSS={stall:[37,GY+10],windrad:[9,GY+6],heu:[19,GY+16],troge:[17,GY+18],baum1:[6,GY+6],baum2:[7,GY+4]},UMR={stall:1,heu:1,troge:1};
+// Feiner Umriss der Hofgegenstände (seit 2026-10-25, wie bei den Pferden): Die Zeichnung steht unter sich selbst noch einmal als <use> mit dickem,
+// halbtransparentem Strich (.umr), darüber die normale Zeichnung ohne Strich. So entsteht nur ein Rand um die äußere Form, kein Strich um jedes Brett.
+// Die Kopie folgt Animationen von selbst (Tore, Wetterfahne). Innenlinien (.uin) haben nur Scheune, Heu und Trog (früher der Strich um jede Fläche, UMR).
+// Wichtig: Schatten im Gegenstand brauchen stroke="none", sonst bekommen sie einen Ring. Regeln in style.css.
+const UMRISS={baum1:1,baum2:1,heu:1,troge:1,stall:1};
+const umrGruppe=(id,z,innen)=>`<use href="#uo-${id}" class="umr"/><g class="${innen?'uin':'ufuell'}"><g id="uo-${id}">${z}</g></g>`;
 const hill=(ww,y0,amp,wl,ph,col)=>{let d=`M0 ${WH}`;for(let x=0;x<=ww+16;x+=16)d+=`L${x} ${(y0+amp*Math.sin(x/wl+ph)+amp*.5*Math.sin(x/(wl*.43)+ph*2)).toFixed(1)}`;return `<path d="${d}L${ww+16} ${WH}Z" fill="${col}"/>`};
 const hillY=(x,y0,amp,wl,ph)=>y0+amp*Math.sin(x/wl+ph)+amp*.5*Math.sin(x/(wl*.43)+ph*2);
 // Farben nach Tageszeit (echte Uhrzeit): t/m/b Himmel oben/Mitte/unten, far/mid Hügel, g1/g2 Wiese, w1/w2 Wolken, bu Büsche, glow Sonnenschein
@@ -187,11 +193,30 @@ const AKT={baum1:1,windrad:1,teich:1,heu:1,stall:1};// heu und stall seit 2026-1
 const mistSvg=m=>`<g class="mist" data-act="mist" data-id="${m.id}" transform="translate(${r1(m.x)} ${r1(m.y)}) scale(1.4)" style="cursor:pointer"><circle cy="-3" r="8" fill="#000" opacity="0"/><ellipse cy="-1.1" rx="4.2" ry="1.8" fill="#5e3f22"/><ellipse cx="-.5" cy="-2.7" rx="3.1" ry="1.5" fill="#6f4b2a"/><ellipse cx=".3" cy="-4.1" rx="2" ry="1.2" fill="#80582f"/><ellipse cx="-.6" cy="-4.5" rx=".7" ry=".35" fill="#fff" opacity=".25"/></g>`;
 const APFEL='<g class="apfel"><circle r="2.6" fill="#c0392b"/><circle cx="-.8" cy="-.9" r=".7" fill="#fff" opacity=".6"/><path d="M0 -2.5l.8 -1.6" stroke="#5a3b1d" stroke-width=".6"/></g>';
 // Stallkatze (seit 2026-10-21): grau getigert, steht mit den Pfoten auf y = 0, schaut nach rechts. .kb = Beine, .kk = Kopf, .ks = Schwanz, .kr = Körper (kippt beim Sitzen)
-const KATZE='<g class="katze"><g class="kr"><path class="ks" d="M-4 -3.4q-3.2 -1 -3.4 -4.8" stroke="#858a91" stroke-width="1.1" fill="none" stroke-linecap="round"/><ellipse cy="-3.1" rx="4.2" ry="2.1" fill="#8f949b"/><path d="M-2.6 -4.9l.8 1.2M-.8 -5.1l.6 1.3M1 -5l.5 1.2" stroke="#6c7178" stroke-width=".6"/></g>'+
- '<path class="kb" d="M-2.8 -1.4v1.4M-1.4 -1.4v1.4M1.6 -1.4v1.4M3 -1.4v1.4" stroke="#6c7178" stroke-width="1" stroke-linecap="round"/>'+
- '<g class="kk"><circle cx="4.4" cy="-5.1" r="2" fill="#8f949b"/><path d="M3.1 -6.3l.3 -1.9l1.2 1.3ZM4.9 -6.7l1 -1.6l.6 1.7Z" fill="#8f949b"/><circle cx="5.3" cy="-5.3" r=".35" fill="#2b2321"/><circle cx="6.3" cy="-4.8" r=".3" fill="#d98a8a"/><path d="M6.4 -4.7l1.5 -.4M6.4 -4.4l1.5 .2" stroke="#eee" stroke-width=".2"/></g></g>';
-// Maus (seit 2026-10-21): klein, grau, schaut nach rechts, Pfoten auf y = 0
-const MAUS='<g class="maus"><path d="M-1.8 -.8q-2 .2 -3 -1.2" stroke="#9b8f86" stroke-width=".35" fill="none"/><ellipse cy="-.9" rx="1.9" ry="1" fill="#8b8078"/><circle cx="1.7" cy="-1.2" r=".75" fill="#8b8078"/><circle cx="1.3" cy="-1.9" r=".5" fill="#c9a9a0"/><circle cx="2.2" cy="-1.3" r=".18" fill="#222"/></g>';
+// Seit 2026-10-25 mit feinem Umriss (dunkles Grau), Streifen, heller Brust, rosa Ohren, Augenlicht, Nase und Schnurrhaaren.
+// Die Beine (.kb) bekommen eine Umrisslinie darunter (.kbo), beide setzt hofSpass gemeinsam. Der Schwanz (.ks) ist eine Gruppe aus Umriss und Fell.
+const KATZE='<g class="katze" stroke="#4a4f57" stroke-width=".35" stroke-linejoin="round" stroke-linecap="round">'+
+ '<path class="kbo" d="M-2.8 -1.4v1.4M-1.4 -1.4v1.4M1.6 -1.4v1.4M3 -1.4v1.4" stroke-width="1.7" fill="none"/>'+
+ '<g class="kr"><g class="ks"><path d="M-4 -3.4q-3.2 -1 -3.4 -4.8" stroke-width="2" fill="none"/><path d="M-4 -3.4q-3.2 -1 -3.4 -4.8" stroke="#858a91" stroke-width="1.25" fill="none"/>'+
+ '<path d="M-6.9 -4.8L-6 -5.4M-7.7 -6.6L-6.7 -6.9" stroke="#5d6269" stroke-width=".4" fill="none"/><circle cx="-7.4" cy="-8" r=".6" fill="#5d6269" stroke="none"/></g>'+
+ '<ellipse cy="-3.1" rx="4.3" ry="2.2" fill="#8f949b"/><ellipse cx="2.9" cy="-2.5" rx="1.35" ry="1.4" fill="#e4e7ea" stroke="none"/><ellipse cx="-2.4" cy="-2.4" rx="1.7" ry="1.5" fill="#7a7f86" stroke="none" opacity=".4"/>'+
+ '<path d="M-2.6 -4.9l.8 1.2M-.8 -5.1l.6 1.3M1 -5l.5 1.2M-3.7 -4.3l.9 .9" stroke="#6c7178" stroke-width=".55" fill="none"/></g>'+
+ '<path class="kb" d="M-2.8 -1.4v1.4M-1.4 -1.4v1.4M1.6 -1.4v1.4M3 -1.4v1.4" stroke="#8f949b" stroke-width="1.05" fill="none"/>'+
+ '<g class="kk"><path d="M3.1 -6.4l.1 -2.5l1.7 1.6ZM4.9 -6.9l1.3 -1.9l.5 2.4Z" fill="#8f949b"/><path d="M3.6 -7l.1 -1.2l.8 .8ZM5.5 -7.2l.5 -1l.3 1.1Z" fill="#e9a9aa" stroke="none"/>'+
+  '<circle cx="4.4" cy="-5.1" r="2.1" fill="#8f949b"/><ellipse cx="5.7" cy="-4.4" rx="1.1" ry=".8" fill="#dfe2e5" stroke="none"/>'+
+  '<path d="M3.9 -6.8l.1 .9M4.6 -6.9v1M5.3 -6.8l-.1 .9" stroke="#6c7178" stroke-width=".3" fill="none"/>'+
+  '<circle cx="5.2" cy="-5.4" r=".42" fill="#2b2321" stroke="none"/><circle cx="5.35" cy="-5.55" r=".13" fill="#fff" stroke="none"/><circle cx="6.5" cy="-4.8" r=".3" fill="#e08a8f" stroke="none"/>'+
+  '<path d="M6.5 -4.6l1.7 -.5M6.5 -4.3l1.7 .3M3.2 -4.6l-1.4 -.4" stroke="#f0f0f0" stroke-width=".2" fill="none"/></g></g>';
+// Maus (seit 2026-10-21): klein, grau, schaut nach rechts, Pfoten auf y = 0. Seit 2026-10-25 mit feinem Umriss, rosa Ohr, Füßen, Nase und Schnurrhaaren.
+// Körper und Kopf werden zuerst mit Strich und dann noch einmal ohne Strich gezeichnet, damit zwischen beiden keine Linie bleibt.
+const MAUS='<g class="maus" stroke="#4a4039" stroke-width=".25" stroke-linejoin="round" stroke-linecap="round">'+
+ '<path d="M-1.8 -.8q-2.1 .3 -3.2 -1.5" stroke="#a98a82" stroke-width=".45" fill="none"/>'+
+ '<ellipse cx="-.8" cy="-.25" rx=".55" ry=".28" fill="#d9a9a0" stroke="none"/><ellipse cx="1" cy="-.25" rx=".5" ry=".26" fill="#d9a9a0" stroke="none"/>'+
+ '<ellipse cy="-1" rx="2" ry="1.1" fill="#8b8078"/><path d="M.8 -2.1Q3.7 -2 3.4 -1.2Q3 -.4 .8 -.5Z" fill="#8b8078"/>'+
+ '<ellipse cy="-1" rx="1.95" ry="1.05" fill="#8b8078" stroke="none"/><path d="M.8 -2.05Q3.6 -1.95 3.3 -1.2Q2.95 -.45 .8 -.55Z" fill="#8b8078" stroke="none"/>'+
+ '<circle cx="1.3" cy="-2.3" r=".85" fill="#8b8078"/><circle cx="1.35" cy="-2.3" r=".48" fill="#e0a9a3" stroke="none"/>'+
+ '<circle cx="2.4" cy="-1.5" r=".24" fill="#1c1917" stroke="none"/><circle cx="3.35" cy="-1.2" r=".22" fill="#e08a8f" stroke="none"/>'+
+ '<path d="M3 -1.1l1.1 -.35M3 -.95l1.1 .15" stroke="#d9d3cd" stroke-width=".13" fill="none"/></g>';
 // Frosch, steht mit den Füßen auf y = 0, schaut nach rechts; .kehle ist die Schallblase beim Quaken
 const FROSCH=`<g class="frosch"><ellipse cx="-2.2" cy="-1" rx="2.4" ry="1.1" fill="#3f7a2e"/><ellipse cy="-2.4" rx="3.4" ry="2.3" fill="#5aa13f"/><ellipse cx="2.3" cy="-3.2" rx="1.9" ry="1.5" fill="#5aa13f"/><circle class="kehle" cx="3" cy="-1.8" r="1.4" fill="#d9eaa0" opacity="0"/><circle cx="1.6" cy="-4.7" r="1" fill="#fff"/><circle cx="3.1" cy="-4.6" r="1" fill="#fff"/><circle cx="1.8" cy="-4.7" r=".45" fill="#111"/><circle cx="3.3" cy="-4.6" r=".45" fill="#111"/><path d="M1.6 -2.6q1.4 .7 2.6 -.2" stroke="#2d5a20" stroke-width=".35" fill="none"/><ellipse cx="1.4" cy="-.3" rx="1.2" ry=".4" fill="#3f7a2e"/></g>`;
 
@@ -321,7 +346,7 @@ function hofBuild(kind){
   grasStreifen(WW,Math.round(WW/9),GY-5,GY+3,2.4,4,350,gras,frei)+
   `<g fill="#a9805a">${[GY-6,GY].map(y=>`<rect x="0" y="${y-1}" width="${WW}" height="2.2" rx=".8"/><rect x="0" y="${y+1.2}" width="${WW}" height=".8" fill="#7d5c3c" opacity=".5"/>`).join('')}</g>`+
   [...Array(Math.ceil(WW/28)+1)].map((_,i)=>`<rect x="${i*28}" y="${GY-12}" width="3.2" height="18" rx=".8" fill="#9b7449"/><rect x="${i*28}" y="${GY-12}" width="1.1" height="18" rx=".5" fill="#b78c5e"/>`).join('')+
-  ITEMS.filter(i=>items.includes(i[0])&&DR[i[0]]).map(i=>{const z=DR[i[0]](Math.round(OX+i[3]*WK)),u=UMR[i[0]]?`<g stroke="#3a261466" stroke-width=".55" stroke-linejoin="round">${z}</g>`:z;
+  ITEMS.filter(i=>items.includes(i[0])&&DR[i[0]]).map(i=>{const z=DR[i[0]](Math.round(OX+i[3]*WK)),u=UMRISS[i[0]]?umrGruppe(i[0],z,UMR[i[0]]):z;
    return kind=='kid'&&AKT[i[0]]?`<g data-act="${i[0]}" style="cursor:pointer">${u}</g>`:u}).join('')+geb.s+drinSvg+
   grasStreifen(WW,Math.round(WW/6),GY+6,GY+14,3,5.5,200,gras,frei)+
   // Anbinder (kommt mit der Pflegekiste) und Glücks-Hufeisen nach dem ersten Hufschmied (seit 2026-10-25, pflege.js)
@@ -504,7 +529,8 @@ function hofSpass(dt){
   (HF.stor||[]).forEach(g=>{const hx=+g.dataset.x,c=1-.82*tor;g.setAttribute('transform',tor?`matrix(${c.toFixed(3)} 0 0 1 ${(hx-c*hx).toFixed(2)} 0)`:'')});
   if(HF.katze){const sc=1.2+.4*(ky-GY-9)/18,lf=!sitz&&sicht&&(t>.5&&t<2.5||t>5.5&&t<7.5);
    K.el.setAttribute('transform',`translate(${r1(kx)} ${r1(ky+(lf?-Math.abs(Math.sin(t*14))*.4:0))}) scale(${(dir*sc).toFixed(2)} ${sc.toFixed(2)})`);K.el.setAttribute('opacity',sicht?'1':'0');
-   K.el.querySelector('.kb').setAttribute('d',lf&&Math.sin(t*14)>0?'M-3.3 -1.4l-.5 1.4M-1 -1.4l.5 1.4M1.1 -1.4l-.5 1.4M3.4 -1.4l.5 1.4':sitz?'M-3.4 -1v1M-2.2 -1v1M1.5 0L1.9 -4.4M2.6 0L2.9 -4.6':'M-2.8 -1.4v1.4M-1.4 -1.4v1.4M1.6 -1.4v1.4M3 -1.4v1.4');
+   const kd=lf&&Math.sin(t*14)>0?'M-3.3 -1.4l-.5 1.4M-1 -1.4l.5 1.4M1.1 -1.4l-.5 1.4M3.4 -1.4l.5 1.4':sitz?'M-3.4 -1v1M-2.2 -1v1M1.5 0L1.9 -4.4M2.6 0L2.9 -4.6':'M-2.8 -1.4v1.4M-1.4 -1.4v1.4M1.6 -1.4v1.4M3 -1.4v1.4';
+   K.el.querySelectorAll('.kb,.kbo').forEach(p=>p.setAttribute('d',kd));// Beine und ihr Umriss (seit 2026-10-25)
    K.el.querySelector('.kr').setAttribute('transform',sitz?'rotate(-28 -3 -1.2)':'');
    K.el.querySelector('.kk').setAttribute('transform',sitz?`translate(-1.6 ${(-2.6+Math.max(0,Math.sin(t*5))*1.3).toFixed(2)})`:'');
    K.el.querySelector('.ks').setAttribute('transform',`rotate(${(Math.sin(t*(sitz?2.5:6))*14).toFixed(1)} -4 -3.4)`)}}
