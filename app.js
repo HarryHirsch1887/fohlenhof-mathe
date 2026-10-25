@@ -545,9 +545,12 @@ const frueherThema=(k,key)=>!T[k.g].some(t=>t[0]===key);
 // Kategorien: Schulstoff, Mathe-Olympiade & Knobeln, Sudoku (eigene Überschrift seit 2026-10-20), aufklappbar Wiederholen
 // Wiederholen: Themen früherer Klassen ohne die, die schon in der eigenen Klasse oder einer früheren Klasse stehen (z. B. Einmaleins in Klasse 4 und 5)
 const wdhListe=k=>{const da=new Set(T[k.g].map(t=>t[0]));return frueher(k).map(g=>[g,KAT[g].schul.filter(x=>!da.has(x)&&da.add(x))]).filter(([,L])=>L.length)};
+// Hinweis (seit 2026-10-25): Themen früherer Klassen, die es auch in der eigenen Klasse gibt (z. B. das Einmaleins in Klasse 4 und 5), stehen nur oben
+const wdhOben=k=>{const L=[...new Set(frueher(k).flatMap(g=>KAT[g].schul).filter(x=>KAT[k.g].schul.includes(x)))].map(x=>`„${THEMA[x][1]}“`);
+ return L.length?(L.length>1?` Die Themen ${undListe(L)} stehen`:` Das Thema ${L[0]} steht`)+' oben bei deinem Schulstoff.':''};
 function themen(k){const K=KAT[k.g],fr=frueher(k),kz=(k.kn||0)>=KNMAX;
  return`<h3 class="kat">Schulstoff Klasse ${k.g}</h3>${K.schul.map(x=>themaKnopf(k,x)).join('')}<h3 class="kat">Mathe-Olympiade & Knobeln</h3>${kz?`<p class="small knsperre">${KNHINWEIS}</p>`:''}${K.oly.map(x=>themaKnopf(k,x)).join('')}<h3 class="kat">Sudoku</h3>${K.sud.map(x=>themaKnopf(k,x)).join('')}`+
-  (fr.length?`<details class="wdh"><summary>Wiederholen: Klasse ${undListe(fr)}</summary><p class="small">Bei Themen früherer Klassen gibt es weniger Äpfel: auf Stufe 4 und 5 nur 1 statt 2.</p>${wdhListe(k).map(([g,L])=>`<h3 class="kat">Schulstoff Klasse ${g}</h3>${L.map(x=>themaKnopf(k,x)).join('')}`).join('')}</details>`:'')}
+  (fr.length?`<details class="wdh"><summary>Wiederholen: Klasse ${undListe(fr)}</summary><p class="small">Bei Themen früherer Klassen gibt es weniger Äpfel: auf Stufe 4 und 5 nur 1 statt 2.${wdhOben(k)}</p>${wdhListe(k).map(([g,L])=>`<h3 class="kat">Schulstoff Klasse ${g}</h3>${L.map(x=>themaKnopf(k,x)).join('')}`).join('')}</details>`:'')}
 // Themen für die Eltern-Ansicht: eigene Klasse und wiederholte Themen früherer Klassen, die schon geübt wurden
 const elternThemen=k=>[...new Set([...T[k.g].map(t=>t[0]),...frueher(k).flatMap(g=>KAT[g].schul).filter(x=>k.t[x]&&k.t[x].n)])].map(x=>THEMA[x]);
 // Tageslimit erreicht: Rundflug beenden und verabschieden
