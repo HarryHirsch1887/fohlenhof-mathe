@@ -158,8 +158,14 @@ function kuerbis(x,y,s,licht){const f=licht?'#ffe066':'#3a1a05';
   `<path d="M-2.6 -11Q-4.2 -5.6 -2.6 -.4M2.6 -11Q4.2 -5.6 2.6 -.4" stroke="#c45f08" stroke-width=".5" fill="none"/><path d="M-.9 -11.4Q-.6 -14 1.8 -14.6L2.2 -13.2Q1 -12.6 1 -11.2Z" fill="#4a6b2a"/>`+
   `<path d="M-5 -6.2l1.9 -2.5l1.9 2.5zM1.2 -6.2l1.9 -2.5l1.9 2.5z" fill="${f}"/><path d="M-4.6 -3.4l1.3 1.3l1.3 -1l1.3 1.1l1.3 -1.1l1.3 1l1.3 -1.3l-.2 1.8q-1.9 2 -4.8 .1z" fill="${f}"/></g>`}
 // Jeder vierte Platz bleibt frei (die Kürbisse ohne Gesicht sind seit 2026-10-22 weg), keiner liegt auf dem Teich
-function kuerbisse(WW,frei,P){const n=Math.max(6,Math.round(WW/105)),licht=P.n!='tag'&&P.n!='morgen',tx=itemX('teich');
- return[...Array(n)].map((_,i)=>[(i+.5)/n*WW+(sr(i+500)-.5)*70,GY+6+sr(i+510)*28,1.1+sr(i+520)*.8,i%4!=3]).filter(([x,y,,g])=>g&&frei(x,y)&&Math.abs(x-tx)>58).sort((a,b)=>a[1]-b[1]).map(([x,y,sc])=>kuerbis(x,y,sc,licht)).join('')}
+// Drei feste Plätze (seit 2026-10-25): links neben dem Trog, rechts neben der Scheune, rechts neben dem Heuballen. Sie stehen auf der Fußlinie der Gegenstände,
+// hinter dem Laufband der Pferde (deren Füße stehen ab GY+14), so läuft kein Pferd über sie. Zufällige Kürbisse halten Abstand zu diesen Gegenständen.
+// items: Gegenstände, die es auf dieser Weide gibt (auf dem eigenen Hof mit Motto nur die gekauften); fehlt einer, entfällt sein Platz.
+function kuerbisse(WW,frei,P,items){const n=Math.max(6,Math.round(WW/105)),licht=P.n!='tag'&&P.n!='morgen',tx=itemX('teich'),
+  // je Gegenstand: Lage, Lage des Kürbisplatzes daneben, Größe (je nach Lücke; zwischen Heuballen und Scheune ist wenig Platz), halber Sperrbereich für zufällige Kürbisse
+  plaetze=[['troge',-29,1.2,48],['stall',46,1.15,62],['heu',28,1,50]].filter(([id])=>items.includes(id)).map(([id,dx,sc,r])=>[itemX(id),dx,sc,r]),
+  nah=x=>plaetze.some(([ix,,,r])=>Math.abs(x-ix)<r);
+ return[...plaetze.map(([ix,dx,sc])=>[ix+dx,GY+13,sc,1]),...[...Array(n)].map((_,i)=>[(i+.5)/n*WW+(sr(i+500)-.5)*70,GY+6+sr(i+510)*28,1.1+sr(i+520)*.8,i%4!=3]).filter(([x,y,,g])=>g&&frei(x,y)&&Math.abs(x-tx)>58&&!nah(x))].sort((a,b)=>a[1]-b[1]).map(([x,y,sc])=>kuerbis(x,y,sc,licht)).join('')}
 // Fledermaus: Flügel schlagen über den Pfad (k = Ausschlag), der Körper bleibt in der Mitte
 const fledPfad=k=>{k=+k;const a=r1(-k*2-1),b=r1(-k*1.5),c=r1(-k*1.5+2.2),d=r1(-k*1.5+1.2);return`M-1 -1.8L-.4 -.5Q-3 ${a} -6.5 ${b}Q-5.5 ${c} -4.2 ${d}Q-3 1.4 -1.8 .8Q-.9 1.8 0 1.6Q.9 1.8 1.8 .8Q3 1.4 4.2 ${d}Q5.5 ${c} 6.5 ${b}Q3 ${a} .4 -.5L1 -1.8L0 -1.2Z`};
 const FLED=`<path class="vogel fled" d="${fledPfad(1)}" fill="#1b1030"/>`;
@@ -352,7 +358,7 @@ function hofBuild(kind){
   // Anbinder (kommt mit der Pflegekiste) und Glücks-Hufeisen nach dem ersten Hufschmied (seit 2026-10-25, pflege.js)
   (H0&&H0.au&&H0.au.pflege?anbinderSvg(gpAX(H0),GPAY):'')+(H0?gluecksSvg(H0):'')+
   // Halloween (Startseite, seit 2026-10-23 auch der eigene Hof mit gekauftem Motto): Kürbisse auf der Wiese
-  (TH=='halloween'?kuerbisse(WW,frei,P):'')+
+  (TH=='halloween'?kuerbisse(WW,frei,P,items):'')+
   // Eigene Figur steht auf dem Hof vor dem Zaun
   (figs.eigen?`<g class="fig eigen" data-k="${figs.eigen.id}" transform="translate(${r1(OX+(H0&&H0.ko.u[0]?FIGX.geb:FIGX.frei)*WK)} ${GY+FIGX.y}) scale(${FIGX.s})">${figurBild(figs.eigen.f)}</g>`:'')+
   // Figuren der Freundinnen (Besuch) stehen auch vorn auf der Wiese, etwas kleiner

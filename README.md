@@ -49,7 +49,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 4 bis 8 (Klasse
 
 | Klasse | Themen |
 |---|---|
-| 4 | Grundschulstoff (seit 2026-10-24): Zahlen bis zur Million (Stellenwerte, Zahlwörter, Runden, Nachbarzahlen), Einmaleins, Kopfrechnen, Schriftlich rechnen (Plus, Minus, Mal, Geteilt mit Rechenweg Stelle für Stelle), Größen (Geld, Längen, Gewichte, Zeit, Hohlmaße), Geometrie (Umfang, Fläche, Würfel und Quader, Maßstab), Sachaufgaben. Dazu Zahlenfolgen, Knobeln, Logik-Rätsel und Sudoku |
+| 4 | Grundschulstoff (seit 2026-10-24): Zahlen bis zur Million (Stellenwerte, Zahlwörter, Runden, Nachbarzahlen), Einmaleins, Kopfrechnen, Größen (Geld, Längen, Gewichte, Zeit, Hohlmaße), Geometrie (Umfang, Fläche, Würfel und Quader, Maßstab), Sachaufgaben. Dazu Zahlenfolgen, Knobeln, Logik-Rätsel und Sudoku |
 | 5 | Zahlenfolgen, Teilbarkeit, Rechentricks, Knobeln und Zählen, Rechnen und Rechengesetze, Größen und Einheiten, Umfang und Fläche |
 | 6 | Brüche, Dezimalzahlen, Dreisatz, Rechentricks, Knobeln und Zählen |
 | 7 | Schulstoff in der Reihenfolge des Mathebuchs (seit 2026-10-24): Flächen von Figuren (Dreieck, Parallelogramm, Trapez, Raute, zusammengesetzte Figuren, mit Zeichnungen), Zuordnungen (proportional, antiproportional, Dreisatz), Prozent, Winkel, Rationale Zahlen, Wahrscheinlichkeit, Gleichungen & Terme. Dazu Zahlentheorie, Zählen & Wege und Sudoku |

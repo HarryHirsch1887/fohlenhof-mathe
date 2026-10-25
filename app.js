@@ -148,6 +148,8 @@ function clean(d){
   // gl: gelöste Aufgaben fürs Training (seit 2026-10-22), Prüfung wie beim Fehlerheft, ohne Zeichnung
   if(Array.isArray(k.gl)){c.gl=[];for(const m of k.gl.slice(-GLMAX))if(m&&typeof m.key==='string'&&/^[a-z0-9]{1,12}$/.test(m.key)&&Array.isArray(m.q)&&typeof m.q[0]==='string'&&Number.isFinite(+m.q[1]))c.gl.push({key:m.key==='term'?'gl':m.key,d:nn(m.d,1,5),q:[ct(m.q[0],400),+m.q[1],ct(m.q[2],200),ct(m.q[3],800)]});if(!c.gl.length)delete c.gl}
   if(Array.isArray(k.mist))for(const m of k.mist.slice(0,30)){if(m&&typeof m.key==='string'&&Array.isArray(m.q)&&typeof m.q[0]==='string'&&Number.isFinite(+m.q[1]))c.mist.push({key:m.key==='geo'?(m.q[4]&&(m.q[4].t=='gitter'||m.q[4].diag||/Diagonale|Weg führt/.test(m.q[0]))?'wege':'winkel'):m.key==='term'?'gl':ct(m.key,12),q:[ct(m.q[0],400),+m.q[1],ct(m.q[2],200),ct(m.q[3],800),...(zCheck(m.q[4])?[zCheck(m.q[4])]:[])]})}
+  // Gestrichene Themen (seit 2026-10-25 "Schriftlich rechnen" in Klasse 4): Einträge im Fehlerheft und bei den gelösten Aufgaben fallen weg
+  c.mist=c.mist.filter(m=>THEMA[m.key]);if(c.gl){c.gl=c.gl.filter(m=>THEMA[m.key]);if(!c.gl.length)delete c.gl}
   if(k.h&&typeof k.h==='object'){c.h=pclean(k.h);
    // Gekaufte Rassen (bis 2026-10-18, 40 Äpfel) gibt es nicht mehr: Die Äpfel werden zurückgegeben, die Rassen-Freunde verschwinden vom Hof
    if(Array.isArray(k.h.brs))c.ap+=40*new Set(k.h.brs.filter(x=>BR[x]&&x!='std')).size;

@@ -451,26 +451,6 @@ const ZE=['','ein','zwei','drei','vier','fünf','sechs','sieben','acht','neun','
  zw2=(n,ende)=>n==1&&ende?'eins':n<20?ZE[n]:(n%10?ZE[n%10]+'und':'')+ZZ[Math.floor(n/10)],
  zw3=(n,ende)=>(n>=100?ZE[Math.floor(n/100)]+'hundert':'')+zw2(n%100,ende),
  zahlwort=n=>{const t=Math.floor(n/1000),r=n%1000;return(t?zw3(t)+'tausend':'')+(r?zw3(r,1):'')};
-// Schriftliche Verfahren als Lösungsweg, Stelle für Stelle von rechts
-function schrAdd(zs){const L=Math.max(...zs.map(z=>String(z).length)),o=[];let m=0;
- for(let i=0;i<L;i++){const ds=zs.filter(z=>z>=10**i).map(z=>Math.floor(z/10**i)%10),s=ds.reduce((x,y)=>x+y,0)+m,t=ds.join(' + ')+(m?` + ${m} (gemerkt)`:'');
-  o.push(`${ST4[i]}: ${ds.length>1||m?`${t} = ${s}`:s}, schreibe ${i<L-1?s%10:s}${i<L-1&&s>=10?`, merke ${Math.floor(s/10)}`:''}.`);m=Math.floor(s/10)}
- return o.join('\n')+`\nErgebnis: ${gzf(zs.reduce((x,y)=>x+y,0))}`}
-function schrSub(a,b){const L=String(a).length,lb=String(b).length,o=[];let m=0;
- for(let i=0;i<L;i++){const x=Math.floor(a/10**i)%10,y0=i<lb?Math.floor(b/10**i)%10:0,y=y0+m,vorn=Math.floor((a-b)/10**i)===0;// vorn: führende Null des Ergebnisses
-  if(i>=lb&&!m){o.push(`${ST4[i]}: ${x}, schreibe ${x}.`);continue}
-  const yt=m?`${y0} + 1 (gemerkt) = ${y}. `:'';
-  if(x>=y){o.push(`${ST4[i]}: ${yt}${x} − ${y} = ${x-y}, ${vorn?'vorne schreibt man keine 0':`schreibe ${x-y}`}.`);m=0}
-  else{o.push(`${ST4[i]}: ${yt}${x} − ${y} geht nicht, also ${x+10} − ${y} = ${x+10-y}, ${vorn?'vorne schreibt man keine 0':`schreibe ${x+10-y}`}, merke 1.`);m=1}}
- return o.join('\n')+`\nErgebnis: ${gzf(a-b)}\nProbe: ${gzf(b)} + ${gzf(a-b)} = ${gzf(a)}`}
-function schrMul(a,f){const s=String(a),o=[];let m=0;
- for(let i=0;i<s.length;i++){const x=Math.floor(a/10**i)%10,p=x*f+m,last=i==s.length-1;
-  o.push(`${f} · ${x}${m?` + ${m} (gemerkt)`:''} = ${p}, schreibe ${last?p:p%10}${!last&&p>=10?`, merke ${Math.floor(p/10)}`:''}.`);m=Math.floor(p/10)}
- return o.join('\n')+`\nErgebnis: ${gzf(a*f)}`}
-function schrDiv(n,d){const s=String(n),o=[];let r=0,los=0;
- for(let i=0;i<s.length;i++){const c=r*10+ +s[i];if(!los&&c<d&&i<s.length-1){r=c;continue}
-  const q=Math.floor(c/d);o.push(`${los?`Hole die ${s[i]} herunter: `:''}${c} : ${d} = ${q}, denn ${q} · ${d} = ${q*d}, Rest ${c-q*d}.`);r=c-q*d;los=1}
- return o.join('\n')+`\nErgebnis: ${gzf(n/d)}\nProbe: ${gzf(n/d)} · ${d} = ${gzf(n)}`}
 const T4=[
 ['zr4','Zahlen bis zur Million',d=>{let n,a,b,k;
  const stelle=()=>P([[100,'Hunderter'],[1000,'Tausender'],[10000,'Zehntausender']]);
@@ -526,15 +506,6 @@ const T4=[
    return[`${u} · ${x} · ${v} = ?`,p*q*x,'Vertausche die Zahlen so, dass du leicht rechnen kannst.',`Vertausche: ${p} · ${q} = ${p*q}\n${p*q} · ${x} = ${gzf(p*q*x)}`]},
   ()=>{n=R(12,99)*P([1,10]);const f=P([9,11]);
    return[`${f} · ${n} = ?`,f*n,`Rechne mit 10 · ${n} und gleiche dann aus.`,`${f} · ${n} = 10 · ${n} ${f==9?'−':'+'} ${n}\n10 · ${n} = ${10*n}\n${10*n} ${f==9?'−':'+'} ${n} = ${gzf(f*n)}`]}])()}],
-['schr4','Schriftlich rechnen',d=>{let a,b,c,f;const T0='Schreibe die Zahlen genau untereinander: Einer unter Einer, Zehner unter Zehner. Fange bei den Einern an.';
- if(d==1){a=R(1000,8999);b=R(1000,8999);return[`Rechne schriftlich: ${a} + ${b} = ?`,a+b,T0,schrAdd([a,b])]}
- if(d==2){a=R(5000,99999);b=R(1000,Math.min(a-100,99999));return[`Rechne schriftlich: ${gzf(a)} − ${gzf(b)} = ?`,a-b,T0,schrSub(a,b)]}
- if(d==3){if(R(0,1)){a=R(1000,49999);b=R(1000,29999);c=R(100,9999);return[`Rechne schriftlich: ${gzf(a)} + ${gzf(b)} + ${c} = ?`,a+b+c,T0,schrAdd([a,b,c])]}
-  a=R(2,9)*10000+R(0,1)*R(1,9)*100;b=R(1000,a-1000);return[`Rechne schriftlich: ${gzf(a)} − ${gzf(b)} = ?`,a-b,T0+' Pass bei den Nullen auf.',schrSub(a,b)]}
- if(d==4){if(R(0,1)){a=R(1000,9999);f=R(3,9);return[`Rechne schriftlich: ${a} · ${f} = ?`,a*f,'Rechne von rechts nach links und vergiss die gemerkten Zahlen nicht.',schrMul(a,f)]}
-  a=R(120,999);do b=R(12,49);while(b%10==0);const b1=Math.floor(b/10),b2=b%10;
-  return[`Rechne schriftlich: ${a} · ${b} = ?`,a*b,`Rechne ${a} · ${b1*10} und ${a} · ${b2} und zähle beides zusammen.`,`${a} · ${b1} = ${a*b1}, eine Stelle nach links gerückt (mal 10): ${gzf(a*b1*10)}\n${a} · ${b2} = ${a*b2}\n${gzf(a*b1*10)} + ${a*b2} = ${gzf(a*b)}`]}
- f=R(3,9);const q=R(400,9999);return[`Rechne schriftlich: ${gzf(q*f)} : ${f} = ?`,q,`Fange vorne an: Wie oft passt die ${f} in die ersten Ziffern?`,schrDiv(q*f,f)]}],
 ['gr4','Größen',d=>{let n,x,a,b,p,q;const nm=P(NAM4);
  if(d==1){const [g1,g2,f]=P([['€','ct',100],['m','cm',100],['cm','mm',10],['km','m',1000],['kg','g',1000],['t','kg',1000],['l','ml',1000],['min','s',60],['h','min',60]]);n=R(2,f==10?19:12);
   return[`${n} ${g1} = ? ${g2}`,n*f,'',`1 ${g1} = ${gzf(f)} ${g2}\n${n} · ${gzf(f)} = ${gzf(n*f)}\nAlso ${n} ${g1} = ${gzf(n*f)} ${g2}`]}
@@ -626,7 +597,7 @@ T[4]=T4;// Klasse 4 (seit 2026-10-24)
 const THEMA={};for(const g of KL)for(const t of T[g])THEMA[t[0]]=t;for(const t of SUDOKU)THEMA[t[0]]=t;THEMA.logik=TLOG;
 // sud: Sudoku als eigene Kategorie unter "Mathe-Olympiade & Knobeln" (seit 2026-10-20)
 // Klasse 4: Grundschulstoff, Einmaleins steht auch hier. Olympiade und Sudoku wie Klasse 5.
-const KAT={4:{schul:['zr4','ee','kopf4','schr4','gr4','geo4','sach4'],oly:['folgen','knob'],sud:['sud5']},
+const KAT={4:{schul:['zr4','ee','kopf4','gr4','geo4','sach4'],oly:['folgen','knob'],sud:['sud5']},
  5:{schul:['ee','rechnen','groessen','umfl','teil'],oly:['folgen','trick','knob'],sud:['sud5']},
  6:{schul:['bruch','dez','dreisatz'],oly:['trick','knob'],sud:['sud6']},
  // Klasse 7 seit 2026-10-24 in der Reihenfolge des Mathebuchs: Flächen (1), Zuordnungen (2), Prozent (3), Winkel (4), Rationale Zahlen (5),

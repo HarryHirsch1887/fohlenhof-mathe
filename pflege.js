@@ -83,8 +83,9 @@ function gpFertigText(art,H,st,k){const n=esc(H.name),zw=art=='pflege'&&k&&k.h2;
 
 // ---------- Zeichnungen ----------
 const SVGNS='http://www.w3.org/2000/svg';
-// Anbinder: zwei Pfosten mit Querholz und Ring, kommt mit der Pflegekiste. Lage: rechts neben Unterstand oder Stall, ohne Gebäude rechts der Mitte
-const gpAX=H=>Math.round(unterkunft(H)?HF.OX+.477*HF.WK+78:HF.OX+.56*HF.WK),GPAY=GY+34;
+// Anbinder: zwei Pfosten mit Querholz und Ring, kommt mit der Pflegekiste. Lage (seit 2026-10-25): zwischen Unterstand bzw. Stall (.477) und Heuballen (.555),
+// mit und ohne Gebäude am selben Platz. Er steht weiter vorn als beide (GPAY), so überdeckt er keinen von ihnen.
+const gpAX=H=>Math.round(HF.OX+.516*HF.WK),GPAY=GY+34;
 const anbinderSvg=(x,y)=>`<g class="anbinder"><ellipse cx="${x}" cy="${y+.8}" rx="18" ry="1.6" fill="#000" opacity=".12"/><rect x="${x-14.6}" y="${y-14}" width="2.8" height="15" rx=".8" fill="#8a6440"/><rect x="${x+11.8}" y="${y-14}" width="2.8" height="15" rx=".8" fill="#8a6440"/>`+
  `<rect x="${x-17}" y="${y-13.4}" width="34" height="2.6" rx="1" fill="#a9805a"/><rect x="${x-17}" y="${y-11.6}" width="34" height=".8" fill="#7d5c3c" opacity=".5"/><circle cx="${x}" cy="${y-9}" r="1.5" fill="none" stroke="#9aa0a6" stroke-width=".7"/></g>`;
 // Glücks-Hufeisen (offen nach oben): über der linken Tür von Unterstand oder Stall, ohne Gebäude am linken Pfosten des Anbinders
@@ -197,7 +198,7 @@ function gpLoslassen(F,gang){
  gpPause(F,.4,(p,F)=>{F.arm=-60*Math.sin(Math.PI*p);if(p>.3)F.strick=''});
  gpPause(F,1.6,(p,F)=>{F.arm=p<.85?-140+18*Math.sin(F.T*12):0},F=>{F.hfrei=gang;F.hdir=-1;herzen([F.horse]);if(S.snd!==0)neigh(F.horse.st)});
  gpGeh(F,1.6,[F.fx,F.fy],null,{a:F=>{F.vorn=0;F.arm=0;F.fsZ=FIGX.s}})}
-// Pflege: Bürste links und rechts, Mähne und Schweif, vier Hufe auskratzen
+// Pflege: Bürste links und rechts, Mähne und Schweif, vier Hufe auskratzen (nahe Seite vorn und hinten, dann ferne Seite hinten und vorn)
 function gpPflegeSzene(F){const X=s=>F.HX+s*F.hs,KX=F.KX-8,KY=F.KY-2;
  gpHolen(F);gpZumAnbinder(F);
  gpGeh(F,.7,[KX,KY],null,{f:(p,F)=>{F.kiste=gpSm(Math.max(0,p*2-1))}});
@@ -216,10 +217,15 @@ function gpPflegeSzene(F){const X=s=>F.HX+s*F.hs,KX=F.KX-8,KY=F.KY-2;
  gpPause(F,2,(p,F)=>{F.arm=-66+16*Math.sin(F.T*10);if(Math.random()<.06)gpPartikel(F,'funkel',X(-96),gpY(F.hdd)-120*F.hs)});
  gpGeh(F,.8,[KX,KY],null,{a:F=>{F.arm=0}});
  gpPause(F,.4,(p,F)=>{F.arm=-40*Math.sin(Math.PI*p)},F=>{F.wz='kratzer'});
- for(const b of ['vn','vf','hn','hf']){
-  gpGeh(F,.5,F=>[gpBeinX(F,b)-(b[0]=='v'?16:12)*F.hs/.2,F.gyT+6],null,{a:F=>{F.arm=0;F.huf=null}});
-  gpPause(F,2,(p,F)=>{F.huf.f=p<.15?p/.15:p>.85?(1-p)/.15:1;F.arm=-30+14*Math.sin(F.T*18);if(p>.2&&p<.8&&Math.random()<.22){const [x,y]=gpHufPos(F,b);gpPartikel(F,'krume',x,y)}},F=>{F.huf={b,f:0}})}
- gpGeh(F,.6,[KX,KY],null,{a:F=>{F.huf=null;F.arm=0}});
+ // Hufe (seit 2026-10-25): erst die nahe Seite vorn und hinten, dann geht die Figur um das Pferd und kratzt auf der fernen Seite hinten und vorn aus
+ const huf=(b,fern)=>{
+  gpGeh(F,.5,F=>[gpBeinX(F,b)-(b[0]=='v'?16:12)*F.hs/.2,F.gyT+(fern?-8:6)],null,{a:F=>{F.arm=0;F.huf=null;F.vorn=fern?0:1}});
+  gpPause(F,2,(p,F)=>{F.huf.f=p<.15?p/.15:p>.85?(1-p)/.15:1;F.arm=-30+14*Math.sin(F.T*18);if(p>.2&&p<.8&&Math.random()<.22){const [x,y]=gpHufPos(F,b);gpPartikel(F,'krume',x,y)}},F=>{F.huf={b,f:0}})};
+ huf('vn');huf('hn');
+ gpGeh(F,.7,[X(-128),F.gyT+1],null,{a:F=>{F.huf=null;F.arm=0}});// hinten um das Pferd herum (wie beim Bürsten)
+ huf('hf',1);huf('vf',1);
+ gpGeh(F,.6,[X(-128),F.gyT+1],null,{a:F=>{F.huf=null;F.arm=0}});
+ gpGeh(F,.8,[KX,KY],null,{a:F=>{F.vorn=1}});
  gpPause(F,.5,(p,F)=>{F.kiste=1-p},F=>{F.wz=''});
  gpLoslassen(F,'gallop');
  // Bei zwei Pferden wird das zweite anschließend mitgeputzt: Kamera hin, Schmutz verschwindet mit Glitzer, Herzen und Wiehern
