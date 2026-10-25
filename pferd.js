@@ -1,8 +1,9 @@
 // Pferdehof Mathe: das gezeichnete 2D-Pferd im Bilderbuch-Look (SVG).
 // PF.bild(P, spec, opt) liefert ein Pferd als SVG-Text. P ist ein Präfix für alle Kennungen, damit mehrere Pferde nebeneinander gehen.
 // spec: coat (Fellfarbe), st (Wachstumsstufe 0-3), br (Rasse), bl (Blesse), so (Socken), ma (Mähne kurz/mittel/lang), zo (Zöpfe), gu (Gummifarbe),
-//       bf (Form des Kopfabzeichens 0-4), sm (Socken je Bein, z. B. "3120"), fs (Zahl für die Anordnung der Schecken-Flecken), mh (eigene Mähnenfarbe)
-// new PF.Rig(P) bewegt ein Pferd, das schon im Dokument steht (Gangarten, Grasen, Hüpfer, Schweif, Mähne, Blinzeln).
+//       bf (Form des Kopfabzeichens 0-4), sm (Socken je Bein, z. B. "3120"), fs (Zahl für die Anordnung der Schecken-Flecken), mh (eigene Mähnenfarbe),
+//       dr (Schmutzflecken, seit 2026-10-25: ungepflegtes Pferd, Gruppen mit class="dreck")
+// new PF.Rig(P) bewegt ein Pferd, das schon im Dokument steht (Gangarten, Grasen, Hüpfer, Schweif, Mähne, Blinzeln, ein Huf angehoben).
 // Umriss: Die Teile werden zweimal gezeichnet, zuerst mit Rand, darüber ohne. "Umriss leicht": Haare und Details bekommen keinen Rand.
 // Greift zur Laufzeit auf BR (Rassen) aus app.js zu.
 const PF = (() => {
@@ -102,24 +103,35 @@ const stirnschopf = f => [0, 1, 2].map(i => straehne(96 + i * 2.2, -214 + i * .8
 
 // ---------- Beine (Drehpunkt oben bei 0,0; Boden bei 100 bzw. 104) ----------
 // so: weiße Socke an diesem Bein, 0 keine, 1 Fessel, 2 Halbsocke, 3 Strumpf (bis zum Knie). Wird als weiße Fläche über das Bein gelegt.
-function vorderbein(id, fern, so = 0) {
+// dr: Schmutz an Unterbein und Fessel (seit 2026-10-25, ungepflegtes Pferd), als Gruppe .dreck, damit er beim Putzen ausblenden kann
+const DRECKF = '#6b4b2e';
+function vorderbein(id, fern, so = 0, dr = 0) {
   const o = fern ? 'bOf' : 'bO', u = fern ? 'bUf' : 'bU', h = fern ? 'hf' : 'hu', w = fern ? 'sockF' : 'sock';
   return `<g id="${id}1"><path class="${o}" d="M-11 -16C-12 8 -8 28 -5.6 40L5.6 40C8 26 13 6 13 -16Z"/><circle class="${o}" cx="0" cy="42" r="6"/>` +
     `<g id="${id}2"><path class="${u}" d="M-5.4 42L-4.6 76L4.4 76L5.4 42Z"/><circle class="${u}" cx="-.2" cy="76" r="5.5"/>` +
     (so >= 3 ? `<path class="${w}" d="M-5.4 42L-4.6 76L4.4 76L5.4 42Z"/>` : so == 2 ? `<path class="${w}" d="M-5 59L-4.6 76L4.4 76L4.9 59Z"/>` : '') +
     (so >= 2 ? `<circle class="${w}" cx="-.2" cy="76" r="5.5"/>` : '') +
+    (dr ? `<g class="dreck"><path d="M-5 64Q-1 68 5 62L4.6 76L-4.6 76Z" fill="${DRECKF}" opacity=".45"/><circle cx="2" cy="56" r="1.6" fill="${DRECKF}" opacity=".4"/></g>` : '') +
     `<g id="${id}3"><path class="beh" d="M-4 75C-7.5 82 -7 90 -2.5 96L.5 90C-1 86 -1.5 81 0 76Z"/>` +
-    `<path class="${u}" d="M-4.4 76L-.5 88.5L8 88.5L4.6 75Z"/>${so >= 1 ? `<path class="${w}" d="M-4.4 76L-.5 88.5L8 88.5L4.6 75Z"/>` : ''}<path class="${h}" d="M-1 88L9.5 88L12.5 100L-3 100Z"/></g></g></g>`;
+    `<path class="${u}" d="M-4.4 76L-.5 88.5L8 88.5L4.6 75Z"/>${so >= 1 ? `<path class="${w}" d="M-4.4 76L-.5 88.5L8 88.5L4.6 75Z"/>` : ''}` +
+    (dr ? `<g class="dreck"><path d="M-4.4 76L-.5 88.5L8 88.5L4.6 75Z" fill="${DRECKF}" opacity=".5"/></g>` : '') + `<path class="${h}" d="M-1 88L9.5 88L12.5 100L-3 100Z"/></g></g></g>`;
 }
-function hinterbein(id, fern, so = 0) {
+function hinterbein(id, fern, so = 0, dr = 0) {
   const o = fern ? 'bOf' : 'bO', u = fern ? 'bUf' : 'bU', h = fern ? 'hf' : 'hu', w = fern ? 'sockF' : 'sock';
   return `<g id="${id}1"><path class="${o}" d="M-18 -18C-25 8 -19 32 -16 46L-4 49C-2 30 6 10 17 -14Z"/><circle class="${o}" cx="-10" cy="48" r="6.4"/><circle class="${o}" cx="-15.5" cy="45.5" r="4"/>` +
+    (dr ? `<g class="dreck"><ellipse cx="-8" cy="20" rx="5" ry="3.6" fill="${DRECKF}" opacity=".32"/></g>` : '') +
     `<g id="${id}2"><path class="${u}" d="M-15.2 48L-12.8 80L-3.6 80L-4.8 48Z"/><circle class="${u}" cx="-8.2" cy="80" r="5.5"/>` +
     (so >= 3 ? `<path class="${w}" d="M-15.2 48L-12.8 80L-3.6 80L-4.8 48Z"/>` : so == 2 ? `<path class="${w}" d="M-14 64L-12.8 80L-3.6 80L-4.2 64Z"/>` : '') +
     (so >= 2 ? `<circle class="${w}" cx="-8.2" cy="80" r="5.5"/>` : '') +
+    (dr ? `<g class="dreck"><path d="M-14 67Q-9 71 -4 65L-3.6 80L-12.8 80Z" fill="${DRECKF}" opacity=".45"/></g>` : '') +
     `<g id="${id}3"><path class="beh" d="M-12 79C-15.5 86 -15 94 -10.5 100L-7.5 94C-9 90 -9.5 85 -8 80Z"/>` +
-    `<path class="${u}" d="M-12.4 80L-8.5 92.5L0 92.5L-3.4 79Z"/>${so >= 1 ? `<path class="${w}" d="M-12.4 80L-8.5 92.5L0 92.5L-3.4 79Z"/>` : ''}<path class="${h}" d="M-9 92L1.5 92L4.5 104L-11 104Z"/></g></g></g>`;
+    `<path class="${u}" d="M-12.4 80L-8.5 92.5L0 92.5L-3.4 79Z"/>${so >= 1 ? `<path class="${w}" d="M-12.4 80L-8.5 92.5L0 92.5L-3.4 79Z"/>` : ''}` +
+    (dr ? `<g class="dreck"><path d="M-12.4 80L-8.5 92.5L0 92.5L-3.4 79Z" fill="${DRECKF}" opacity=".5"/></g>` : '') + `<path class="${h}" d="M-9 92L1.5 92L4.5 104L-11 104Z"/></g></g></g>`;
 }
+// Schmutzflecken im Fell (Körper-Koordinaten): je Fleck einige überlappende Kleckse und Spritzer
+const DRECK_K = [[-62, -122, 10], [-24, -100, 9], [30, -112, 8], [-34, -146, 7], [-84, -138, 6], [52, -134, 6]];
+const dreckFlecken = L => L.map(([x, y, r], i) => `<ellipse cx="${x}" cy="${y}" rx="${r1(r * 1.3)}" ry="${r1(r * .8)}" opacity=".3"/><ellipse cx="${r1(x + r * .7)}" cy="${r1(y + r * .3)}" rx="${r1(r * .6)}" ry="${r1(r * .45)}" opacity=".35"/>` +
+  `<circle cx="${r1(x - r * 1.2)}" cy="${r1(y - r * .5)}" r="${r1(1.2 + (i % 3) * .5)}" opacity=".4"/><circle cx="${r1(x + r * 1.5)}" cy="${r1(y - r * .2)}" r="1.1" opacity=".4"/>`).join('');
 // Socken je Bein als Text aus 4 Ziffern (Reihenfolge vorn nah, vorn fern, hinten nah, hinten fern). Ohne Angabe: alle hoch (wie früher).
 const SOCKBEIN = { vn: 0, vf: 1, hn: 2, hf: 3 };
 const sockenMuster = sp => !sp.so ? '0000' : /^[0-3]{4}$/.test(sp.sm || '') ? sp.sm : '3333';
@@ -171,7 +183,7 @@ function bild(P, sp, opt = {}) {
   const m = masse(sp), L = beinLage(m), idle = !!opt.idle;
   const art = m.fohlen ? 'fohlen' : (sp.zo && sp.ma === 'lang' ? 'zoepfe' : 'offen'), mf = m.ml * (m.fohlen ? 1 : (MAEHNE[sp.ma] || 1));
   const sm = sockenMuster(sp);
-  const bein = (id, fn, fern) => `<g transform="translate(${r1(L[id][0])} ${r1(L[id][1])}) scale(${m.lw} ${m.ls})">${fn(id, fern, +sm[SOCKBEIN[id]])}</g>`;
+  const bein = (id, fn, fern) => `<g transform="translate(${r1(L[id][0])} ${r1(L[id][1])}) scale(${m.lw} ${m.ls})">${fn(id, fern, +sm[SOCKBEIN[id]], sp.dr ? 1 : 0)}</g>`;
   const T = (x, y) => [r1(x * m.bx), r1(m.by * (y + 100) - 100 * m.ls)];
   const [nx, ny] = T(62, -132), [tx, ty] = T(-85, -150), ks = (m.bx + m.by) / 2;
   // Flecken: Körper-Koordinaten, für den Hals umgerechnet (gleiche Rechnung wie die Verschiebung des Halses weiter unten)
@@ -201,10 +213,11 @@ function bild(P, sp, opt = {}) {
    <ellipse class="glanz" cx="-64" cy="-138" rx="25" ry="15" transform="rotate(-18 -64 -138)"/><ellipse class="glanz" cx="56" cy="-142" rx="15" ry="10"/>
    <path class="aal" d="M38 -158C18 -152 -8 -153 -36 -157C-52 -159 -66 -159 -80 -153"/>
    ${linie('M42 -152C52 -140 64 -127 74 -117')}${linie('M-36 -148C-46 -132 -48 -114 -42 -97', .1)}${linie('M-30 -89C-6 -85 16 -85 32 -89', .06, 3)}
+   ${sp.dr ? `<g clip-path="url(#koerperClip)" class="dreck" fill="${DRECKF}">${dreckFlecken(DRECK_K)}</g>` : ''}
    ${sp.dk ? `<g clip-path="url(#koerperClip)" class="pdecke"><path d="M-112 -182H92V-114Q-10 -100 -112 -116Z" fill="${sp.dk}"/><path d="M-112 -116Q-10 -100 92 -114" fill="none" stroke="#e2b24a" stroke-width="3"/><path d="M-40 -175V-110M20 -175V-108" stroke="#000" stroke-opacity=".12" stroke-width="2"/></g>` : ''}
   </g>
   <g transform="translate(${nx} ${ny}) scale(${r1(m.ns * 100) / 100}) translate(-62 132)">
-   <g id="hals1"><path id="hals1Form" class="kN" d="${HALS1}"/><circle class="kN" cx="80" cy="-172" r="17"/><g clip-path="url(#hals1Clip)" class="fleck">${fleckSvg(flHals)}</g>
+   <g id="hals1"><path id="hals1Form" class="kN" d="${HALS1}"/><circle class="kN" cx="80" cy="-172" r="17"/><g clip-path="url(#hals1Clip)" class="fleck">${fleckSvg(flHals)}</g>${sp.dr ? `<g clip-path="url(#hals1Clip)" class="dreck" fill="${DRECKF}">${dreckFlecken([[74, -142, 6]])}</g>` : ''}
     ${maehne([38, -156], [43, -177], [64, -185], 6, t => (26 + t * 8) * mf, 10, 1, art)}
     <g id="hals2"><path id="hals2Form" class="kN2" d="${HALS2}"/><circle class="kN2" cx="80" cy="-172" r="16.5"/><g clip-path="url(#hals2Clip)" class="fleck">${fleckSvg(flHals)}</g>${linie('M86 -158C91 -170 96 -184 100 -196', .08, 1.4)}
      ${gelenkMaehne(art, 34 * mf)}
@@ -244,6 +257,8 @@ function beinWinkel(g, typ, q) {
 const RUHE = { vn: [0, 0, 0], vf: [2, 0, 0], hn: [0, 0, 0], hf: [-3, 0, 0] };
 const GRASEN = { vn: [-13, 6, 2], vf: [6, 0, 0], hn: [4, 0, 0], hf: [-6, 0, 0] }, GRAS_HALS = [55, 50, -66];
 const PIV = { v: [[0, 0], [0, 42], [0, 76]], h: [[0, 0], [-10, 48], [-8, 80]] };
+// Angehobener Huf (Pflege, Hufschmied, seit 2026-10-25): Winkel der drei Gelenke, wenn das Bein ganz angewinkelt ist
+const HUFHOCH = { v: [-6, 100, 42], h: [12, -78, 70] };
 
 class Rig {
   constructor(P) {
@@ -254,13 +269,14 @@ class Rig {
     this.MH = root ? [...root.querySelectorAll(`#${P}nahTeile .mh`)].map(el => ({ el, teil: +el.dataset.t, p: [+el.dataset.x, +el.dataset.y] })) : [];
     Object.assign(this, { zeit: Math.random() * 9, blinzeln: 1 + Math.random() * 3, ohrZeit: 2 + Math.random() * 2, schlagen: 0, schlagZeit: 2 + Math.random() * 4 });
   }
-  // a: g Gangart (walk/trot/gallop), am 0..1 Bewegung, ph Phase 0..1, gr 0..1 Grasen, hop Hüpfer nach oben
+  // a: g Gangart (walk/trot/gallop), am 0..1 Bewegung, ph Phase 0..1, gr 0..1 Grasen, hop Hüpfer nach oben,
+  //    huf {b: Bein (vn/vf/hn/hf), f: 0..1} hebt ein Bein an
   pose(dt, a) {
     this.zeit += dt;
-    const g = GANG[a.g] || GANG.walk, am = a.am || 0, gr = a.gr || 0, ph = a.ph || 0, hop = a.hop || 0;
+    const g = GANG[a.g] || GANG.walk, am = a.am || 0, gr = a.gr || 0, ph = a.ph || 0, hop = a.hop || 0, hb = a.huf && a.huf.b, hf = a.huf ? Math.max(0, Math.min(1, a.huf.f || 0)) : 0;
     for (const k in this.B) {
       const b = this.B[k], w = beinWinkel(g, b.typ, (ph + g.off[k]) % 1), piv = PIV[b.typ];
-      b.g.forEach((el, i) => { const st = RUHE[k][i] + (GRASEN[k][i] - RUHE[k][i]) * gr; rot(el, w[i] * am + st * (1 - am), piv[i]); });
+      b.g.forEach((el, i) => { const st = RUHE[k][i] + (GRASEN[k][i] - RUHE[k][i]) * gr; let an = w[i] * am + st * (1 - am); if (k === hb) an += (HUFHOCH[b.typ][i] - an) * hf; rot(el, an, piv[i]); });
     }
     const gal = a.g === 'gallop', tr = a.g === 'trot';
     const bob = am * (gal ? -9 * Math.max(0, Math.sin(Math.PI * 2 * (ph - .25))) : tr ? -3 * Math.abs(Math.sin(Math.PI * 2 * ph)) : 1.6 * Math.sin(ph * Math.PI * 4));

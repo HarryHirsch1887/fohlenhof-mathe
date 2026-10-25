@@ -219,7 +219,8 @@ function hofFuehr(raus){const h=HF.horses.find(x=>x.own);if(!h)return;const xs=M
  HF.fuehr={raus,t:0,xs,fx,fy,hx0:h.x,hd0:h.d};
  if(raus){h.drin=0;HF.hw.insertBefore(h.g_,HF.vorne);const w=HF.hw.querySelector('#hdrin');if(w)w.remove();h.x=xs;h.d=0;h.op=0;h.g_.style.opacity='0'}
  hofKick(raus?6:6)}
-function fuehrSchritt(h,dt){const F=HF.fuehr;if(dt>0)F.t+=dt;const t=F.t,L=(p,a,b)=>a+(b-a)*Math.max(0,Math.min(1,p)),dy=Y=>(Y-138)/54,xs=F.xs;
+function fuehrSchritt(h,dt){const F=HF.fuehr;if(F.art)return gpSchritt(h,dt);// Pflege, Tierarzt, Hufschmied (pflege.js)
+ if(dt>0)F.t+=dt;const t=F.t,L=(p,a,b)=>a+(b-a)*Math.max(0,Math.min(1,p)),dy=Y=>(Y-138)/54,xs=F.xs;
  const F1=[xs-24,GY+20],ziel=(x,d)=>{h.dir=x>=h.x?1:-1;h.x=x;h.d=d};let fig=[F.fx,F.fy],geht=0,op=1,lauf=0;
  if(F.raus){const H2=[xs+70,.45];
   if(t<1.2){fig=[L(t/1.2,F.fx,F1[0]),L(t/1.2,F.fy,F1[1])];geht=1;op=0}
@@ -233,18 +234,23 @@ function fuehrSchritt(h,dt){const F=HF.fuehr;if(dt>0)F.t+=dt;const t=F.t,L=(p,a,
   else if(t<5.4){op=1-(t-5)/.4;fig=F1}
   else{HF.fuehr=null;hofSync(true);ui();return}}
  h.state=lauf?'walk':'stand';h.g='walk';h.am+=((lauf?1:0)-h.am)*Math.min(1,dt*6);if(lauf)h.ph=(h.ph+dt*G.walk[1])%1;h.ha+=(0-h.ha)*Math.min(1,dt*3);h.joy=0;
- h.g_.style.opacity=op<1?op.toFixed(2):'';fuehrFigur(fig[0],fig[1],geht?t:0)}
+ h.g_.style.opacity=op<1?op.toFixed(2):'';fuehrFigur(fig[0],fig[1],geht?t:0);
+ // Gekaufter Führstrick (seit 2026-10-25): von der Hand der Figur zum Halfter, solange beide zusammen gehen
+ const zus=F.raus?t>=1.4&&t<4.6:t>=2&&t<5,k=kid(),e=HF.hw&&HF.hw.querySelector('#hstrick');
+ if(e)e.setAttribute('d',zus&&k&&k.h&&k.h.au&&k.h.au.strick&&HF.figE?(()=>{const s=gpS(h,h.d),gy=gpY(h.d),[ax,ay]=gpHand(fig[0],fig[1],0,FIGX.s),hx=h.x+h.dir*116*s,hy=gy-166*s;
+  return`M${r1(ax)} ${r1(ay)}Q${r1((ax+hx)/2)} ${r1(Math.max(ay,hy)+3+Math.hypot(hx-ax,hy-ay)*.12)} ${r1(hx)} ${r1(hy)}`})():'')}
 // Eigene Figur verschieben (leichtes Wippen beim Gehen)
 function fuehrFigur(x,y,t){const e=HF.figE;if(!e)return;e.setAttribute('transform',`translate(${r1(x)} ${r1(y-(t?Math.abs(Math.sin(t*9))*1.2:0))}) scale(${FIGX.s})`)}
 function hofSpecs(kind){
- const A=[],km=k=>{const H=hh(k);return{id:'k'+k.id,c:H.coat,st:stg(k),m:pfSpec(H,stg(k)),name:H.name,own:k.id}};
+ // dr: Schmutzflecken, solange das Pferd heute (ab 6 Uhr) noch nicht geputzt wurde (pflege.js, nur mit Pflegekiste)
+ const A=[],km=k=>{const H=hh(k);return{id:'k'+k.id,c:H.coat,st:stg(k),m:{...pfSpec(H,stg(k)),...(dreckig(H)?{dr:1}:{})},name:H.name,own:k.id}};
  if(kind=='kid'){const k=kid(),H=hh(k),b=belegung(H),o={...km(k),ko:0,drin:drinnen(H)?unterkunft(H):0};if(H.au&&H.au.pdecke&&deckeWetter())o.m={...o.m,dk:DECKE};A.push(o);
   // Freunde stehen auf der Koppel, auf der sie einen Platz haben (belegung in app.js). Ohne Platz sind sie nicht auf dem Hof.
   b.p.forEach((L,i)=>L.forEach(f=>{if(f!='eigen')A.push({...freundInfo(k,f),ko:i})}));
   // Besuch (seit 2026-10-20): Pferde der Freundinnen laufen auf der Hauptkoppel mit, ohne Platz zu brauchen
   besuche(k).forEach((b,i)=>A.push({id:'b'+k.id+'_'+i,c:b.h.coat,st:b.h.st,m:pfSpec(b.h,b.h.st),name:`${b.h.name} (Besuch von ${b.n})`,own:0,ko:0,besuch:1}))}
  // Startseite: Pferde der Kinder (auch zweite Pferde), höchstens 5, aufgefüllt mit fremden Pferden
- else{S.kids.filter(k=>k.h).forEach(k=>{A.push(km(k));if(k.h2)A.push({id:'e'+k.id,c:k.h2.coat,st:k.h2.st||0,m:pfSpec(k.h2,k.h2.st||0),name:k.h2.name,own:0})});A.splice(5);const f=fillers();for(let i=0;A.length<5;i++)A.push(f[i])}
+ else{S.kids.filter(k=>k.h).forEach(k=>{A.push(km(k));if(k.h2)A.push({id:'e'+k.id,c:k.h2.coat,st:k.h2.st||0,m:{...pfSpec(k.h2,k.h2.st||0),...(dreckig(k.h2)?{dr:1}:{})},name:k.h2.name,own:0})});A.splice(5);const f=fillers();for(let i=0;A.length<5;i++)A.push(f[i])}
  return A}
 
 function hofBuild(kind){
@@ -263,7 +269,7 @@ function hofBuild(kind){
  const kidId=kind=='kid'?kid().id:null;
  if(HF.mistK!==kidId){HF.mist=[];HF.mistT=20;HF.mistK=kidId;HF.apfel=null;HF.frosch=null}
  if(kind!='kid'){HF.apfel=null;HF.frosch=null}
- HF.wellen=[];HF.katze=null;HF.maeuse=null;HF.fuehr=null;// Katze und Mäuse gehen beim Neuaufbau verloren (seit 2026-10-21)
+ const szene=HF.fuehr&&HF.fuehr.art;HF.wellen=[];HF.katze=null;HF.maeuse=null;HF.fuehr=null;if(szene)setTimeout(()=>{if(typeof ui=='function')ui()},0);// Katze und Mäuse gehen beim Neuaufbau verloren (seit 2026-10-21)
  const old=Object.fromEntries(HF.horses.map(h=>[h.id,h]));
  const startX=i=>{const [a,b]=HF.kr[i];return i?a+40+Math.random()*(b-a-80):Math.min(b-30,Math.max(a+30,HF.cam+30+Math.random()*(W-60)))};
  HF.horses=hofSpecs(kind).map(s=>{s.ko=s.ko|0;const o=old[s.id]&&(old[s.id].ko|0)===s.ko?old[s.id]:null;return Object.assign({ph:0,am:0,g:'walk',ha:0,joy:0,state:'stand',t:R(1,3),dir:R(0,1)?1:-1,d:Math.random(),dd:.5,sw:Math.random()*6,x:startX(s.ko)},s,o?{x:o.x,d:o.d,dir:o.dir,state:o.state,t:o.t,ph:o.ph,am:o.am,g:o.g,ha:o.ha,dd:o.dd,ziel:kind=='kid'?o.ziel:null}:{})});
@@ -318,6 +324,8 @@ function hofBuild(kind){
   ITEMS.filter(i=>items.includes(i[0])&&DR[i[0]]).map(i=>{const z=DR[i[0]](Math.round(OX+i[3]*WK)),u=UMR[i[0]]?`<g stroke="#3a261466" stroke-width=".55" stroke-linejoin="round">${z}</g>`:z;
    return kind=='kid'&&AKT[i[0]]?`<g data-act="${i[0]}" style="cursor:pointer">${u}</g>`:u}).join('')+geb.s+drinSvg+
   grasStreifen(WW,Math.round(WW/6),GY+6,GY+14,3,5.5,200,gras,frei)+
+  // Anbinder (kommt mit der Pflegekiste) und Glücks-Hufeisen nach dem ersten Hufschmied (seit 2026-10-25, pflege.js)
+  (H0&&H0.au&&H0.au.pflege?anbinderSvg(gpAX(H0),GPAY):'')+(H0?gluecksSvg(H0):'')+
   // Halloween (Startseite, seit 2026-10-23 auch der eigene Hof mit gekauftem Motto): Kürbisse auf der Wiese
   (TH=='halloween'?kuerbisse(WW,frei,P):'')+
   // Eigene Figur steht auf dem Hof vor dem Zaun
@@ -328,7 +336,7 @@ function hofBuild(kind){
   `<g id="hap">${kind=='kid'?HF.mist.map(mistSvg).join(''):''}</g>`+
   HF.horses.map((h,i)=>h.drin?'':hsSvg(h,i)).join('')+
   // Gras ganz vorn (vor allen Pferden), danach die Herzen beim Antippen
-  `<g id="hv">${grasStreifen(WW,Math.round(WW/12),193,201,4,8,900,gras)}</g><g id="hfx"></g></g>`;
+  `<g id="hv">${grasStreifen(WW,Math.round(WW/12),193,201,4,8,900,gras)}</g><path id="hstrick" fill="none" stroke="#c0392b" stroke-width=".9" stroke-linecap="round"/><g id="hfx"></g></g>`;
  // Schmetterlinge (vor den Pferden) und Regen bzw. Schnee (ganz vorn), beide fest im Bild, nicht mit der Kamera
  if(falterOk)s+=`<g id="hfa" pointer-events="none">${['#f4c430','#e8508f','#4aa3df'].map(falterSvg).join('')}</g>`;
  // Regen und Schnee liegen seit 2026-10-21 in einer eigenen Ebene über dem Bild (wetterEbene, nach svg.innerHTML)
@@ -377,7 +385,8 @@ function hofDraw(dt){
    const tx=xs+D.dx-118*sc,ty=B+D.dy+185*sc;
    h.ziel=null;if(h.joy>0)h.joy-=dt;h.rig.pose(dt,{g:'walk',am:0,ph:0,gr:0,hop:0});h.g_.setAttribute('transform',`translate(${r1(tx)} ${r1(ty)}) scale(${sc.toFixed(3)})`);h.x=xs+D.dx;h.gy=ty;h.sc=sc/PFS;h.d=0;h.gez=1;return}
   if(h.gez&&!(HF.fuehr&&h.own)&&(h.x<cam-120||h.x>cam+W+120))return;
-  if(HF.fuehr&&h.own)fuehrSchritt(h,dt);
+  // Szene mit eigenem Zeichnen (Pferd steht in der Tür, pflege.js): hier nichts mehr tun
+  if(HF.fuehr&&h.own){fuehrSchritt(h,dt);if(HF.fuehr&&HF.fuehr.eigen)return}
   else if(dt>0&&rg[0]<rg[1]){
    h.t-=dt;if(h.joy>0)h.joy-=dt;
    // Ziel (z. B. ein gefallener Apfel): hinlaufen, dort grasen bzw. naschen
@@ -396,7 +405,7 @@ function hofDraw(dt){
   }
   const sc=(.30+.20*h.d)*GS[h.st].s,gy=138+h.d*54,hop=h.joy>0?40*Math.sin(Math.PI*Math.min(1,1-h.joy/1.2)):0;
   // Beine, Hals, Kopf, Schweif und Mähne bewegt das gezeichnete Pferd selbst (pferd.js)
-  h.rig.pose(dt,{g:h.g,am:h.am,ph:h.ph,gr:h.ha/48,hop});
+  h.rig.pose(dt,{g:h.g,am:h.am,ph:h.ph,gr:h.ha/48,hop,huf:h.huf});
   // Hintere (kleinere) Pferde ohne Umriss
   if((h.d<.5)!==h.hint){h.hint=h.d<.5;h.g_.classList.toggle('hinten',h.hint)}
   h.sc=sc;h.gy=gy;
@@ -526,7 +535,9 @@ function hofFrame(ts){
  if(HF.sl>40){HF.sl=0;if(!HF.spar){HF.spar=1;document.getElementById('hof').classList.add('ohneUmriss')}else if(!HF.iv)HF.iv=.066}
  const span=HF.WW-HF.W;
  if(HF.mode=='fly'){if(HF.drag){}else if(HF.idle>0)HF.idle-=d;else{HF.cam+=HF.cv*d;if(HF.cam<=0){HF.cam=0;HF.cv=Math.abs(HF.cv)}if(HF.cam>=span){HF.cam=span;HF.cv=-Math.abs(HF.cv)}}}
- else{const sh=(HF.WK||HF.WW)-HF.W;HF.cam=(HF.OX||0)+sh/2+Math.sin(HF.t/45)*Math.min(110,sh/2)}
+ // Während Pflege, Tierarzt und Hufschmied (pflege.js) schwenkt die Kamera weich zum Geschehen (camX) und danach zurück
+ else{const sh=(HF.WK||HF.WW)-HF.W,base=(HF.OX||0)+sh/2+Math.sin(HF.t/45)*Math.min(110,sh/2),cx=HF.fuehr&&HF.fuehr.camX,
+  ziel=cx!=null?Math.min(Math.max(cx-HF.W/2,0),HF.WW-HF.W)-base:0;HF.camOff=(HF.camOff||0)+(ziel-(HF.camOff||0))*Math.min(1,d*1.5);HF.cam=base+HF.camOff}
  hofDraw(d)}
 function hofStop(){if(HF.raf)cancelAnimationFrame(HF.raf);HF.raf=0}
 function hofRun(){
@@ -542,7 +553,8 @@ function hofSync(force){
  if(!show){hofStop();const we=document.getElementById('hwetter');if(we)we.classList.add('ruhig');svg.style.display='none';root.setProperty('--wh','0px');return}
  svg.style.display='block';root.setProperty('--wh',(fly?0:Math.max(210,Math.min(360,Math.round(innerHeight*.34))))+'px');
  const k=(v=='kid'||v=='wish'||v=='rassen'||v=='done'||v=='einladen'||v=='bye')?kid():null,kind=k&&k.h?'kid':'home';
- const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.ma,H.coats.join(),Object.keys(H.it).join(),H.lp.join('+'),JSON.stringify(H.ko),drinnen(H),!!(H.au&&H.au.pdecke),k.h2?[k.h2.name,k.h2.coat,k.h2.st,k.h2.bl,k.h2.so,k.h2.ma].join('/'):'',JSON.stringify(k.bs||[])].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.bl,x.h.so,x.h.ma,x.h2?x.h2.coat+x.h2.st:''].join():'').join(';');
+ const sig=kind=='kid'?(()=>{const H=hh(k);return[k.id,H.coat,stg(k),H.bl,H.so,H.bf,H.sm,H.fs,H.ma,H.coats.join(),Object.keys(H.it).join(),H.lp.join('+'),JSON.stringify(H.ko),drinnen(H),!!(H.au&&H.au.pdecke),k.h2?[k.h2.name,k.h2.coat,k.h2.st,k.h2.bl,k.h2.so,k.h2.ma,dreckig(k.h2)].join('/'):'',JSON.stringify(k.bs||[]),
+  !!(H.au&&H.au.pflege),dreckig(H),!!(H.ge&&H.ge.gh)].join()})():S.kids.map(x=>x.h?[x.id,x.h.coat,stg(x),x.h.bf,x.h.sm,x.h.fs,x.h.bl,x.h.so,x.h.ma,dreckig(x.h),x.h2?x.h2.coat+x.h2.st+dreckig(x.h2):''].join():'').join(';');
  const fsig=S.kids.map(x=>x.f?[x.id,x.f.g,x.f.hf,x.f.ha,x.f.lg,x.f.sh].join(''):'').join();
  const key=[kind,sig,fsig,pal(new Date().getHours()).n,wetter(),hofThema(kind,k),fly,S.calm|0,RM,svg.clientWidth,svg.clientHeight].join('|');
  // Führen (Unterstand/Stall): Der erste Abgleich nach dem Start merkt sich den Schlüssel. Ändert sich währenddessen etwas anderes
@@ -574,6 +586,6 @@ function flyOff(){HF.mode='bg';document.body.classList.remove('fly');$('#fly').h
   HF.cam=Math.min(HF.WW-HF.W,Math.max(0,d.cam-dx/k));if(!HF.raf)hofDraw(0)});
  svg.addEventListener('pointerup',()=>{const d=HF.drag;if(!d)return;HF.drag=null;HF.idle=3;if(d.moved<6){if(d.h)hofTap(d.h);else if(d.a)hofAkt(d.a.dataset.act,d.a);else if(d.fg)winken(d.fg)}});
  svg.addEventListener('pointercancel',()=>{HF.drag=null});
- let rt=0;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>hofSync(true),200)});
+ let rt=0;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(HF.fuehr&&HF.fuehr.art)return;hofSync(true)},200)});
  addEventListener('keydown',e=>{if(e.key=='Escape'&&HF.mode=='fly')flyOff()});
 })();

@@ -10,10 +10,10 @@
 // Arten: n = Name je Stufe, max = höchste Sternzahl je Stufe (Fohlen, Jährling, Jungpferd, Pferd),
 // alle = Abstand in Tagen je Stufe (Anreiten beim Jährling nur alle 2 Tage), tage = nur an diesen Wochentagen (0 = Sonntag),
 // spiel = Minispiel ist schon gebaut (1 oder je Stufe, die anderen zeigen "Kommt bald"); Anreiten (Jährling) seit 2026-10-22, Reiten ab Jungpferd folgt
-// TRZEIT: Sekunden je Aufgabe (seit 2026-10-23 30, vorher 20 bzw. 15). HUMAX: höchstens so viele Hufeisen auf Vorrat (seit 2026-10-22)
-const TRPREIS=10,TRN=5,TROK=4,TRZEIT=30,TRXP=10,HUMAX=10;
-// Hufeisen dazubekommen, höchstens HUMAX. Liefert 1, wenn eins dazukam.
-const huPlus=k=>{if((k.hu||0)>=HUMAX)return 0;k.hu=(k.hu||0)+1;return 1};
+// TRZEIT: Sekunden je Aufgabe (seit 2026-10-23 30, vorher 20 bzw. 15). Höchstzahl der Hufeisen: huMax in pflege.js (seit 2026-10-25 20, mit zweitem Pferd 30, vorher 10)
+const TRPREIS=10,TRN=5,TROK=4,TRZEIT=30,TRXP=10;
+// Hufeisen dazubekommen, höchstens huMax(k). Liefert 1, wenn eins dazukam.
+const huPlus=k=>{if((k.hu||0)>=huMax(k))return 0;k.hu=(k.hu||0)+1;return 1};
 const TRA=[
  ['lo',{n:()=>'Longieren',max:[0,5,5,5],spiel:1}],
  ['re',{n:st=>st==1?'Anreiten':'Reiten',max:[0,3,7,10],alle:[1,2,1,1],spiel:[0,1,0,0]}],
@@ -35,6 +35,8 @@ function trStatus(k,id){if(!k||!k.h)return{txt:`Ab ${GS[1].n}`};const H=hh(k),st
  if(!mx)return{txt:st==0?`Ab ${GS[1].n}`:`Ab ${GS[2].n}`};
  if(s>=mx)return{voll:1,txt:st<3&&A.max[st+1]>mx?`Alle Sterne geschafft. Mehr gibt es, wenn ${H.name} ein ${GS[st+1].n} ist.`:'Alle Sterne geschafft!'};
  if(!(Array.isArray(A.spiel)?A.spiel[st]:A.spiel))return{bald:1,txt:'Kommt bald'};
+ // Tierarzt oder Hufschmied überfällig (seit 2026-10-25, pflege.js): kein Training
+ const gs=gpSperre(k);if(gs)return{gp:1,txt:gs.includes(' und ')?'Erst müssen Tierarzt und Hufschmied kommen. Ruf sie unten unter „Gesundheit und Pflege“.':`Erst muss der ${gs} kommen. Ruf ihn unten unter „Gesundheit und Pflege“.`};
  // Anreiten und Reiten nur mit Sattel (mit Sattelgurt), Satteldecke und Trense (seit 2026-10-22, Kauf im Wunschbaum, AUSR in app.js)
  if(id=='re'&&!reitfertig(H))return{ausr:1,txt:`Zum ${A.n(st)} braucht ${H.name} Sattel mit Sattelgurt, Satteldecke und Trense. Du bekommst sie im Wunschbaum unter „Reitausrüstung & Pflege“.`};
  const tl=(H.tl||{})[id],ab=(A.alle||[])[st]||1;
@@ -104,7 +106,7 @@ function trSeite(){const k=kid(),H=hh(k),st=stg(k),A=TRART[TQ.id],it=TQ.auf[TQ.i
  let h=`<div class="row sp qkopf"><button class="alt" onclick="${TQ.ende?'trZurueck()':'trAbbruch()'}">${TQ.ende?'Zurück':'Beenden'}</button><span class="qthema">${A.n(st)}</span><span class="ap">${k.ap||0} ${AP}</span></div>`+trSzene(k);
  if(TQ.ende){const S=trStatus(k,TQ.id),s=(H.tr||{})[TQ.id]||0,mx=A.max[st];
   return h+`<div class="card trende" style="text-align:center"><h1 style="margin:4px 0">${TQ.stern?'Super gemacht!':'Fast geschafft!'}</h1><p><b>${TQ.right} von ${TRN}</b> richtig.</p>`+
-   (TQ.stern?`<p class="ok pop"><b>${esc(H.name)} hat einen Stern beim ${A.n(st)} bekommen!</b></p><p>${trSterne(s,mx)}</p><p>${TQ.hu?`+1 Hufeisen ${HU}`:`Dein Hufeisen-Vorrat ist voll (${HUMAX} ${HU})`} · +${TQ.right*TRXP} Erfahrung</p>`:
+   (TQ.stern?`<p class="ok pop"><b>${esc(H.name)} hat einen Stern beim ${A.n(st)} bekommen!</b></p><p>${trSterne(s,mx)}</p><p>${TQ.hu?`+1 Hufeisen ${HU}`:`Dein Hufeisen-Vorrat ist voll (${huMax(k)} ${HU})`} · +${TQ.right*TRXP} Erfahrung</p>`:
     `<p class="no">Für einen Stern brauchst du ${TROK} von ${TRN}. Üb weiter, dann klappt es beim nächsten Mal!</p><p class="small">+${TQ.right*TRXP} Erfahrung</p>`)+
    (ausZeit(k)?`</div><div class="card" id="limit"><b>Für heute ist Schluss.</b><p>Deine ${limM(k)} Minuten auf dem Hof sind um. Morgen geht es weiter, ${esc(H.name)} wartet auf dich!</p></div><button class="go" onclick="trZurueck()">Tschüss, bis morgen</button>`:
    `<p class="small">${esc(S.ok?'Du kannst gleich noch einmal trainieren.':S.txt)}</p></div><button class="go" onclick="trZurueck()">Zurück zum Training</button>`)}

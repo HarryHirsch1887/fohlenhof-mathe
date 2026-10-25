@@ -162,3 +162,5 @@ ul.info{margin:6px 0 0;padding-left:20px}ul.info li{margin:5px 0}
 button.big:disabled{opacity:.5}
 /* Schulstoff "im Unterricht schon dran" in der Eltern-Ansicht (seit 2026-10-24) */
 details.ndl{margin:6px 0}details.ndl summary{cursor:pointer;font-size:15px}.ndz{display:block;margin:4px 0;font-size:15px}.ndz input{width:auto;min-height:0;margin-right:6px}
+/* Gesundheit und Pflege (seit 2026-10-25, pflege.js): Glücks-Hufeisen erscheint nach dem ersten Hufschmied */
+@keyframes gpEin{from{opacity:0}to{opacity:1}}#hof .glueck.neu{animation:gpEin 1.2s ease-out}.gpk button{margin-top:6px}
