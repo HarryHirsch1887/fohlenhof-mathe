@@ -112,4 +112,4 @@ Es gibt keinen Build-Schritt. Alles ist reines HTML, CSS und JavaScript. Die ein
 
 ## Lizenz
 
-Noch nicht festgelegt. Bis dahin gilt: Alle Rechte vorbehalten. Der Quelltext ist öffentlich einsehbar, aber nicht zur Weiterverwendung freigegeben.
+© 2026 Pferdehof Mathe. Alle Rechte vorbehalten. Der Quelltext ist öffentlich einsehbar, aber nicht zur Weiterverwendung freigegeben. Ausgenommen sind die mitgelieferten Teile mit eigener Lizenz: three.js (MIT-Lizenz, Lizenztext im Ordner `3d/`) und das Pferdemodell von Quaternius (CC0).

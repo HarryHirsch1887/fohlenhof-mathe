@@ -87,6 +87,8 @@ const AP='<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><ci
 // Speicher: nur localStorage dieses Browsers, keine Cookies, keine Netzwerkzugriffe
 // Speicherschlüssel: neuer Name, alte Stände unter 'mathegipfel1' werden beim ersten Start übernommen (und dort nicht gelöscht)
 const KEY='fohlenhof1',OLDKEY='mathegipfel1';
+// Copyright-Vermerk (seit 2026-10-25) auf der Erklärseite für Eltern, bewusst ohne Namen
+const COPYJAHR=2026;
 // Prüft und bereinigt einen Spielstand (aus dem Browser oder einer importierten Datei). Gibt null zurück, wenn er unbrauchbar ist.
 const nn=(x,lo=0,hi=1e9)=>{x=+x;return Number.isFinite(x)?Math.min(hi,Math.max(lo,Math.floor(x))):lo};
 const ct=(x,n)=>String(x==null?'':x).slice(0,n);
@@ -365,7 +367,7 @@ function ui(){let h='';PZ=0;
    `„Freundin einladen“: Der QR-Code bzw. Link enthält nur den Vornamen, den Namen des Pferds und das Aussehen von Pferd und Figur. Diese Angaben stehen hinter dem „#“ im Link und gehen beim Öffnen nicht an den Webserver. Den QR-Code scannt die Freundin direkt, einen Link schickt ihr zum Beispiel per Messenger.`,
    `Die PIN ist eine Kindersicherung. Sie wird nicht im Klartext gespeichert, sondern als Prüfsumme. Man sieht sie also nicht einfach im Browser-Speicher oder in der Sicherung. Vor jemandem, der das Gerät technisch untersucht, schützt sie trotzdem nicht: Eine kurze PIN lässt sich mit Technik herausfinden, und der Speicher lässt sich ändern.`])+`</div>`+
   `<div class="card"><b>Installieren und offline nutzen</b>`+li([`Im Browser „Zum Startbildschirm hinzufügen“ bzw. „App installieren“ wählen. Danach läuft die App auch ohne Internet.`,
-   `Der Spielstand gehört zu Gerät und Browser. Für einen Gerätewechsel die Sicherung exportieren und auf dem neuen Gerät importieren.`])+`</div>`+zur}
+   `Der Spielstand gehört zu Gerät und Browser. Für einen Gerätewechsel die Sicherung exportieren und auf dem neuen Gerät importieren.`])+`</div>`+zur+`<p class="small copyright">© ${COPYJAHR} Pferdehof Mathe. Alle Rechte vorbehalten.</p>`}
  if(v=='parent'){h=`<button class="alt" onclick="v='home';lock()">Zurück</button><h1>${S.pin?'Eltern-Ansicht':'Einstellungen'}</h1>`;
  if(S.pin&&!open&&pinZu())h+=pinZuKarte();// PIN-Sperre (seit 2026-10-24)
  else if(S.pin&&!open)h+=`<div class="card pinkarte"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p>${pinI()}</div>`+pinResetKarte();
