@@ -2,7 +2,7 @@
 // Wird vor app.js geladen. Alles aus app.js, hof.js, pferd.js und figur.js wird erst zur Laufzeit benutzt.
 //
 // Regeln:
-// - Pflege: mit Pflegekiste und Führstrick (Wunschbaum, AUSR in app.js), höchstens PFLMAX-mal am Pflegetag. Der Pflegetag beginnt um 6 Uhr.
+// - Pflege: mit Pflegekiste, Halfter und Führstrick (Wunschbaum, AUSR in app.js; Halfter seit 2026-10-25), höchstens PFLMAX-mal am Pflegetag. Der Pflegetag beginnt um 6 Uhr.
 //   Mit Pflegekiste hat ein ungepflegtes Pferd leichte Schmutzflecken, nach der Pflege ist es bis zum nächsten Morgen um 6 Uhr sauber.
 //   Belohnung: Herzen und Wiehern, keine Äpfel, keine Hufeisen.
 // - Tierarzt alle TAZ Spieltage (TAPREIS Hufeisen), Hufschmied alle SCHZ Spieltage (SCHPREIS Hufeisen), beides ab Jährling.
@@ -22,7 +22,7 @@ let GPJETZT=null;
 const pflTag=()=>{const d=new Date((GPJETZT||Date.now())-6*36e5);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const gpG=H=>{if(!H.ge||typeof H.ge!=='object')H.ge={t:0,s:0};return H.ge};
 const gpHeute=H=>H&&H.ge&&H.ge.p&&H.ge.p.d==pflTag()?H.ge.p.n:0;
-const pflegbar=H=>!!(H&&H.au&&H.au.pflege&&H.au.strick);
+const pflegbar=H=>!!(H&&H.au&&H.au.pflege&&H.au.halfter&&H.au.strick);
 const dreckig=H=>!!(H&&H.au&&H.au.pflege)&&!gpHeute(H);
 // Stand eines Besuchs, art 't' (Tierarzt) oder 's' (Schmied): rest = Spieltage bis fällig, faellig, ueber = seit einem früheren Tag fällig
 function gpStand(H,art){const g=(H&&H.ge)||{},n=g[art]||0,z=art=='t'?TAZ:SCHZ,f=g[art+'f'];return{rest:Math.max(0,z-n),faellig:!!f,ueber:!!f&&f<tag()}}
@@ -32,10 +32,12 @@ function gpSperre(k){if(!k||!k.h||stg(k)<1)return'';const t=gpStand(k.h,'t').ueb
 function gesundTag(k){const t=tag();
  for(const [H,st] of [[k.h,stg(k)],[k.h2,k.h2?k.h2.st||0:0]]){if(!H||st<1)continue;const g=gpG(H);
   g.t=Math.min(999,(g.t||0)+1);g.s=Math.min(999,(g.s||0)+1);if(g.t>=TAZ&&!g.tf)g.tf=t;if(g.s>=SCHZ&&!g.sf)g.sf=t}}
+// Datum von heute (JJJJ-MM-TT) ohne tag() aus app.js: Das Laden des Spielstands (clean, pclean) läuft, bevor app.js tag() anlegt (seit 2026-10-25)
+function datumHeute(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 // Laden und Import (pclean in app.js)
 function gpClean(g){if(!g||typeof g!=='object')return null;const D=/^\d{4}-\d\d-\d\d$/,o={t:nn(g.t,0,999),s:nn(g.s,0,999)};
  if(D.test(g.tf))o.tf=g.tf;if(D.test(g.sf))o.sf=g.sf;if(g.p&&typeof g.p==='object'&&D.test(g.p.d))o.p={d:g.p.d,n:nn(g.p.n,0,PFLMAX)};if(g.gh)o.gh=1;
- if(o.t>=TAZ&&!o.tf)o.tf=tag();if(o.s>=SCHZ&&!o.sf)o.sf=tag();return o}
+ if(o.t>=TAZ&&!o.tf)o.tf=datumHeute();if(o.s>=SCHZ&&!o.sf)o.sf=datumHeute();return o}
 
 // ---------- Bereich "Gesundheit und Pflege" in der Kind-Ansicht ----------
 let GPNOTE='',GPOK=1,GPKLICK=0;// GPOK: Erfolgsmeldung (grün) oder Hinweis (rot); GPKLICK: Zeit des letzten Starts (gegen Doppelklick)
@@ -50,7 +52,7 @@ function gpTeil(k){const H=hh(k),st=stg(k),n=esc(H.name),zu=k.hl,lauf=gpLaeuft()
  const alle=P2?[H,P2]:[H],dreck=alle.filter(dreckig),sauber=alle.filter(x=>gpHeute(x)>0&&!dreckig(x)),viele=L=>L.length>1;
  let h=`<p class="small">Du hast ${k.hu||0} von ${huMax(k)} Hufeisen ${HU}. Hufeisen gibt es für jede Runde mit mindestens ${FREI} von 10 und für jeden Trainings-Stern.</p><p class="${GPOK?'ok':'no'}" id="gpnote"${GPNOTE?'':' hidden'}>${GPNOTE}</p>`;
  h+=`<div class="card gpk" data-gp="pflege"><div class="row sp"><b>Pflege</b><span class="small">${pf?`heute ${hn} von ${PFLMAX}`:''}</span></div>`+
-  (!pf?`<p class="small" style="margin:4px 0 0">Zum Putzen braucht ${n} eine Pflegekiste und einen Führstrick. Du bekommst beides im Wunschbaum unter „Reitausrüstung & Pflege“.</p>`:
+  (!pf?`<p class="small" style="margin:4px 0 0">Zum Putzen braucht ${n} eine Pflegekiste, ein Halfter und einen Führstrick. Du bekommst alles im Wunschbaum unter „Reitausrüstung & Pflege“.</p>`:
    `<p class="small" style="margin:4px 0 0">${[sauber.length?`${gpNamen(sauber)} ${viele(sauber)?'sind':'ist'} frisch geputzt.`:'',dreck.length?`${gpNamen(dreck)} ${viele(dreck)?'haben':'hat'} ein paar Schmutzflecken im Fell.`:''].filter(x=>x).join(' ')}${hn>=PFLMAX?' Für heute genug geputzt, morgen wieder.':''}</p>`+
    (hn<PFLMAX&&!zu?`<button class="go" onclick="gpPflege()"${lauf?' disabled':''}>${P2?'Pferde':n} putzen</button>`:''))+`</div>`;
  if(st<1)h+=`<p class="small">Tierarzt und Hufschmied kommen, wenn ${n} ein ${GS[1].n} ist.</p>`;
@@ -70,6 +72,9 @@ function gpKarte(k,H,art){const S=gpStand(H,art),ta=art=='t',preis=ta?TAPREIS:SC
 function gpOk(k){return!!(k&&k.h&&!k.hl&&!gpLaeuft()&&Date.now()-GPKLICK>800)}
 function gpPflege(){const k=kid();if(!gpOk(k))return;const H=hh(k);if(!pflegbar(H))return;const n=gpHeute(H);
  if(n>=PFLMAX)return gpHinweis('Für heute genug geputzt, morgen wieder.');
+ // Seit 2026-10-25: Das Bild springt in den Flugmodus und zeigt die Figur, am Ende landet es wieder (gpEnde).
+ // Vor dem Speichern, denn der Flugmodus baut den Hof neu auf: danach wären die Pferde schon sauber gezeichnet.
+ if(!RM&&v=='kid'&&typeof flyOn=='function'&&HF.mode!='fly')flyOn();
  gpG(H).p={d:pflTag(),n:n+1};if(k.h2)gpG(k.h2).p={d:pflTag(),n:Math.max(n+1,gpHeute(k.h2))};// das zweite Pferd wird mitgeputzt
  gpStart(k,'pflege')}
 function gpArzt(){gpRufen('t')}
@@ -157,7 +162,7 @@ function gpStart(k,art){const H=hh(k),u=unterkunft(H),st=stg(k);GPNOTE='';GPOK=1
  const h=typeof HF!='undefined'&&HF.horses?HF.horses.find(x=>x.own):null;
  if(RM||v!='kid'||HF.kind!='kid'||!h||!h.g_||!HF.hw||!HF.figP){GPNOTE=gpFertigText(art,H,st,k);if(typeof hofSync=='function')hofSync(true);ui();return}
  const xs=Math.round(HF.OX+.477*HF.WK),AX=gpAX(H),hd=.55,hs=gpS(h,hd),gyT=gpY(hd),[fx,fy]=HF.figP;
- const F={art,L:[],i:0,t:0,T:0,xs,AX,AY:GPAY,hd,hs,gyT,HX:AX-112*hs,fx,fy,u,st,name:H.name,anb:!!(H.au&&H.au.pflege),hatStrick:!!(H.au&&H.au.strick),bx:[.76,.87,.95,1][h.st]||1,
+ const F={art,L:[],i:0,t:0,T:0,xs,AX,AY:GPAY,hd,hs,gyT,HX:AX-112*hs,fx,fy,u,st,name:H.name,anb:!!(H.au&&H.au.pflege),hatStrick:!!(H.au&&H.au.strick&&H.au.halfter),hatHalfter:!!(H.au&&H.au.halfter),halfter:0,beug:0,flug:art=='pflege'&&HF.mode=='fly',bx:[.76,.87,.95,1][h.st]||1,
   fig:[fx,fy],fs:FIGX.s,fsZ:GPFS,arm:0,wz:'',vorn:0,geht:0,hx:h.x,hdd:h.d,hdir:h.dir,pl:0,pg:'walk',pgr:0,pop:1,huf:null,strick:'',kiste:0,dreck:1,P:{},tl:[],camX:art=='arzt'&&u?xs+20:AX-20,horse:h};
  // Steht das Pferd drinnen: beim Tierarzt (mit Gebäude) bleibt es drin, sonst kommt es heraus
  if(h.drin){if(art=='arzt'&&u){F.drin=1;F.eigen=1;F.indoor=HF.hw.querySelector('#hdrin')}
@@ -174,6 +179,8 @@ function gpStart(k,art){const H=hh(k),u=unterkunft(H),st=stg(k);GPNOTE='';GPOK=1
  // Zweites Pferd auf dem Hof (Freund "e:2"): wird am Ende der Pflege mitgeputzt
  if(art=='pflege'&&k.h2){F.zw=HF.horses.find(x=>x.zweit&&x.g_)||null;F.dr2=F.zw?[...F.zw.g_.querySelectorAll('.dreck')]:[]}
  ({pflege:gpPflegeSzene,arzt:gpArztSzene,schmied:gpSchmiedSzene})[art](F);
+ // Im Flugmodus springt das Bild sofort auf die Figur und folgt ihr (hofFrame in hof.js)
+ if(F.flug)HF.cam=Math.min(Math.max(F.fig[0]-HF.W/2,0),HF.WW-HF.W);
  HF.fuehr=F;if(F.L[0]&&F.L[0].a)F.L[0].a(F);
  hofKick(1);scrollTo({top:0,behavior:'smooth'});ui()}
 // Figur (und auf Wunsch das Pferd) gehen von ihrer Lage zu Beginn des Schritts zum Ziel. Ziele: [x, y] bzw. [x, Tiefe, Richtung] oder Funktion(F)
@@ -182,12 +189,29 @@ function gpGeh(F,d,fz,hz,ex){F.L.push({d,a:F=>{F.f0=[...F.fig];F.h0=[F.hx,F.hdd]
   if(F.hz){F.hx=gpL(p,F.h0[0],F.hz[0]);F.hdd=gpL(p,F.h0[1],F.hz[1]);F.pl=p<1&&Math.abs(F.hz[0]-F.h0[0])>2;if(p>=1&&F.hz[2])F.hdir=F.hz[2];else if(F.pl)F.hdir=F.hz[0]>=F.h0[0]?1:-1}
   if(ex&&ex.f)ex.f(p,F)}})}
 const gpPause=(F,d,f,a)=>F.L.push({d,a,f});
-// Pferd holen: aus dem Unterstand bzw. Stall oder auf der Koppel (das Pferd kommt der Figur entgegen), dann Strick anlegen
+// Pferd holen (seit 2026-10-25): Ist das Pferd weit weg (PFIFF), pfeift die Figur (zwei Noten steigen auf), geht ein Stück entgegen,
+// und das Pferd kommt den größten Teil angelaufen. Sonst geht die Figur zum Pferd. Dann Halfter aufsetzen und Führstrick einhaken (gpAnlegen).
+// Steht das Pferd im Unterstand bzw. Stall, holt die Figur es an der Tür.
+const PFIFF=110;
 function gpHolen(F){
- if(F.ausStall){gpGeh(F,1.2,[F.xs-24,GY+20]);gpPause(F,.5,(p,F)=>{F.pop=p;if(p>.4&&F.hatStrick)F.strick='hand'});return}
- F.L.push({d:2.2,a:F=>{F.mx=Math.min(F.fx+100,Math.max(F.fx-60,F.hx));F.f0=[...F.fig];F.h0=[F.hx,F.hdd];const dd=Math.abs(F.hx-F.mx);F.L[F.i].d=Math.min(4,Math.max(1.6,dd/70));F.pg=dd>200?'gallop':dd>80?'trot':'walk';F.vorn=1},
-  f:(p,F)=>{F.fig=[gpL(p,F.f0[0],F.mx+26),gpL(p,F.f0[1],F.gyT+8)];F.geht=p<1;F.hx=gpL(p,F.h0[0],F.mx);F.hdd=gpL(p,F.h0[1],.45);F.pl=p<1&&Math.abs(F.mx-F.h0[0])>2;
-   if(F.pl)F.hdir=F.mx>=F.h0[0]?1:-1;if(p>=1){F.hdir=1;F.pg='walk';if(F.hatStrick)F.strick='hand'}}})}
+ if(F.ausStall){gpGeh(F,1.2,[F.xs-24,GY+20]);gpPause(F,.5,(p,F)=>{F.pop=p});gpAnlegen(F);return}
+ gpPause(F,1.2,(p,F)=>{if(!F.weit)return;F.arm=p<.9?-195+5*Math.sin(F.T*30):0;if(!F.pf1&&p>.12){F.pf1=1;gpNote(F);pfiff(0)}if(!F.pf2&&p>.45){F.pf2=1;gpNote(F);pfiff(1)}},
+  F=>{F.weit=Math.abs(F.hx-F.fx)>PFIFF;if(!F.weit)F.L[F.i].d=0;else F.vorn=1});
+ F.L.push({d:2.2,a:F=>{F.arm=0;F.mx=F.weit?F.fx+(F.hx-F.fx)*.25:F.hx;F.f0=[...F.fig];F.h0=[F.hx,F.hdd];const dd=Math.abs(F.hx-F.mx),df=Math.abs(F.f0[0]-F.mx-26);
+   F.L[F.i].d=Math.min(4,Math.max(1.6,dd/70,df/45));F.pg=dd>200?'gallop':dd>80?'trot':'walk';F.vorn=1},
+  f:(p,F)=>{F.fig=[gpL(p,F.f0[0],F.mx+26),gpL(p,F.f0[1],F.gyT+8)];F.geht=p<1;F.hx=gpL(p,F.h0[0],F.mx);F.hdd=gpL(p,F.h0[1],.45);F.pl=p<1&&(Math.abs(F.mx-F.h0[0])>2||Math.abs(F.h0[1]-.45)>.05);
+   if(p<1&&Math.abs(F.mx-F.h0[0])>2)F.hdir=F.mx>=F.h0[0]?1:-1;if(p>=1){F.hdir=1;F.pg='walk'}}});
+ gpAnlegen(F)}
+// Halfter aufsetzen und Führstrick einhaken (nur, was gekauft ist; ohne beides führt die Figur das Pferd wie früher ohne Strick)
+function gpAnlegen(F){
+ if(F.hatHalfter)gpPause(F,.9,(p,F)=>{F.arm=p<1?-158+12*Math.sin(F.T*12):0;if(p>.55)F.halfter=1});
+ if(F.hatStrick)gpPause(F,.5,(p,F)=>{F.arm=-40*Math.sin(Math.PI*p);if(p>.5)F.strick='hand'})}
+// Note beim Pfeifen: steigt über dem Kopf der Figur auf und weht zur Seite weg
+function gpNote(F){const[x,y]=F.fig;gpPartikel(F,'note',x+2*F.fs,y-104*F.fs)}
+// Pfiff: kurzer, steigender Ton (n = 0 erster, 1 zweiter, höher), still bei "Ton: aus"
+function pfiff(n){if(S.snd===0)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state=='suspended')AC.resume();
+ const t=AC.currentTime+.01,o=AC.createOscillator(),g=AC.createGain(),f=n?2100:1700;o.type='sine';o.frequency.setValueAtTime(f*.8,t);o.frequency.exponentialRampToValueAtTime(f*1.15,t+.12);o.frequency.exponentialRampToValueAtTime(f,t+.22);
+ g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12,t+.03);g.gain.exponentialRampToValueAtTime(.001,t+.28);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.3)}catch(e){}}
 // Zum Anbinder führen und festbinden (ohne Anbinder hält die Figur das Pferd am Kopf)
 function gpZumAnbinder(F){gpGeh(F,2.6,[F.AX+4,F.gyT+6],[F.HX,F.hd,1],{a:F=>{F.vorn=1;F.pg='walk'}});
  if(F.anb)gpPause(F,.6,(p,F)=>{F.arm=-35*Math.sin(Math.PI*p);if(p>.5&&F.hatStrick)F.strick='pfosten'})}
@@ -195,7 +219,9 @@ function gpZumAnbinder(F){gpGeh(F,2.6,[F.AX+4,F.gyT+6],[F.HX,F.hd,1],{a:F=>{F.vo
 function gpLoslassen(F,gang){
  if(F.anb)gpPause(F,.6,(p,F)=>{F.arm=-35*Math.sin(Math.PI*p);if(p>.5&&F.hatStrick)F.strick='hand'});
  gpGeh(F,2,[F.AX+48,F.gyT+7],[F.HX+44,F.hd,1]);
- gpPause(F,.4,(p,F)=>{F.arm=-60*Math.sin(Math.PI*p);if(p>.3)F.strick=''});
+ // Seit 2026-10-25: Die Figur tritt näher an den Kopf und nimmt Halfter und Führstrick in einem Griff ab, dann rennt das Pferd los
+ if(F.hatHalfter||F.hatStrick){gpGeh(F,.5,F=>[F.HX+44+108*F.hs,F.gyT+4]);gpPause(F,.8,(p,F)=>{F.arm=p<1?-158+12*Math.sin(F.T*12):0;if(p>.55){F.strick='';F.halfter=0}})}
+ else gpPause(F,.4,(p,F)=>{F.arm=-60*Math.sin(Math.PI*p)});
  gpPause(F,1.6,(p,F)=>{F.arm=p<.85?-140+18*Math.sin(F.T*12):0},F=>{F.hfrei=gang;F.hdir=-1;herzen([F.horse]);if(S.snd!==0)neigh(F.horse.st)});
  gpGeh(F,1.6,[F.fx,F.fy],null,{a:F=>{F.vorn=0;F.arm=0;F.fsZ=FIGX.s}})}
 // Pflege: Bürste links und rechts, Mähne und Schweif, vier Hufe auskratzen (nahe Seite vorn und hinten, dann ferne Seite hinten und vorn)
@@ -220,7 +246,7 @@ function gpPflegeSzene(F){const X=s=>F.HX+s*F.hs,KX=F.KX-8,KY=F.KY-2;
  // Hufe (seit 2026-10-25): erst die nahe Seite vorn und hinten, dann geht die Figur um das Pferd und kratzt auf der fernen Seite hinten und vorn aus
  const huf=(b,fern)=>{
   gpGeh(F,.5,F=>[gpBeinX(F,b)-(b[0]=='v'?16:12)*F.hs/.2,F.gyT+(fern?-8:6)],null,{a:F=>{F.arm=0;F.huf=null;F.vorn=fern?0:1}});
-  gpPause(F,2,(p,F)=>{F.huf.f=p<.15?p/.15:p>.85?(1-p)/.15:1;F.arm=-30+14*Math.sin(F.T*18);if(p>.2&&p<.8&&Math.random()<.22){const [x,y]=gpHufPos(F,b);gpPartikel(F,'krume',x,y)}},F=>{F.huf={b,f:0}})};
+  gpPause(F,2,(p,F)=>{F.huf.f=p<.15?p/.15:p>.85?(1-p)/.15:1;F.beug=24*F.huf.f;F.arm=-30+14*Math.sin(F.T*18);if(p>.2&&p<.8&&Math.random()<.22){const [x,y]=gpHufPos(F,b);gpPartikel(F,'krume',x,y)}},F=>{F.huf={b,f:0}})};
  huf('vn');huf('hn');
  gpGeh(F,.7,[X(-128),F.gyT+1],null,{a:F=>{F.huf=null;F.arm=0}});// hinten um das Pferd herum (wie beim Bürsten)
  huf('hf',1);huf('vf',1);
@@ -230,8 +256,8 @@ function gpPflegeSzene(F){const X=s=>F.HX+s*F.hs,KX=F.KX-8,KY=F.KY-2;
  gpLoslassen(F,'gallop');
  // Bei zwei Pferden wird das zweite anschließend mitgeputzt: Kamera hin, Schmutz verschwindet mit Glitzer, Herzen und Wiehern
  // (nur wenn es Schmutzflecken hat; erst schwenken, dann putzen)
- if(F.zw&&F.dr2.length){F.L.push({d:2.5,a:F=>{F.camX=F.zw.x},f:(p,F)=>{F.camX=F.zw.x},bis:F=>F.t>=.8&&F.zw.x>HF.cam+60&&F.zw.x<HF.cam+HF.W-60});// warten, bis es im Bild ist
-  gpPause(F,1.6,(p,F)=>{F.camX=F.zw.x;F.dr2.forEach(e=>e.style.opacity=Math.max(0,1-p).toFixed(2));const z=F.zw;if(z.sc&&Math.random()<.25){const s=z.sc*PFS;gpPartikel(F,'funkel',z.x+(Math.random()-.5)*120*s,z.gy-(90+Math.random()*80)*s)}
+ if(F.zw&&F.dr2.length){F.L.push({d:2.5,a:F=>{F.camX=F.flugX=F.zw.x},f:(p,F)=>{F.camX=F.flugX=F.zw.x},bis:F=>{const m=Math.min(60,HF.W*.2);return F.t>=.8&&F.zw.x>HF.cam+m&&F.zw.x<HF.cam+HF.W-m}});// warten, bis es im Bild ist
+  gpPause(F,1.6,(p,F)=>{F.camX=F.flugX=F.zw.x;F.dr2.forEach(e=>e.style.opacity=Math.max(0,1-p).toFixed(2));const z=F.zw;if(z.sc&&Math.random()<.25){const s=z.sc*PFS;gpPartikel(F,'funkel',z.x+(Math.random()-.5)*120*s,z.gy-(90+Math.random()*80)*s)}
    if(p>.55&&!F.zwH&&z.sc){F.zwH=1;herzen([z]);if(S.snd!==0)neigh(z.st)}})}}
 // Hufschmied: kommt mit Amboss, je Huf altes Eisen ab, raspeln, neues Eisen glühend anpassen (dampft), dreimal hämmern, Glitzer.
 // Beim Jährling nur ausschneiden und raspeln. Danach scharrt das Pferd, der Schmied tippt an die Mütze und geht.
@@ -244,7 +270,7 @@ function gpSchmiedSzene(F){const eisen=F.st>=2;
  gpPause(F,.1,null,F=>{const p=F.P.schmied;p.abFix=[p.x+p.abx,p.y]});
  for(const b of ['vn','vf','hn','hf']){
   F.L.push({d:6,a:F=>{gpZiel(F,'schmied',[gpBeinX(F,b)-(b[0]=='v'?16:12)*F.hs/.2,F.gyT+10],30)},bis:F=>gpDa(F,'schmied')});
-  F.L.push({d:2.6,a:F=>{F.huf={b,f:0};F.he={}},f:(p,F)=>{const P=F.P.schmied,e=F.he,[hx,hy]=gpHufPos(F,b);F.huf.f=p<.1?p/.1:p>.92?(1-p)/.08:1;
+  F.L.push({d:2.6,a:F=>{F.huf={b,f:0};F.he={}},f:(p,F)=>{const P=F.P.schmied,e=F.he,[hx,hy]=gpHufPos(F,b);F.huf.f=p<.1?p/.1:p>.92?(1-p)/.08:1;P.beug=20*F.huf.f;
    if(eisen&&!e.alt&&p>.12){e.alt=1;gpPartikel(F,'eisen',hx,hy);kling(1300,.25,.12)}
    if(p>.16&&p<(eisen?.48:.88)){P.wz='raspel';P.arm=-38+16*Math.sin(F.T*22);if(Math.random()<.35)gpPartikel(F,'span',hx,hy)}
    else if(eisen&&p>=.48&&p<.64){P.wz='';P.arm=-24;if(!e.gl){e.gl=1;F.ev.insertAdjacentHTML('beforeend','<path class="neueisen" d="M-2.4 -.4V1.6a2.4 2.4 0 0 0 4.8 0V-.4" fill="none" stroke="#ff8a2a" stroke-width="1.3" stroke-linecap="round"/>');e.el=F.ev.lastElementChild}if(Math.random()<.35)gpPartikel(F,'dampf',hx,hy-2)}
@@ -266,7 +292,7 @@ function gpArztSzene(F){
   gpPause(F,.1,null,F=>gpZiel(F,'arzt',[F.xs+30,GY+30],34));
   if(!F.drin){gpHolen(F);
    gpGeh(F,3,[F.xs-24,GY+20],[F.xs,0,1],{a:F=>{F.vorn=1}});
-   gpPause(F,.4,(p,F)=>{F.pop=1-p;if(p>.3)F.strick=''});
+   gpPause(F,.4,(p,F)=>{F.pop=1-p;if(p>.3){F.strick='';F.halfter=0}});
    gpPause(F,.1,null,F=>gpHinein(F));
    gpGeh(F,1,[F.xs-46,GY+26])}
   F.L.push({d:9,bis:F=>gpDa(F,'arzt')});
@@ -280,9 +306,9 @@ function gpArztSzene(F){
   gpPause(F,.1,null,F=>{gpBlase(F,0);gpWeg(F,'arzt',GY+40)});
   // Pferd wieder herausholen und auf die Koppel bringen
   gpGeh(F,1.2,[F.xs-24,GY+20],null,{a:F=>{F.vorn=1}});
-  gpPause(F,.5,(p,F)=>{F.pop=p;if(p>.4&&F.hatStrick)F.strick='hand'},F=>gpHeraus(F));
+  gpPause(F,.5,(p,F)=>{F.pop=p;if(p>.4){if(F.hatHalfter)F.halfter=1;if(F.hatStrick)F.strick='hand'}},F=>gpHeraus(F));
   gpGeh(F,3,[F.xs+98,GY+40],[F.xs+70,.45,1]);
-  gpPause(F,.4,(p,F)=>{if(p>.3)F.strick=''},F=>{herzen([F.horse])});
+  gpPause(F,.4,(p,F)=>{if(p>.3){F.strick='';F.halfter=0}},F=>{herzen([F.horse])});
   gpGeh(F,1.6,[F.fx,F.fy],null,{a:F=>{F.vorn=0;F.fsZ=FIGX.s}});
   gpWarteWeg(F);return}
  gpHolen(F);gpZumAnbinder(F);
@@ -319,15 +345,18 @@ function gpHinein(F){const h=F.horse;let w=HF.hw.querySelector('#hdrin');
  w.appendChild(h.g_);h.drin=F.u;F.eigen=1;F.pop=1;F.indoor=w;F.strick=''}
 function gpHeraus(F){const h=F.horse;h.drin=0;F.eigen=0;if(F.tuer)gpTuerArzt(F,0);HF.hw.insertBefore(h.g_,HF.vorne);if(F.indoor&&!F.indoor.children.length)F.indoor.remove();F.indoor=null;
  F.hx=F.xs;F.hdd=0;F.hdir=1;F.pop=0;HF.ord=[]}
+// Halfter am gezeichneten Pferd zeigen oder verstecken (Gruppe id=...halfter aus pferd.js, seit 2026-10-25). Auch hof.js (Führen) nutzt das.
+function halfterZeigen(h,an){const e=h&&h.g_&&h.g_.querySelector('[id$="halfter"]');if(e)e.style.display=an?'':'none'}
 // Staub beim Bürsten (irgendwo auf dem Fell)
 function gpStaub(F){if(F.dreck<=0)return;const s=gpS(F.horse,F.hdd),gy=gpY(F.hdd);gpPartikel(F,'staub',F.hx+F.hdir*(Math.random()*110-60)*s,gy-(100+Math.random()*50)*s)}
 // Teilchen: Staub, Erdkrümel, Hornspäne, Dampf, Glitzer, altes Eisen
 const PART={staub:{c:'#b9966a',r:1.5,vy:-7,g:0,life:.8,grow:1.6,op:.6},krume:{c:'#6b4b2e',r:.8,vy:-14,g:90,life:.6,op:.9},span:{c:'#eadbb5',r:.75,vy:-12,g:80,life:.6,op:.9},
- dampf:{c:'#ffffff',r:1.6,vy:-14,g:0,life:1,grow:2.4,op:.75},funkel:{life:.7,op:1},eisen:{life:.9,g:140,vy:-10,op:1}};
+ dampf:{c:'#ffffff',r:1.6,vy:-14,g:0,life:1,grow:2.4,op:.75},note:{vy:-16,g:0,life:1.5,op:1},funkel:{life:.7,op:1},eisen:{life:.9,g:140,vy:-10,op:1}};
 function gpPartikel(F,typ,x,y){const T=PART[typ];if(!T||F.tl.length>60)return;
  F.ev.insertAdjacentHTML('beforeend',typ=='funkel'?'<path d="M0 -3L.8 -.8L3 0L.8 .8L0 3L-.8 .8L-3 0L-.8 -.8Z" fill="#fff6b0" stroke="#e8b400" stroke-width=".3"/>':
-  typ=='eisen'?'<path d="M-2 -2.2V0a2 2 0 0 0 4 0V-2.2" fill="none" stroke="#7b8087" stroke-width="1.1" stroke-linecap="round"/>':`<circle r="${T.r}" fill="${T.c}"/>`);
- F.tl.push({el:F.ev.lastElementChild,typ,x,y,vx:(Math.random()-.5)*(typ=='eisen'?10:14),vy:(T.vy||0)*(.7+Math.random()*.6),t:0,life:T.life,g:T.g||0,grow:T.grow||1,op:T.op})}
+  typ=='eisen'?'<path d="M-2 -2.2V0a2 2 0 0 0 4 0V-2.2" fill="none" stroke="#7b8087" stroke-width="1.1" stroke-linecap="round"/>':
+  typ=='note'?'<g><ellipse cx="-1" cy="0" rx="1.7" ry="1.25" fill="#2b2d3a" transform="rotate(-22 -1 0)"/><path d="M.5 -.4V-6.6Q3 -5.6 3.2 -3.2" fill="none" stroke="#2b2d3a" stroke-width=".75" stroke-linecap="round"/></g>':`<circle r="${T.r}" fill="${T.c}"/>`);
+ F.tl.push({el:F.ev.lastElementChild,typ,x,y,vx:typ=='note'?6+Math.random()*6:(Math.random()-.5)*(typ=='eisen'?10:14),vy:(T.vy||0)*(.7+Math.random()*.6),t:0,life:T.life,g:T.g||0,grow:T.grow||1,op:T.op})}
 // Ein Bild der Szene: Pferd, Figur, Strick, Kiste, Personen, Teilchen
 function gpZeichnen(F,h,dt){
  if(F.hfrei&&dt>0){const kr=(HF.kr||[[0,HF.WW]])[0];F.hx+=F.hdir*(SPEED[F.hfrei]||40)*dt;if(F.hx>kr[1]-40)F.hdir=-1;if(F.hx<kr[0]+40)F.hdir=1;F.pl=1;F.pg=F.hfrei}
@@ -339,7 +368,9 @@ function gpZeichnen(F,h,dt){
  // Figur
  const fe=F.fe,[x,y]=F.fig,bob=F.geht?Math.abs(Math.sin(F.T*9))*1.2:0,ebene=F.vorn?F.ev:F.eh;
  if(fe.parentNode!==ebene)ebene.appendChild(fe);
- F.fs+=(F.fsZ-F.fs)*Math.min(1,dt*2.5);fe.setAttribute('transform',`translate(${r1(x)} ${r1(y-bob)}) scale(${F.fs.toFixed(3)})`);
+ F.fs+=(F.fsZ-F.fs)*Math.min(1,dt*2.5);fe.setAttribute('transform',`translate(${r1(x)} ${r1(y-bob)})${F.beug?` rotate(${r1(F.beug)})`:''} scale(${F.fs.toFixed(3)})`);
+ // Halfter am Pferd (seit 2026-10-25): zu sehen vom Aufsetzen bis zum Abnehmen, nicht wenn nur der Kopf in der Tür steht
+ const hz=!!F.halfter&&!F.eigen;if(F._hz!==hz){F._hz=hz;halfterZeigen(h,hz)}
  if(F.wa){if(F.arm)F.wa.setAttribute('transform',`rotate(${r1(F.arm)} 11.6 -75)`);else F.wa.removeAttribute('transform')}
  if(F.wzEl&&F._wz!==F.wz){F._wz=F.wz;F.wzEl.innerHTML=WZ[F.wz]||''}
  // Führstrick: von der Hand bzw. vom Ring am Anbinder zum Halfter
@@ -352,7 +383,7 @@ function gpZeichnen(F,h,dt){
  for(const k in F.P){const p=F.P[k],dx=p.z[0]-p.x,dy=p.z[1]-p.y,dd=Math.hypot(dx,dy),geht=dd>.8&&dt>0;if(geht){const st=Math.min(dd,p.v*dt);p.x+=dx/dd*st;p.y+=dy/dd*st}
   // Einblenden nur beim Auftauchen (danach steuern die Schritte die Sichtbarkeit, z. B. im Stall), Ausblenden beim Gehen
   if(p.weg)p.op=Math.min(p.op,Math.max(0,(dd-1)/40));else if(p.ein&&dt>0){p.op=Math.min(1,p.op+dt*2.5);if(p.op>=1)p.ein=0}
-  const pb=geht?Math.abs(Math.sin(F.T*8))*1.3:0;p.el.setAttribute('transform',`translate(${r1(p.x)} ${r1(p.y-pb)}) scale(${GPFS})`);p.el.style.opacity=p.op<1?p.op.toFixed(2):'';
+  const pb=geht?Math.abs(Math.sin(F.T*8))*1.3:0;p.el.setAttribute('transform',`translate(${r1(p.x)} ${r1(p.y-pb)})${p.beug?` rotate(${r1(p.beug)})`:''} scale(${GPFS})`);p.el.style.opacity=p.op<1?p.op.toFixed(2):'';
   if(p.pa){if(p.arm)p.pa.setAttribute('transform',`rotate(${r1(p.arm)} 12.8 -90)`);else p.pa.removeAttribute('transform')}
   if(p._wz!==p.wz){p._wz=p.wz;p.wzEl.innerHTML=WZ[p.wz]||''}
   if(p.ab){p.abx+=(p.abSoll-p.abx)*Math.min(1,dt*2.5);const ax=p.abFix?p.abFix[0]:p.x+p.abx,ay=p.abFix?p.abFix[1]:p.y;p.ab.setAttribute('transform',`translate(${r1(ax)} ${r1(ay)})${!p.abFix&&p.abx<0?' scale(-1 1)':''}`);p.ab.style.opacity=p.el.style.opacity}}
@@ -374,9 +405,11 @@ function gpEnde(F,h){HF.fuehr=null;
  F.tl.forEach(q=>q.el.remove());if(F.tuer)gpTuerArzt(F,0);if(F.eigen)gpHeraus(F);
  if(F.temp)F.fe.remove();else{const vor=F.feNext&&F.feNext.parentNode===HF.hw?F.feNext:HF.hap;HF.hw.insertBefore(F.fe,vor);if(F.wa)F.wa.removeAttribute('transform');if(F.wzEl)F.wzEl.remove();fuehrFigur(F.fx,F.fy,0)}
  [F.eh,F.ev].forEach(e=>e&&e.remove());
- h.huf=null;h.g_.style.opacity='';h.x=F.hx;h.d=F.hdd;h.dir=F.hdir;h.ziel=null;
+ h.huf=null;halfterZeigen(h,0);h.g_.style.opacity='';h.x=F.hx;h.d=F.hdd;h.dir=F.hdir;h.ziel=null;
  if(F.hfrei){h.state=F.hfrei;h.g=F.hfrei;h.t=1.5+Math.random()*1.5}else{h.state='graze';h.t=3+Math.random()*3}
  // Nach dem ersten Schmied hängt das Glücks-Hufeisen über der Tür
  if(F.art=='schmied'&&!HF.hw.querySelector('.glueck')){const k=kid(),s=k&&k.h?gluecksSvg(hh(k)):'';if(s){HF.hap.insertAdjacentHTML('beforebegin',s);const gl=HF.hw.querySelector('.glueck');if(gl&&!RM)gl.classList.add('neu')}}
  const k=kid();GPNOTE=k&&k.h?gpFertigText(F.art,hh(k),F.st,k):'';GPOK=1;
- HF.keyNeu=F.key;hofKick(3);ui()}
+ HF.keyNeu=F.key;hofKick(3);ui();
+ // Putzen im Flugmodus: kurz nachschauen lassen, dann landen (falls nicht schon gelandet)
+ if(F.flug)setTimeout(()=>{if(HF.mode=='fly'&&!HF.fuehr&&typeof flyOff=='function')flyOff()},700)}

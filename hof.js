@@ -60,7 +60,16 @@ const DR={
     (j?'':`<path d="M${x} ${GY-16}V${B}" stroke="#c9b893" stroke-width="1"/>`)+[GY-10,GY+4].map(b=>`<rect x="${hx-1.6}" y="${b-.7}" width="3.2" height="1.4" rx=".5" fill="#3d3a36" stroke="none"/>`).join('')+`</g>`).join('')+
    `<path d="M${x} ${GY-19.5}v-2" stroke="#3d3a36" stroke-width=".6"/><circle cx="${x}" cy="${GY-18}" r="1.5" fill="#ffd56a"/>`;
   return s},
- teich:x=>`<ellipse cx="${x}" cy="${GY+24}" rx="37" ry="10.5" fill="#3f86bd"/><ellipse cx="${x}" cy="${GY+23}" rx="35" ry="9" fill="url(#teichG)"/><ellipse cx="${x-9}" cy="${GY+21}" rx="14" ry="2.6" fill="#cfe9f7" opacity=".55"/><ellipse cx="${x+14}" cy="${GY+26}" rx="4" ry="1.6" fill="#5aa45a"/><circle cx="${x+15}" cy="${GY+25.4}" r=".9" fill="#f6a8c8"/>`+[[-34,0],[-30,3],[-27,-1],[31,1],[34,-2]].map(([a,b])=>`<path d="M${x+a} ${GY+22+b}q-1 -8 .5 -14" stroke="#4f7d3a" stroke-width=".9" fill="none"/><ellipse cx="${x+a+.4}" cy="${GY+10+b}" rx=".9" ry="2.4" fill="#7a5233"/>`).join(''),
+ // Teich (seit 2026-10-25 hübscher): grasiges Ufer mit Steinen (vorn größer), Wasser mit Verlauf, Himmelsspiegelung und Glanz,
+ // drei Seerosenblätter mit Kerbe (auf dem rechten vorn landet der Frosch: x+14, GY+25.6), eine Seerose, Schilf mit Rohrkolben
+ teich:x=>{const Y=GY+24,st=[[-36,-1.5,3.2],[-31,4.6,3.6],[-22,8.6,3.4],[-12,10.6,3.8],[-1,11.2,3.2],[10,10.8,3.9],[21,9,3.4],[30,5.6,3.7],[36,.5,3.1],[33,-4.6,2.4],[-34,-5,2.4],[24,-8.2,2.1],[-25,-8.4,2.2],[0,-10.4,2],[-12,-9.8,1.8],[12,-9.9,1.9]];
+  return`<ellipse cx="${x}" cy="${Y+1}" rx="41" ry="12.5" fill="#5f8f45"/><ellipse cx="${x}" cy="${Y}" rx="37" ry="10.5" fill="#2f6f9f"/><ellipse cx="${x}" cy="${Y-.6}" rx="35" ry="9" fill="url(#teichG)"/>`+
+   `<ellipse cx="${x-6}" cy="${Y-4.6}" rx="22" ry="2.6" fill="#bfe3f7" opacity=".45"/><ellipse cx="${x-9}" cy="${Y-3}" rx="13" ry="1.6" fill="#fff" opacity=".5"/><path d="M${x+4} ${Y+4}h12M${x-20} ${Y+5.5}h8" stroke="#e8f6fd" stroke-width=".6" opacity=".7" stroke-linecap="round"/>`+
+   st.map(([dx,dy,r],i)=>`<ellipse cx="${x+dx}" cy="${Y+dy}" rx="${r}" ry="${r1(r*.62)}" fill="${['#9a958c','#aaa59b','#8c877e'][i%3]}"/><ellipse cx="${r1(x+dx-r*.25)}" cy="${r1(Y+dy-r*.22)}" rx="${r1(r*.45)}" ry="${r1(r*.22)}" fill="#fff" opacity=".25"/>`).join('')+
+   [[14,1.8,4.2,'#4f9a47'],[-14,2.6,3.2,'#5aa452'],[2,-3.2,2.6,'#5aa452']].map(([dx,dy,r,c])=>`<path d="M${r1(x+dx)} ${r1(Y+dy)}l${r1(r*.95)} ${r1(-r*.15)}A${r} ${r1(r*.5)} 0 1 0 ${r1(x+dx+r*.95)} ${r1(Y+dy+r*.15)}Z" fill="${c}"/>`).join('')+
+   `<circle cx="${x-15}" cy="${Y+2.2}" r="1.1" fill="#f6a8c8"/><circle cx="${x-15}" cy="${Y+2.2}" r=".45" fill="#ffe27a"/>`+
+   [[-34,0],[-30,3],[-27,-1],[31,1],[34,-2]].map(([a,b])=>`<path d="M${x+a} ${Y-2+b}q-1 -8 .5 -14" stroke="#4f7d3a" stroke-width=".9" fill="none"/><ellipse cx="${x+a+.4}" cy="${Y-14+b}" rx=".9" ry="2.4" fill="#7a5233"/>`).join('')+
+   [[-36,1],[-29,2],[33,0],[29,-1]].map(([a,b])=>`<path d="M${x+a} ${Y-1+b}q-2.6 -5 -2 -10" stroke="#6a9a4a" stroke-width=".8" fill="none"/>`).join('')},
  // Farm-Windrad: Gittermast mit Querstreben, Rad mit 16 schmalen Flügeln (dreht sich, gesteuert in hofDraw), rote Windfahne
  windrad:x=>{const H=GY-46,B=GY+6,lx=y=>x-7+5.4*(B-y)/(B-H-3),rx=y=>x+7-5.4*(B-y)/(B-H-3);
   let s=`<ellipse cx="${x}" cy="${B+.5}" rx="10" ry="1.8" fill="#000" opacity=".13" stroke="none"/><path d="M${x-7} ${B}L${x-1.6} ${H+3}M${x+7} ${B}L${x+1.6} ${H+3}" stroke="#7d878d" stroke-width="1.4" stroke-linecap="round"/>`;
@@ -114,6 +123,9 @@ const FUSS={stall:[37,GY+10],windrad:[9,GY+6],heu:[19,GY+16],troge:[17,GY+18],ba
 // Die Kopie folgt Animationen von selbst (Tore, Wetterfahne). Innenlinien (.uin) haben nur Scheune, Heu und Trog (früher der Strich um jede Fläche, UMR).
 // Wichtig: Schatten im Gegenstand brauchen stroke="none", sonst bekommen sie einen Ring. Regeln in style.css.
 const UMRISS={baum1:1,baum2:1,heu:1,troge:1,stall:1};
+// Sperrbereich um den Teich (seit 2026-10-25): halbe Breite für die Pferdemitte (Teich 37 + halbe Pferdelänge + Rand) und kleinste Tiefe davor
+// (Vorderkante des Teichs GY+34.5 plus Rand, umgerechnet in die Tiefe d der Pferde: Füße bei 138 + 54·d)
+const TEICH_R=56,TEICH_D=.46;
 const umrGruppe=(id,z,innen)=>`<use href="#uo-${id}" class="umr"/><g class="${innen?'uin':'ufuell'}"><g id="uo-${id}">${z}</g></g>`;
 const hill=(ww,y0,amp,wl,ph,col)=>{let d=`M0 ${WH}`;for(let x=0;x<=ww+16;x+=16)d+=`L${x} ${(y0+amp*Math.sin(x/wl+ph)+amp*.5*Math.sin(x/(wl*.43)+ph*2)).toFixed(1)}`;return `<path d="${d}L${ww+16} ${WH}Z" fill="${col}"/>`};
 const hillY=(x,y0,amp,wl,ph)=>y0+amp*Math.sin(x/wl+ph)+amp*.5*Math.sin(x/(wl*.43)+ph*2);
@@ -224,7 +236,18 @@ const MAUS='<g class="maus" stroke="#4a4039" stroke-width=".25" stroke-linejoin=
  '<circle cx="2.4" cy="-1.5" r=".24" fill="#1c1917" stroke="none"/><circle cx="3.35" cy="-1.2" r=".22" fill="#e08a8f" stroke="none"/>'+
  '<path d="M3 -1.1l1.1 -.35M3 -.95l1.1 .15" stroke="#d9d3cd" stroke-width=".13" fill="none"/></g>';
 // Frosch, steht mit den Füßen auf y = 0, schaut nach rechts; .kehle ist die Schallblase beim Quaken
-const FROSCH=`<g class="frosch"><ellipse cx="-2.2" cy="-1" rx="2.4" ry="1.1" fill="#3f7a2e"/><ellipse cy="-2.4" rx="3.4" ry="2.3" fill="#5aa13f"/><ellipse cx="2.3" cy="-3.2" rx="1.9" ry="1.5" fill="#5aa13f"/><circle class="kehle" cx="3" cy="-1.8" r="1.4" fill="#d9eaa0" opacity="0"/><circle cx="1.6" cy="-4.7" r="1" fill="#fff"/><circle cx="3.1" cy="-4.6" r="1" fill="#fff"/><circle cx="1.8" cy="-4.7" r=".45" fill="#111"/><circle cx="3.3" cy="-4.6" r=".45" fill="#111"/><path d="M1.6 -2.6q1.4 .7 2.6 -.2" stroke="#2d5a20" stroke-width=".35" fill="none"/><ellipse cx="1.4" cy="-.3" rx="1.2" ry=".4" fill="#3f7a2e"/></g>`;
+// Seit 2026-10-25 hübscher: Körper mit hellem Bauch und Flecken, Augenhügel mit gelblichen Augen (.fau, blinzelt), Hinterbein (.fhb, streckt sich beim Sprung)
+const FROSCH='<g class="frosch" stroke="#2d5a20" stroke-width=".22" stroke-linejoin="round" stroke-linecap="round">'+
+ '<g class="fhb"><path d="M-1 -1.6Q-4.2 -2.6 -4.4 -.9Q-4.4 -.1 -2.6 -.15L-.6 -.3Z" fill="#4f9a38"/><path d="M-2.6 -.15L-4.9 0L-5.2 -.5M-4.9 0L-5 .4" fill="none" stroke-width=".35"/></g>'+
+ '<path d="M-3.2 -1.5Q-3.4 -4.4 -.4 -4.8Q2.6 -5.1 3.7 -3.1Q4.3 -1.6 3.4 -.9Q1.6 -.1 -1.4 -.3Q-3 -.4 -3.2 -1.5Z" fill="#5fae45"/>'+
+ '<path d="M-1.6 -.45Q1 -.2 3.3 -1.1Q2.4 -.3 .6 -.25Z" fill="#d8eaa2" stroke="none"/>'+
+ '<g fill="#3f8a2e" stroke="none"><ellipse cx="-1.6" cy="-3.4" rx=".55" ry=".4"/><ellipse cx=".2" cy="-4.1" rx=".45" ry=".35"/><ellipse cx="-.3" cy="-2.5" rx=".4" ry=".3"/></g>'+
+ '<path d="M2.4 -1.2l.4 1.1l1 .05" fill="none" stroke-width=".35"/>'+
+ '<circle class="kehle" cx="3.1" cy="-1.5" r="1.3" fill="#e2efb0" opacity="0"/>'+
+ '<path d="M2.2 -2.2q1 .6 1.9 -.3" fill="none" stroke-width=".3"/>'+
+ '<circle cx="1.5" cy="-4.9" r="1.15" fill="#5fae45"/><circle cx="3.1" cy="-4.7" r="1.05" fill="#5fae45"/>'+
+ '<g class="fau"><circle cx="1.6" cy="-5" r=".75" fill="#fff8d0" stroke="none"/><circle cx="3.2" cy="-4.8" r=".7" fill="#fff8d0" stroke="none"/><ellipse cx="1.75" cy="-5" rx=".38" ry=".3" fill="#111" stroke="none"/><ellipse cx="3.35" cy="-4.8" rx=".36" ry=".28" fill="#111" stroke="none"/><circle cx="1.6" cy="-5.15" r=".12" fill="#fff" stroke="none"/></g>'+
+ '<circle cx="3.9" cy="-3.3" r=".12" fill="#2d5a20" stroke="none"/></g>';
 
 function fillers(){if(!HF.fill){const ks=Object.keys(COATS);HF.fill=[...Array(5)].map((_,i)=>{const c=ks[(i*2+R(0,5))%ks.length];return{id:'f'+i,c,st:i==3?1:3,m:{bl:R(0,1),so:R(0,1)},name:COATS[c][0],own:0}})}return HF.fill}
 // ---------- Unterstand und Stall: Pferd morgens herausholen, abends hineinbringen (seit 2026-10-22, Wunsch der Kinder) ----------
@@ -268,7 +291,8 @@ function fuehrSchritt(h,dt){const F=HF.fuehr;if(F.art)return gpSchritt(h,dt);// 
  h.g_.style.opacity=op<1?op.toFixed(2):'';fuehrFigur(fig[0],fig[1],geht?t:0);
  // Gekaufter Führstrick (seit 2026-10-25): von der Hand der Figur zum Halfter, solange beide zusammen gehen
  const zus=F.raus?t>=1.4&&t<4.6:t>=2&&t<5,k=kid(),e=HF.hw&&HF.hw.querySelector('#hstrick');
- if(e)e.setAttribute('d',zus&&k&&k.h&&k.h.au&&k.h.au.strick&&HF.figE?(()=>{const s=gpS(h,h.d),gy=gpY(h.d),[ax,ay]=gpHand(fig[0],fig[1],0,FIGX.s),hx=h.x+h.dir*116*s,hy=gy-166*s;
+ const mitH=!!(zus&&k&&k.h&&k.h.au&&k.h.au.strick&&k.h.au.halfter&&HF.figE);if(F._hz!==mitH){F._hz=mitH;if(typeof halfterZeigen=='function')halfterZeigen(h,mitH)}// Halfter seit 2026-10-25
+ if(e)e.setAttribute('d',mitH?(()=>{const s=gpS(h,h.d),gy=gpY(h.d),[ax,ay]=gpHand(fig[0],fig[1],0,FIGX.s),hx=h.x+h.dir*116*s,hy=gy-166*s;
   return`M${r1(ax)} ${r1(ay)}Q${r1((ax+hx)/2)} ${r1(Math.max(ay,hy)+3+Math.hypot(hx-ax,hy-ay)*.12)} ${r1(hx)} ${r1(hy)}`})():'')}
 // Eigene Figur verschieben (leichtes Wippen beim Gehen)
 function fuehrFigur(x,y,t){const e=HF.figE;if(!e)return;e.setAttribute('transform',`translate(${r1(x)} ${r1(y-(t?Math.abs(Math.sin(t*9))*1.2:0))}) scale(${FIGX.s})`)}
@@ -303,7 +327,10 @@ function hofBuild(kind){
  const szene=HF.fuehr&&HF.fuehr.art;HF.wellen=[];HF.katze=null;HF.maeuse=null;HF.fuehr=null;if(szene)setTimeout(()=>{if(typeof ui=='function')ui()},0);// Katze und Mäuse gehen beim Neuaufbau verloren (seit 2026-10-21)
  const old=Object.fromEntries(HF.horses.map(h=>[h.id,h]));
  const startX=i=>{const [a,b]=HF.kr[i];return i?a+40+Math.random()*(b-a-80):Math.min(b-30,Math.max(a+30,HF.cam+30+Math.random()*(W-60)))};
+ // Teich (seit 2026-10-25): Lage merken, Pferde laufen nicht durchs Wasser (siehe Bewegung in hofDraw)
+ HF.teich=items.includes('teich')?Math.round(OX+ITEMS.find(i=>i[0]=='teich')[3]*WK):null;
  HF.horses=hofSpecs(kind).map(s=>{s.ko=s.ko|0;const o=old[s.id]&&(old[s.id].ko|0)===s.ko?old[s.id]:null;return Object.assign({ph:0,am:0,g:'walk',ha:0,joy:0,state:'stand',t:R(1,3),dir:R(0,1)?1:-1,d:Math.random(),dd:.5,sw:Math.random()*6,x:startX(s.ko)},s,o?{x:o.x,d:o.d,dir:o.dir,state:o.state,t:o.t,ph:o.ph,am:o.am,g:o.g,ha:o.ha,dd:o.dd,ziel:kind=='kid'?o.ziel:null}:{})});
+ if(HF.teich!=null)HF.horses.forEach(h=>{if(!(h.ko|0)&&Math.abs(h.x-HF.teich)<TEICH_R&&h.d<TEICH_D){h.d=TEICH_D+.1;h.dd=Math.max(h.dd,h.d)}});
  // Gras nicht auf Gegenständen: belegte Flächen [links, rechts, Fußlinie]
  const geb=H0?gebaeude(H0,OX,WK,WW):{s:'',belegt:[]};
  const belegt=[...ITEMS.filter(i=>items.includes(i[0])&&FUSS[i[0]]).map(i=>{const x=Math.round(OX+i[3]*WK),[w,b]=FUSS[i[0]];return[x-w,x+w,b]}),...geb.belegt],frei=(x,y)=>!belegt.some(([a,b,f])=>x>a&&x<b&&y<f+1);
@@ -431,6 +458,9 @@ function hofDraw(dt){
     else if(mv&&((h.dir>0&&h.x>rg[1]-12)||(h.dir<0&&h.x<rg[0]+12)))h.dir*=-1}
    const sp=h.joy>0?0:SPEED[h.state]||0;
    h.x+=h.dir*sp*dt;if(sp)h.d+=(h.dd-h.d)*Math.min(1,dt*.5);
+   // Teich: Kommt ein Pferd dem Wasser nahe, geht es nach vorn (größere Tiefe) und läuft vor dem Teich vorbei statt hindurch
+   if(HF.teich!=null&&!(h.ko|0)){const drin=Math.abs(h.x-HF.teich)<TEICH_R,vor=Math.abs(h.x+h.dir*(20+sp*.6)-HF.teich)<TEICH_R;
+    if((drin||vor)&&h.d<TEICH_D+.05){h.dd=Math.max(h.dd,TEICH_D+.1);h.d=drin&&h.d<TEICH_D?TEICH_D+.02:Math.min(TEICH_D+.1,h.d+dt*2.2)}}// steht es schon im Wasser (z. B. nach dem Start), sofort nach vorn
    if(sp){h.g=h.state;h.am+=(1-h.am)*Math.min(1,dt*6);h.ph=(h.ph+dt*G[h.g][1])%1}else h.am+=(0-h.am)*Math.min(1,dt*6);
    h.ha+=((h.state=='graze'&&h.joy<=0?48:0)-h.ha)*Math.min(1,dt*3);
   }
@@ -517,12 +547,17 @@ function hofSpass(dt){
   if(HF.apfel)A.el.setAttribute('transform',`translate(${r1(A.x)} ${r1(A.y)}) scale(${A.weg!=null?Math.max(.2,A.weg/3).toFixed(2):1})`)}
  // Frosch: springt aus dem Teich aufs Seerosenblatt, quakt, springt zurück
  const F=HF.frosch;
- if(F){if(dt>0)F.t+=dt;const x0=F.x-8,y0=GY+24,x1=F.x+14,y1=GY+25.6;let fx=x1,fy=y1,re=1;
-  if(F.t<.5){const p=F.t/.5;fx=x0+(x1-x0)*p;fy=y0+(y1-y0)*p-16*Math.sin(Math.PI*p)}
-  else if(F.t<1.8){if(!F.q){F.q=1;quak()}}
-  else if(F.t<2.3){const p=(F.t-1.8)/.5;re=-1;fx=x1+(x0-x1)*p;fy=y1+(y0-y1)*p-12*Math.sin(Math.PI*p)}
+ // Seit 2026-10-25: im Sprung neigt sich der Frosch (erst Nase hoch, dann runter) und streckt das Hinterbein, beim Landen staucht er sich kurz, auf dem Blatt blinzelt er
+ if(F){if(dt>0)F.t+=dt;const x0=F.x-8,y0=GY+24,x1=F.x+14,y1=GY+25.6;let fx=x1,fy=y1,re=1,luft=0,rot=0,sx=1,sy=1;
+  if(F.t<.5){const p=F.t/.5;fx=x0+(x1-x0)*p;fy=y0+(y1-y0)*p-16*Math.sin(Math.PI*p);luft=Math.sin(Math.PI*p);rot=-24*Math.cos(Math.PI*p)}
+  else if(F.t<1.8){if(!F.q){F.q=1;quak()}const l=F.t-.5;if(l<.16){const q=1-l/.16;sy=1-.22*q;sx=1+.14*q;rot=24*q}
+   else if(F.t>1.65){const q=(F.t-1.65)/.15;re=-1;rot=-24*q;sy=1-.15*q;sx=1+.08*q}}// vor dem Rücksprung: umdrehen und ducken
+  else if(F.t<2.3){const p=(F.t-1.8)/.5;re=-1;fx=x1+(x0-x1)*p;fy=y1+(y0-y1)*p-12*Math.sin(Math.PI*p);luft=Math.sin(Math.PI*p);rot=-24*Math.cos(Math.PI*p)}
   else{F.el.remove();HF.frosch=null;welle(x0,y0)}
-  if(HF.frosch){F.el.setAttribute('transform',`translate(${r1(fx)} ${r1(fy)}) scale(${re*2.2} 2.2)`);const kh=F.el.querySelector('.kehle');kh.setAttribute('opacity',F.t>.55&&F.t<1?'1':'0');kh.setAttribute('r',F.t>.55&&F.t<1?(1.4+Math.sin((F.t-.55)*20)*.4).toFixed(2):'1.4')}}
+  if(HF.frosch){F.el.setAttribute('transform',`translate(${r1(fx)} ${r1(fy)}) rotate(${r1(rot*re)}) scale(${(re*2.2*sx).toFixed(2)} ${(2.2*sy).toFixed(2)})`);
+   const hb=F.el.querySelector('.fhb'),au=F.el.querySelector('.fau');
+   if(hb)hb.setAttribute('transform',luft>.05?`translate(-1 -1.6) rotate(${r1(-34*luft)}) scale(${(1+.4*luft).toFixed(2)} 1) translate(1 1.6)`:'');
+   if(au)au.setAttribute('transform',F.t>1.3&&F.t<1.42?'translate(0 -4.9) scale(1 .15) translate(0 4.9)':'');const kh=F.el.querySelector('.kehle');kh.setAttribute('opacity',F.t>.55&&F.t<1?'1':'0');kh.setAttribute('r',F.t>.55&&F.t<1?(1.4+Math.sin((F.t-.55)*20)*.4).toFixed(2):'1.4')}}
  // Stallkatze: Tor auf (0 bis 0,5 s), hinauslaufen (bis 2,5 s), sitzen und putzen (bis 5,5 s), zurücklaufen (bis 7,5 s), Tor zu (bis 8 s)
  const K=HF.katze;
  if(K){if(dt>0)K.t+=dt;const t=K.t,lauf=(p,a,b)=>a+(b-a)*p;let kx=K.x0,ky=K.y0,dir=K.x1>=K.x0?1:-1,sitz=0,sicht=1,tor=0;
@@ -567,7 +602,8 @@ function hofFrame(ts){
  HF.sl=dt>iv*1.3?(HF.sl||0)+1:Math.max(0,(HF.sl||0)-1);
  if(HF.sl>40){HF.sl=0;if(iv<.03)HF.iv=.033;else if(!HF.spar){HF.spar=1;document.getElementById('hof').classList.add('ohneUmriss')}else if(iv<.06)HF.iv=.066}
  const span=HF.WW-HF.W;
- if(HF.mode=='fly'){if(HF.drag){}else if(HF.idle>0)HF.idle-=d;else{HF.cam+=HF.cv*d;if(HF.cam<=0){HF.cam=0;HF.cv=Math.abs(HF.cv)}if(HF.cam>=span){HF.cam=span;HF.cv=-Math.abs(HF.cv)}}}
+ // Putzen im Flugmodus (seit 2026-10-25): die Kamera folgt der Figur bzw. dem Ziel flugX (zweites Pferd)
+ if(HF.mode=='fly'){const FF=HF.fuehr&&HF.fuehr.flug?HF.fuehr:null;if(HF.drag){}else if(FF){const zx=FF.flugX!=null?FF.flugX:FF.fig[0];HF.cam+=(Math.min(Math.max(zx-HF.W/2,0),span)-HF.cam)*Math.min(1,d*2.5)}else if(HF.idle>0)HF.idle-=d;else{HF.cam+=HF.cv*d;if(HF.cam<=0){HF.cam=0;HF.cv=Math.abs(HF.cv)}if(HF.cam>=span){HF.cam=span;HF.cv=-Math.abs(HF.cv)}}}
  // Während Pflege, Tierarzt und Hufschmied (pflege.js) schwenkt die Kamera weich zum Geschehen (camX) und danach zurück
  else{const sh=(HF.WK||HF.WW)-HF.W,base=(HF.OX||0)+sh/2+Math.sin(HF.t/45)*Math.min(110,sh/2),cx=HF.fuehr&&HF.fuehr.camX,
   ziel=cx!=null?Math.min(Math.max(cx-HF.W/2,0),HF.WW-HF.W)-base:0;HF.camOff=(HF.camOff||0)+(ziel-(HF.camOff||0))*Math.min(1,d*1.5);HF.cam=base+HF.camOff}

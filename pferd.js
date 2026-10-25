@@ -3,6 +3,7 @@
 // spec: coat (Fellfarbe), st (Wachstumsstufe 0-3), br (Rasse), bl (Blesse), so (Socken), ma (Mähne kurz/mittel/lang), zo (Zöpfe), gu (Gummifarbe),
 //       bf (Form des Kopfabzeichens 0-4), sm (Socken je Bein, z. B. "3120"), fs (Zahl für die Anordnung der Schecken-Flecken), mh (eigene Mähnenfarbe),
 //       dr (Schmutzflecken, seit 2026-10-25: ungepflegtes Pferd, Gruppen mit class="dreck")
+// Halfter: Gruppe id="halfter" am Kopf, zunächst versteckt; pflege.js (halfterZeigen) blendet sie beim Führen und Putzen ein (seit 2026-10-25)
 // new PF.Rig(P) bewegt ein Pferd, das schon im Dokument steht (Gangarten, Grasen, Hüpfer, Schweif, Mähne, Blinzeln, ein Huf angehoben).
 // Umriss: Die Teile werden zweimal gezeichnet, zuerst mit Rand, darüber ohne. "Umriss leicht": Haare und Details bekommen keinen Rand.
 // Greift zur Laufzeit auf BR (Rassen) aus app.js zu.
@@ -230,6 +231,7 @@ function bild(P, sp, opt = {}) {
       <path class="kKf" d="M91 -211C88 -218 87 -225 88.5 -231C93 -225 96 -219 96.5 -211Z"/><path id="kopfForm" class="kH" d="${KOPF}"/>
       <g clip-path="url(#kopfClip)"><ellipse class="maul" cx="134" cy="-158" rx="11.5" ry="10.5"/><ellipse class="glanz" cx="103" cy="-186" rx="10" ry="8"/>
        <path class="blesse" d="${BLESSE[sp.bf == null ? 3 : Math.max(0, Math.min(4, sp.bf | 0))]}"/></g>
+      <g id="halfter" class="det" style="display:none" clip-path="url(#kopfClip)"><path d="M131 -182L117 -166L112 -158M117 -166L100 -211" fill="none" stroke="#1f6fb2" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M131 -182L117 -166M117 -166L100 -211" fill="none" stroke="#7cb8ea" stroke-width=".7" stroke-linecap="round" opacity=".8"/><circle cx="117" cy="-166" r="1.9" fill="none" stroke="#c9ced3" stroke-width="1.1"/></g>
       ${linie('M96 -177C104 -169 113 -161 121 -156', .2, 1.4)}${linie('M133 -164C136 -166 138.5 -163 136.5 -159.5', .5)}${linie('M137.5 -153.5C134 -152.4 130 -152.8 126.5 -154.2', .35, 1.2)}
       <g id="auge" class="det"><path d="M105.5 -196.5Q111 -201.5 116.5 -195.5Q111 -192.2 105.5 -196.5Z" fill="#1c1410"/><circle cx="113" cy="-197.3" r="1.25" fill="#fff"/></g>
       ${linie('M104.5 -199.2Q111 -204.6 117.5 -197.6', .3, 1.2)}

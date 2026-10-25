@@ -37,11 +37,11 @@ const GLMAX=80;
 // Schulstoff-Themen aller Klassen: nur diese kommen ins Training (Olympiade, Knobeln und Sudoku haben oft lange Texte)
 const SCHUL=new Set(KL.flatMap(g=>KAT[g].schul));
 // Reitausrüstung und Pflege (seit 2026-10-22): je Pferd gekauft (H.au). Sattel mit Sattelgurt, Satteldecke und Trense braucht das Anreiten (training.js).
-// Die Pferdedecke trägt das Pferd auf dem eigenen Hof bei Regen, Schnee und nachts. Pflegekiste und Führstrick braucht man zum Putzen (seit 2026-10-25, pflege.js), der Führstrick ist auch beim Führen zu sehen.
+// Die Pferdedecke trägt das Pferd auf dem eigenen Hof bei Regen, Schnee und nachts. Pflegekiste, Halfter (seit 2026-10-25, Brain Dump) und Führstrick braucht man zum Putzen (pflege.js), Halfter und Führstrick sind auch beim Führen zu sehen.
 // [id, Name, Preis (vorläufig), Beschreibung]
 const AUSR=[['sattel','Sattel mit Sattelgurt',30,'Zum Anreiten und Reiten'],['decke','Satteldecke',10,'Liegt unter dem Sattel'],['trense','Trense',20,'Zaumzeug mit Gebiss und Zügeln'],
  ['pdecke','Pferdedecke',15,'Hält warm bei Regen, Schnee und in der Nacht'],['pflege','Pflegekiste',20,'Huf-Auskratzer, Bürste, Striegel, Schwamm und Schweißabzieher'],
- ['strick','Führstrick',10,'Zum Führen, Putzen und für den Tierarzt']];
+ ['halfter','Halfter',10,'Daran wird der Führstrick eingehakt'],['strick','Führstrick',10,'Zum Führen, Putzen und für den Tierarzt']];
 const reitfertig=H=>!!(H&&H.au&&H.au.sattel&&H.au.decke&&H.au.trense);
 // Kleine Bilder der Ausrüstung im Wunschbaum
 const AUBILD={sattel:'<path d="M5 14Q8 6 13 12Q20 15 27 12Q31 5 35 13L32 20Q20 23 8 20Z" fill="#6b3e1f" stroke="#3b2414"/><path d="M16 20h8l1 8h-10z" fill="#7d4a26" stroke="#3b2414"/>',
@@ -49,6 +49,7 @@ const AUBILD={sattel:'<path d="M5 14Q8 6 13 12Q20 15 27 12Q31 5 35 13L32 20Q20 2
  trense:'<path d="M9 5L17 25M14 12Q24 9 33 17M7 9Q9 5 13 5" fill="none" stroke="#3b2414" stroke-width="2.4" stroke-linecap="round"/><circle cx="27" cy="22" r="3" fill="none" stroke="#9aa0a6" stroke-width="1.5"/>',
  pdecke:'<path d="M3 8Q20 3 37 8L36 24Q20 28 4 24Z" fill="#b0412f" stroke="#7a2a1e"/><path d="M4 12H36M4 18H36" stroke="#e2b24a" stroke-width="1.4"/>',
  pflege:'<rect x="5" y="12" width="30" height="14" rx="2" fill="#4a90c2" stroke="#2c5f86"/><path d="M12 12V8h16v4" fill="none" stroke="#2c5f86" stroke-width="2"/><rect x="9" y="5" width="9" height="5" rx="1" fill="#8b5a2b"/><path d="M10 5v-3M13 5v-3M16 5v-3" stroke="#3b2414"/>',
+ halfter:'<path d="M9 7Q6 17 13 23Q22 27 31 21Q35 14 29 8Q20 3 9 7Z" fill="none" stroke="#1f6fb2" stroke-width="2.6" stroke-linejoin="round"/><path d="M13 23L24 13M9 7L4 3" stroke="#1f6fb2" stroke-width="2.6" stroke-linecap="round"/><circle cx="13" cy="23" r="2.6" fill="#fff" stroke="#9aa0a6" stroke-width="1.4"/>',
  strick:'<path d="M8 22Q4 14 12 10Q22 6 26 14Q29 21 21 23Q14 24 15 17Q16 12 22 13" fill="none" stroke="#c0392b" stroke-width="2.4" stroke-linecap="round"/><path d="M26 14L33 8" stroke="#c0392b" stroke-width="2.4" stroke-linecap="round"/><path d="M32 9l2.2 -3l2.6 1.8l-2 3Z" fill="#9aa0a6" stroke="#5a5f66" stroke-width=".6"/>'};
 const ausrBild=id=>`<svg viewBox="0 0 40 30" width="56" height="42" aria-hidden="true">${AUBILD[id]||''}</svg>`;
 // Freischaltung über Erfahrung (seit 2026-10-19): Gesperrtes bleibt sichtbar mit "ab X Erfahrung".
@@ -156,6 +157,12 @@ function clean(d){
    // Zweites eigenes Pferd (seit 2026-10-19): eigenes Aussehen und eigenes Wachstum (st Stufe, sd gesammelte Tage).
    // Hof-Daten (it, lp, ko) gehören immer zum gerade gewählten Pferd k.h und wandern beim Umschalten mit.
    if(k.h2&&typeof k.h2==='object'){c.h2=pclean(k.h2);for(const f of ['it','lp','ko'])delete c.h2[f];c.h2.st=nn(k.h2.st,0,3);c.h2.sd=nn(k.h2.sd,0,999)}}
+  // Einmalig (Brain Dump 2026-10-25): Tierarzt und Hufschmied werden für jedes Pferd ab Jährling sofort fällig, danach gelten die festen Tage.
+  // Dazu so viele Hufeisen, dass beide Besuche bezahlt werden können (höchstens bis zum Vorrat). Merker gpa, damit es nur einmal passiert. Achtung: tag() gibt es beim Laden noch nicht, deshalb datumHeute() aus pflege.js.
+  if(!k.gpa){let n=0;for(const [H,st] of [[c.h,c.st],[c.h2,c.h2&&c.h2.st]]){if(!H||(st|0)<1)continue;const g=H.ge||(H.ge={t:0,s:0});
+    g.t=Math.max(g.t||0,TAZ);g.s=Math.max(g.s||0,SCHZ);if(!g.tf)g.tf=datumHeute();if(!g.sf)g.sf=datumHeute();n++}
+   if(n)c.hu=Math.min(huMax(c),Math.max(c.hu||0,n*(TAPREIS+SCHPREIS)))}
+  c.gpa=1;
   o.kids.push(c)}
  return o}
 // Prüft und bereinigt ein Pferd aus dem Spielstand (eigenes Aussehen, Fähigkeiten, Mähne, dazu die Hof-Daten)
@@ -300,7 +307,7 @@ function ui(){let h='';PZ=0;
   <div class="row">${[['bl','Blesse'],['so','Weiße Socken']].map(([t,n])=>`<button class="${H[t]?'go':'alt'}" onclick="wish('${t}')"${gesperrt(k,'abz',H.own[t])?' disabled':''}>${n}${H.own[t]?(H[t]?' an':' aus'):gesperrt(k,'abz')?'':' · '+preis(15)}</button>`).join('')}${kannAnordnen(H)?`<button class="alt" onclick="anordnen()">Neu anordnen</button>`:''}</div>`+
   (gesperrt(k,'abz')&&!H.own.bl&&!H.own.so?xpb(k,'abz'):'')+
   (kannAnordnen(H)?`<p class="small">„Neu anordnen“ ist kostenlos und würfelt ${[H.bl&&'die Form auf dem Kopf',H.so&&'die Socken an jedem Bein',H.coat=='schecke'&&'die Flecken'].filter(Boolean).join(', ').replace(/, ([^,]*)$/,' und $1')} neu aus.</p>`:''))+
- teil('Reitausrüstung & Pflege',`<p class="small">Für das Anreiten braucht ${esc(H.name)} Sattel, Satteldecke und Trense, zum Putzen Pflegekiste und Führstrick. Die Ausrüstung gehört ${esc(H.name)}.</p><div class="grid">${AUSR.map(([id,n,p,b])=>{const hat=(H.au||{})[id];return`<button class="pick au ${hat?'on':''}" data-au="${id}" onclick="wish('au','${id}')" aria-pressed="${!!hat}">${ausrBild(id)}<b>${n}</b><br><span class="small">${b}</span><br>${hat?'gekauft':preis(p)}</button>`}).join('')}</div>`)+
+ teil('Reitausrüstung & Pflege',`<p class="small">Für das Anreiten braucht ${esc(H.name)} Sattel, Satteldecke und Trense, zum Putzen Pflegekiste, Halfter und Führstrick. Die Ausrüstung gehört ${esc(H.name)}.</p><div class="grid">${AUSR.map(([id,n,p,b])=>{const hat=(H.au||{})[id];return`<button class="pick au ${hat?'on':''}" data-au="${id}" onclick="wish('au','${id}')" aria-pressed="${!!hat}">${ausrBild(id)}<b>${n}</b><br><span class="small">${b}</span><br>${hat?'gekauft':preis(p)}</button>`}).join('')}</div>`)+
  teil('Hof ausbauen',(gesperrt(k,'it')?`<p class="small">Gegenstände für den Hof kannst du kaufen, sobald du genug Erfahrung hast:</p>${xpb(k,'it')}`:k.xp<ITXP.ausbau?`<p class="small">Weitere Gegenstände schalten sich mit mehr Erfahrung frei.</p>`:'')+
   // Von billig nach teuer; Unterstand und Stall (Ausbau) direkt nacheinander bei 25 Äpfeln
   `<div class="grid">${[...ITEMS.map(([id,n,p])=>{const zu=itZu(k,id,H.it[id]);return[p,0,`<button class="pick it ${H.it[id]?'on':''}${zu?' gesperrt':''}" data-id="${id}" onclick="wish('it','${id}')"${zu?' disabled':''}>${itemBild(id)}${n}<br>${H.it[id]?'gebaut':zu?`<span class="small">${itNoch(k,id)}</span>`:preis(p)}</button>`]}),
@@ -354,7 +361,7 @@ function ui(){let h='';PZ=0;
    `Falsch gelöste Aufgaben kommen ins Fehlerheft und tauchen in späteren Runden wieder auf, bis sie sitzen.`,
    `Themen: der Schulstoff der eigenen Klasse (Klasse 7 nach dem Mathebuch), Mathe-Olympiade & Knobeln und Sudoku. Frühere Klassen lassen sich unter „Wiederholen“ üben.`,
    `Im Training übt das Kind mit Aufgaben, die es schon einmal richtig gelöst hat.`,
-   `Unter „Gesundheit und Pflege“ putzt das Kind sein Pferd (mit Pflegekiste und Führstrick, höchstens ${PFLMAX}-mal am Tag, ein zweites Pferd wird gleich mitgeputzt) und ruft Tierarzt (alle ${TAZ} Tage mit Mathe, ${TAPREIS} Hufeisen) und Hufschmied (alle ${SCHZ} Tage, ${SCHPREIS} Hufeisen). Ist ein Besuch überfällig, gibt es kein Training. Hufeisen gibt es für gute Runden und Trainings-Sterne, nicht für Geld.`])+`</div>`+
+   `Unter „Gesundheit und Pflege“ putzt das Kind sein Pferd (mit Pflegekiste, Halfter und Führstrick, höchstens ${PFLMAX}-mal am Tag, ein zweites Pferd wird gleich mitgeputzt) und ruft Tierarzt (alle ${TAZ} Tage mit Mathe, ${TAPREIS} Hufeisen) und Hufschmied (alle ${SCHZ} Tage, ${SCHPREIS} Hufeisen). Ist ein Besuch überfällig, gibt es kein Training. Hufeisen gibt es für gute Runden und Trainings-Sterne, nicht für Geld.`])+`</div>`+
   `<div class="card"><b>Was du als Elternteil im Griff hast</b><p class="small">In der Eltern-Ansicht, geschützt mit deiner PIN:</p>`+li([`Zeitlimit pro Kind und Tag: standardmäßig ${LIMIN} Minuten, einstellbar von 5 bis ${LIMMAX} Minuten oder ohne Limit. Eine laufende Runde wird nicht unterbrochen.`,
    `Erst rechnen, dann spielen: Nach ${HOFZEIT/60} Minuten auf dem Hof braucht das Kind eine Runde mit mindestens ${FREI} von 10 richtig, bevor es weiterspielen kann.`,
    `Knobeln geht höchstens ${KNMAX} Runden am Stück. Danach ist erst wieder eine Runde Schulstoff mit mindestens ${FREI} von 10 dran.`,
@@ -462,7 +469,7 @@ function d3Sync(){const el=$('#d3');
 const nkPin=()=>!!S.pin&&S.kids.length>0&&v=='home'&&!EIN;
 function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();
  if(nkPin()){const p=($('#nkpin')||{}).value||'',r=p||pinZu()?pinPruef(p):'Bitte gib die Eltern-PIN ein.';if(r!==true){NKN=n;NKG=+$('#gr').value;NKW=r;ui();NKW='';const f=$('#nkpin');if(f)f.focus();return}}
- NKN='';NKG=5;S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},neu:1});save();ui()}
+ NKN='';NKG=5;S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,gpa:1,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},neu:1});save();ui()}
 // PIN festlegen: ohne id beim ersten Start (Feld pin0), mit id='pin1' nachträglich in den Einstellungen
 function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=pinHash(p);delete S.np;delete S.pf;delete S.ps;S.mo='e';if(id)open=true;save();ui()}
 function nopin(){S.np=1;S.mo='k';save();ui()}
