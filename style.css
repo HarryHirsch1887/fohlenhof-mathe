@@ -117,6 +117,8 @@ button:disabled{opacity:.55;cursor:not-allowed}.pick.gesperrt svg{filter:graysca
 .umriss{stroke:#2a1d14;stroke-width:3.8;stroke-linejoin:round;opacity:.6;--ohneUm:none}.fuell{stroke:none}/* Deckkraft am ganzen Umriss statt je Teil (seit 2026-10-25): überlappende Striche werden nicht mehr dunkler (Kehle, Brust, Beinansätze) */
 .ha1,.ha2,.glanz,.maul,.aal,.beh,.det,.fleck,.blesse,.gummi2d{display:var(--ohneUm,inline)}
 .hinten .umriss,.ohneUmriss .umriss{display:none}
+/* Copyright-Vermerk als Fußzeile unten auf jeder Seite (seit 2026-10-25) */
+.copyright{text-align:center;margin:28px 0 0;opacity:.8}
 /* Umriss der Hofgegenstände (hof.js, umrGruppe): .umr ist die Kopie mit dickem Strich unter der Zeichnung, .ufuell die Zeichnung ohne Strich, .uin mit feinen Innenlinien. Im Sparmodus fällt der Umriss weg. */
 .umr{stroke:#2a1d14;stroke-width:1.7;stroke-linejoin:round;opacity:.6}.ufuell{stroke:none}.uin{stroke:#3a261466;stroke-width:.55;stroke-linejoin:round}.ohneUmriss .umr{display:none}
 /* 3D-Fenster (nur ausgewachsene Pferde); im Wunschbaum bleibt es beim Scrollen oben stehen */
