@@ -639,7 +639,7 @@ function hofTap(h){
  if(!HF.run)hofDraw(0)}
 function hofPet(){const h=HF.horses.find(x=>x.own);if(h)hofTap(h)}
 function flyOn(){HF.mode='fly';HF.cv=24;HF.idle=0;document.body.classList.add('fly');$('#fly').hidden=false;hofSync(true)}
-function flyOff(){HF.mode='bg';document.body.classList.remove('fly');$('#fly').hidden=true;hofSync(true);if(typeof itBilder=='function')itBilder()}
+function flyOff(){HF.mode='bg';document.body.classList.remove('fly');$('#fly').hidden=true;hofSync(true);if(typeof itBilder=='function')itBilder();if(typeof kopfAusschnitt=='function')kopfAusschnitt()}// Bilder, die im Rundflug nicht gemessen werden konnten
 // Eingaben: Tippen auf ein Pferd, im Rundflug zusätzlich Wischen zum Umschauen
 (()=>{
  const svg=document.getElementById('hof');if(!svg)return;

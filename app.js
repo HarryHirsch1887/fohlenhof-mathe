@@ -397,7 +397,7 @@ function ui(){let h='';PZ=0;
  const ml=leisteZeigen();if(ml)h+=leisteHtml();document.body.classList.toggle('mitleiste',ml);
  // Ansicht A "Pferdehof": Holz-Optik auf Startseite, Kind-Ansicht (mit Themen) und Rundenende
  document.body.classList.toggle('holz',!mAn()&&(v=='home'||v=='kid'||v=='done'));
- $('#app').innerHTML='<div class="in">'+h+`<p class="small copyright">${COPY}</p>`+'</div>';if(v!='kid'&&v!='wish'&&v!='rassen')countdown(0);hofSync();d3Sync();trSync();nachZeichnen();itBilder();setTimeout(()=>{let a=$('#ans')||$('#pin')||$('#hn')||$('#pin0');a&&(v!='home'||a.id=='pin0')&&a.focus({preventScroll:a.id=='hn'})})}
+ $('#app').innerHTML='<div class="in">'+h+`<p class="small copyright">${COPY}</p>`+'</div>';if(v!='kid'&&v!='wish'&&v!='rassen')countdown(0);hofSync();d3Sync();trSync();nachZeichnen();itBilder();kopfAusschnitt();setTimeout(()=>{let a=$('#ans')||$('#pin')||$('#hn')||$('#pin0');a&&(v!='home'||a.id=='pin0')&&a.focus({preventScroll:a.id=='hn'})})}
 // ---------- Besuch per Code (seit 2026-10-20, siehe Notiz "Ideen Besuch per Code") ----------
 // Ein Kind lädt eine Freundin ein: Link mit QR-Code (qr.js). Hinter "#b=" stehen nur Vorname, Pferdename und das Aussehen von Pferd
 // und Figur (kein Fortschritt, keine Äpfel, keine PIN). Der Teil hinter "#" wird nie an einen Server geschickt, auch nicht an GitHub.

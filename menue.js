@@ -56,9 +56,25 @@ function homeB(zu){
  return`<h1>${S.kids.length?'Wer reitet heute?':'Pferdehof Mathe'}</h1>${zu?pinZuKarte():''}`+
   S.kids.map((k,i)=>`<button class="mk mkind" onclick="sel(${k.id})"${zu?' disabled':''}><span class="mbild" style="background:${MKF[i%MKF.length]}">${kindBild(k)}</span><span class="mwt"><b>${esc(k.name)}</b>${k.h?` <span class="small">mit ${esc(k.h.name)}</span>`:''}<br><span class="small">Klasse ${k.g} · ${k.h?GS[stg(k)].n:'noch ohne Pferd'}</span><br><span class="ap">${k.ap||0} ${AP}</span></span></button>`).join('')+
   `<div class="mgrid">${kachel('mf6','neu','Neues Kind','','nkAuf()')}${kachel('mf3','flug','Flug über die Koppel','','flyOn()')}</div>`+(nkOffen()?nkKarte(zu):'')+mLinks()}
+// C Startseite (seit 2026-10-26, Florians Wunsch): Pferdekopf mit etwas Hals statt der Startnummer. Das Pferd wird ganz gezeichnet,
+// nach dem Seitenaufbau misst kopfAusschnitt() Kopf und oberen Hals und setzt den Bildausschnitt (wie itBilder bei den Hof-Gegenständen).
+// Lage und Größe des Kopfs hängen von Wachstumsstufe und Rasse ab, deshalb gemessen statt fest eingetragen.
+// Ohne Pferd: Kopf der Figur, ohne Figur die Startnummer.
+// Startwert: fester Ausschnitt für ein ausgewachsenes Pferd (falls die Messung nicht klappt), quadratisch wie das Bild
+function kopfBild(k,i){if(!k.h)return k.f?figurKopf(k.f,46):String(i+1);
+ const p='b'+PZ+'_';return`<svg class="mkopfbild" data-p="${p}" viewBox="60 -243 98 98" width="52" height="52" aria-hidden="true">${pfBild(pfSpec(k.h,stg(k)))}</svg>`}
+// Bildschirm → Bildkoordinaten über die aktuelle viewBox (Bild und viewBox sind beide quadratisch, also kein Rand durch preserveAspectRatio).
+// Unsichtbar (z. B. im Rundflug): nichts tun, flyOff() und der nächste ui() holen es nach.
+function kopfAusschnitt(){document.querySelectorAll('#app svg.mkopfbild[data-p]').forEach(s=>{const p=s.dataset.p,
+  kopf=s.querySelector(`[id="${p}kopf"]`),hals=s.querySelector(`[id="${p}hals2Form"]`),r=s.getBoundingClientRect(),b=s.viewBox.baseVal;if(!kopf||!hals||!r.width||!b||!b.width)return;
+ const f=b.width/r.width,R=[kopf,hals].map(e=>e.getBoundingClientRect()),vx=x=>b.x+(x-r.left)*f,vy=y=>b.y+(y-r.top)*f,
+  x0=vx(Math.min(...R.map(a=>a.left))),x1=vx(Math.max(...R.map(a=>a.right))),y0=vy(Math.min(...R.map(a=>a.top))),y1=vy(Math.max(...R.map(a=>a.bottom))),
+  g=Math.max(x1-x0,y1-y0)*1.15;
+ // quadratisch, waagerecht fast mittig (vor dem Maul bleibt etwas Luft), oben Luft für die Ohrspitzen
+ s.setAttribute('viewBox',`${r1((x0+x1)/2-g*.46)} ${r1((y0+y1)/2-g*.53)} ${r1(g)} ${r1(g)}`);s.removeAttribute('data-p')})}
 function homeC(zu){
  return`<h1>${S.kids.length?'Wer startet heute?':'Pferdehof Mathe'}</h1>${zu?pinZuKarte():''}`+
-  S.kids.map((k,i)=>`<button class="mk mnr" onclick="sel(${k.id})"${zu?' disabled':''}><span class="nr" aria-hidden="true">${i+1}</span><span class="mwt"><b>${esc(k.name)}</b> <span class="small">${k.h?'auf '+esc(k.h.name):'noch ohne Pferd'}</span><br><span class="small">Klasse ${k.g} · ${k.ap||0} Äpfel</span></span></button>`).join('')+
+  S.kids.map((k,i)=>`<button class="mk mnr" onclick="sel(${k.id})"${zu?' disabled':''}><span class="nr" aria-hidden="true">${kopfBild(k,i)}</span><span class="mwt"><b>${esc(k.name)}</b> <span class="small">${k.h?'auf '+esc(k.h.name):'noch ohne Pferd'}</span><br><span class="small">Klasse ${k.g} · ${k.ap||0} Äpfel</span></span></button>`).join('')+
   `<button class="mk mros" onclick="nkAuf()">${mi('neu',34)}<b>Neues Kind anmelden</b></button>`+(nkOffen()?nkKarte(zu):'')+
   `<button class="mk mros" onclick="flyOn()">${mi('flug',34)}<b>Flug über die Koppel</b></button>`+mLinks()}
 
