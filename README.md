@@ -1,6 +1,8 @@
-# Pferdehof Mathe
+# Rechenhof – Mathe mit Pferd
 
-(Früher „Fohlenhof Mathe“. Adresse, Repository `fohlenhof-mathe` und Speicherschlüssel behalten den alten Namen, damit installierte Apps und Spielstände erhalten bleiben.)
+**Pferdestark in Mathe!**
+
+(Seit 2026-10-26 „Rechenhof“, vorher „Pferdehof Mathe“ und „Fohlenhof Mathe“. Adresse, Repository `fohlenhof-mathe` und Speicherschlüssel behalten den alten Namen, damit installierte Apps und Spielstände erhalten bleiben.)
 
 Eine kleine Lern-App, in der Kinder Mathe üben und dabei ein Pferd großziehen. Wer an mehreren Tagen rechnet, lässt das Fohlen zum ausgewachsenen Pferd wachsen. Für richtig gelöste Aufgaben gibt es Äpfel, mit denen sich Pferderassen, Abzeichen, Hof-Gegenstände und Lieblingspferde kaufen lassen. Was man kaufen darf, schaltet die Erfahrung frei. Pferderassen: Fuchs, Brauner, Rappe, Schimmel, Palomino, Schecke, Falbe (mit dunklen Beinen und Aalstrich) und Windfarben (dunkles Fell, helle Mähne).
 
@@ -114,4 +116,4 @@ Es gibt keinen Build-Schritt. Alles ist reines HTML, CSS und JavaScript. Die ein
 
 ## Lizenz
 
-© 2026 Florian N. – Pferdehof Mathe. Alle Rechte vorbehalten. Der Quelltext ist öffentlich einsehbar, aber nicht zur Weiterverwendung freigegeben. Ausgenommen sind die mitgelieferten Teile mit eigener Lizenz: three.js (MIT-Lizenz, Lizenztext im Ordner `3d/`) und das Pferdemodell von Quaternius (CC0).
+© 2026 Florian N. – Rechenhof. Alle Rechte vorbehalten. Der Quelltext ist öffentlich einsehbar, aber nicht zur Weiterverwendung freigegeben. Ausgenommen sind die mitgelieferten Teile mit eigener Lizenz: three.js (MIT-Lizenz, Lizenztext im Ordner `3d/`) und das Pferdemodell von Quaternius (CC0).

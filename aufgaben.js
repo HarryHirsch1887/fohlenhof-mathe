@@ -1,4 +1,4 @@
-// Pferdehof Mathe: Aufgaben (Generatoren mit Lösungswegen) und Hilfsfunktionen
+// Rechenhof: Aufgaben (Generatoren mit Lösungswegen) und Hilfsfunktionen
 const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),P=a=>a[R(0,a.length-1)];
 const gcd=(a,b)=>b?gcd(b,a%b):a,cnt=(a,b,f)=>{let c=0;for(let i=a;i<=b;i++)f(i)&&c++;return c};
 const isP=n=>n>1&&cnt(2,Math.sqrt(n)|0,i=>n%i==0)==0,fa=n=>n?n*fa(n-1):1;

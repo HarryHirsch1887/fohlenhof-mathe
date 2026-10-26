@@ -1,4 +1,4 @@
-// Pferdehof Mathe: das gezeichnete 2D-Pferd im Bilderbuch-Look (SVG).
+// Rechenhof: das gezeichnete 2D-Pferd im Bilderbuch-Look (SVG).
 // PF.bild(P, spec, opt) liefert ein Pferd als SVG-Text. P ist ein Präfix für alle Kennungen, damit mehrere Pferde nebeneinander gehen.
 // spec: coat (Fellfarbe), st (Wachstumsstufe 0-3), br (Rasse), bl (Blesse), so (Socken), ma (Mähne kurz/mittel/lang), zo (Zöpfe), gu (Gummifarbe),
 //       bf (Form des Kopfabzeichens 0-4), sm (Socken je Bein, z. B. "3120"), fs (Zahl für die Anordnung der Schecken-Flecken), mh (eigene Mähnenfarbe),

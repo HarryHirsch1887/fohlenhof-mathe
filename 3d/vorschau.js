@@ -1,4 +1,4 @@
-// Pferdehof Mathe: 3D-Vorschau des eigenen Pferds (nur ausgewachsene Pferde).
+// Rechenhof: 3D-Vorschau des eigenen Pferds (nur ausgewachsene Pferde).
 // Wird erst geladen, wenn das 3D-Fenster zum ersten Mal erscheint. Modell "Horse" von Quaternius (CC0), three.js (MIT, siehe LICENSE-three.txt).
 // Keine Netzwerkzugriffe außer dem Laden der eigenen Dateien, keine Speicherung.
 import * as THREE from './three.module.js';

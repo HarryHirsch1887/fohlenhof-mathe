@@ -1,4 +1,4 @@
-// Pferdehof Mathe: kleine Zeichnungen zu Geometrie-Aufgaben (nur Code, SVG), maßstabsgetreu zu den Zahlen der Aufgabe.
+// Rechenhof: kleine Zeichnungen zu Geometrie-Aufgaben (nur Code, SVG), maßstabsgetreu zu den Zahlen der Aufgabe.
 // Eine Aufgabe bringt die Zeichnung als 5. Eintrag mit: [Text, Antwort, Tipp, Lösungsweg, Zeichnung].
 // Zeichnung = {t: Art, ...Werte}. Arten: rechteck, ausschnitt, dreieck, rechtwinklig, leiter, gleichschenklig, vieleck, gitter, nebenwinkel,
 // sudoku, seit 2026-10-24 dreieckh, parallelogramm, trapez (Figuren mit Höhe).

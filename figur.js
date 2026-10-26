@@ -1,4 +1,4 @@
-// Pferdehof Mathe: gezeichnete Figur (Reiterin oder Reiter) im Bilderbuch-Stil, Ansicht von vorn.
+// Rechenhof: gezeichnete Figur (Reiterin oder Reiter) im Bilderbuch-Stil, Ansicht von vorn.
 // Füße auf y = 0, Kopf mit Helm oben bei etwa y = -110, Mitte x = 0. Nur Code (SVG), keine Bilddateien.
 // Gespeichert am Kind als k.f = {g: 'm' (Mädchen) oder 'j' (Junge), hf: Hautfarbe, ha: Haarfarbe, lg: Farbe der Reitleggings,
 // sh: Farbe des Reitshirts, lgs/shs: gekaufte Farben}. Immer dabei: schwarzer Reithelm und Reitstiefel.

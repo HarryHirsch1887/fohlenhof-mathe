@@ -1,4 +1,4 @@
-// Pferdehof Mathe: Training des Pferds (seit 2026-10-22, Konzept in der Notiz "Ideen Reiten und Pferdepflege")
+// Rechenhof: Training des Pferds (seit 2026-10-22, Konzept in der Notiz "Ideen Reiten und Pferdepflege")
 // Wird vor app.js geladen. Alles, was app.js, hof.js, pferd.js, figur.js oder aufgaben.js bereitstellt, wird erst zur Laufzeit benutzt.
 //
 // Regeln:
@@ -119,24 +119,65 @@ document.addEventListener('keydown',e=>{if(e.key=='Enter'&&!e.repeat&&v=='train'
 // ---------- Longierzirkel (2D, Bilderbuch-Look wie der Hof) ----------
 // Ovaler Sandplatz von schräg oben. Das Pferd läuft auf einer Ellipse um die Figur: vorne groß nach rechts, hinten kleiner nach links,
 // an den Seiten kurz schmal (es dreht sich). Longe = Linie von der Hand zum Kopf. Eine Peitsche gibt es nicht (seit 2026-10-22 entfernt).
-const TRZ={cx:160,cy:142,rx:104,ry:38,fx:160,fy:150,fs:.44,ls:.47};
+// fs/ls: Größe der Figur bzw. der Reitlehrerin in der Mitte. Seit 2026-10-26 kleiner (vorher .44/.47, Brain Dump: Reitlehrerin zu groß),
+// die Figur passt damit zur Größe auf dem Hof (FIGX.s), die Reitlehrerin bleibt als Erwachsene etwas größer
+const TRZ={cx:160,cy:142,rx:104,ry:38,fx:160,fy:150,fs:.32,ls:.37};
 // Reitlehrerin (Erwachsene, etwas größer): führt das Pferd beim Anreiten in den Skill-Stufen 1 bis 3 (seit 2026-10-22)
 const LEHRERIN={g:'m',hf:'mittel',ha:'schwarz',lg:'beige',sh:'gruen'};
 const trLehrerin=()=>!!TQ&&TQ.id=='re'&&TQ.ziel<=3;
 const trMitte=()=>!!TQ&&(TQ.id=='lo'||trLehrerin());
-function trSzene(k){const H=hh(k),now=new Date(),P=pal(now.getHours()+now.getMinutes()/60),cx=TRZ.cx,cy=TRZ.cy;
- const pf=(a,b)=>[...Array(22)].map((_,i)=>i*Math.PI*2/22).filter(t=>a?Math.sin(t)>=0:Math.sin(t)<0).map(t=>{const x=cx+(TRZ.rx+24)*Math.cos(t),y=cy+(TRZ.ry+13)*Math.sin(t),s=.75+.25*(Math.sin(t)+1)/2;
-  return`<rect x="${r1(x-1.4*s)}" y="${r1(y-12*s)}" width="${r1(2.8*s)}" height="${r1(12*s)}" rx=".6" fill="#9b7449"/>`}).join('');
- const ring=(f)=>`<path d="${[...Array(41)].map((_,i)=>{const t=f?i/40*Math.PI:Math.PI+i/40*Math.PI,x=cx+(TRZ.rx+24)*Math.cos(t),y=cy+(TRZ.ry+13)*Math.sin(t)-8;return(i?'L':'M')+r1(x)+' '+r1(y)}).join('')}" fill="none" stroke="#a9805a" stroke-width="1.8"/>`;
+// Seit 2026-10-26 hübscher (Brain Dump): Himmel mit Wolken bzw. Sternen, Hügel mit Büschen, rote Scheune und zwei Bäume, Wiese mit Verlauf,
+// Holzzaun mit zwei Latten, Lichtkante und Tor, Sandplatz mit Rand, ausgetretener Hufspur, Rechenspuren und Steinchen,
+// vorn Aufsteighilfe, Wassereimer, Gras und Blumen. Die Tageszeit kommt wie auf dem Hof aus pal() (für Tests HF.hTest).
+function trSzene(k){const H=hh(k),now=new Date(),P=pal(typeof HF!='undefined'&&HF.hTest!=null?HF.hTest:now.getHours()+now.getMinutes()/60),cx=TRZ.cx,cy=TRZ.cy,nacht=P.n=='nacht';
+ const ZX=TRZ.rx+24,ZY=TRZ.ry+13,ep=t=>[cx+ZX*Math.cos(t),cy+ZY*Math.sin(t)],tief=t=>.72+.28*(Math.sin(t)+1)/2;
+ // Zaun: Pfosten mit Lichtkante, zwei Latten; v = vordere Hälfte (vor dem Pferd), sonst hintere
+ // Torbereich (hinten rechts, Winkel −0,98 bis −0,7): dort keine Pfosten und keine Latten (nach der Code-Prüfung)
+ // r = Rand: Latten etwas ins Tor hinein (Enden unter den Torpfosten), Pfosten mit Abstand (kein Doppelpfosten neben dem Tor)
+ const TOR=[2*Math.PI-.98,2*Math.PI-.7],imTor=(t,r)=>{const u=((t%(2*Math.PI))+2*Math.PI)%(2*Math.PI);return u>TOR[0]-r&&u<TOR[1]+r};
+ const pfosten=v=>[...Array(24)].map((_,i)=>i*Math.PI*2/24+.13).filter(t=>(v?Math.sin(t)>=0:Math.sin(t)<0)&&!imTor(t,.06)).map(t=>{const [x,y]=ep(t),s=tief(t);
+  return`<rect x="${r1(x-1.6*s)}" y="${r1(y-15*s)}" width="${r1(3.2*s)}" height="${r1(15*s)}" rx=".8" fill="#8f6a43"/><rect x="${r1(x-1.6*s)}" y="${r1(y-15*s)}" width="${r1(1.1*s)}" height="${r1(15*s)}" rx=".5" fill="#b78c5e"/>`}).join('');
+ const latte=(v,h,w)=>{let neu=1;const d=[...Array(81)].map((_,i)=>{const t=v?i/80*Math.PI:Math.PI+i/80*Math.PI;if(imTor(t,-.03)){neu=1;return''}const [x,y]=ep(t),c=neu?'M':'L';neu=0;return c+r1(x)+' '+r1(y-h*tief(t))}).join('');
+  return`<path d="${d}" fill="none" stroke="#a9805a" stroke-width="${w}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#c9a376" stroke-width="${r1(w*.38)}" stroke-linecap="round" transform="translate(0 -${r1(w*.28)})"/>`};
+ const zaun=v=>latte(v,11.5,2.2)+latte(v,5.5,2.2)+pfosten(v);
+ // Tor hinten rechts: zwei dicke Pfosten, Bretter mit Querstrebe
+ const tor=(()=>{const [a,b]=[ep(-.98),ep(-.7)],s=tief(-.84);return`<g><path d="M${r1(a[0])} ${r1(a[1]-12*s)}L${r1(b[0])} ${r1(b[1]-12*s)}L${r1(b[0])} ${r1(b[1]-3*s)}L${r1(a[0])} ${r1(a[1]-3*s)}Z" fill="#c9a376" stroke="#8f6a43" stroke-width=".8"/>`+
+  `<path d="M${r1(a[0])} ${r1(a[1]-3*s)}L${r1(b[0])} ${r1(b[1]-12*s)}M${r1(a[0])} ${r1(a[1]-7.5*s)}L${r1(b[0])} ${r1(b[1]-7.5*s)}" stroke="#8f6a43" stroke-width="1"/>`+
+  [a,b].map(([x,y])=>`<rect x="${r1(x-2.2*s)}" y="${r1(y-17*s)}" width="${r1(4.4*s)}" height="${r1(17*s)}" rx="1" fill="#7a5a38"/>`).join('')+`</g>`})();
+ // Sand: Steinchen (fest ausgewürfelt), Rechenspuren
+ const steine=[...Array(34)].map((_,i)=>{const t=sr(i+71)*Math.PI*2,r=Math.sqrt(sr(i+93))*.92,x=cx+(TRZ.rx+14)*r*Math.cos(t),y=cy+(TRZ.ry+8)*r*Math.sin(t);return`<circle cx="${r1(x)}" cy="${r1(y)}" r="${r1(.5+sr(i+5)*.6)}" fill="#a88a5c" opacity=".55"/>`}).join('');
+ const rechen=[[.42,.6],[.62,.5],[.86,.42]].map(([f,o])=>`<ellipse cx="${cx}" cy="${cy}" rx="${r1(TRZ.rx*f)}" ry="${r1(TRZ.ry*f)}" fill="none" stroke="#f6e8c2" stroke-width=".8" stroke-dasharray="14 9" opacity="${o}"/>`).join('');
+ // Vordergrund außerhalb des Zauns: Aufsteighilfe (Holztreppe), Wassereimer, Gras und Blumen
+ const gras=nacht?['#2f5a38','#376640','#28503a']:['#6d9f4c','#7fb258','#5f9245','#86b960'];
+ const vorn=`<g transform="translate(22 178)"><ellipse cx="2" cy="1" rx="14" ry="2.4" fill="#000" opacity=".12"/><path d="M-10 0V-8H-1V-15H12V0Z" fill="#a9805a" stroke="#6b4a2b" stroke-width=".9"/><path d="M-10 -8H-1M-1 -15H12" stroke="#c9a376" stroke-width="1.2"/><path d="M-10 -4H12M-1 -11H12" stroke="#6b4a2b" stroke-width=".5" opacity=".6"/></g>`+
+  `<g transform="translate(300 182)"><ellipse cx="0" cy="1" rx="8" ry="1.8" fill="#000" opacity=".12"/><path d="M-6 -9L-5 0H5L6 -9Z" fill="#4a90c2" stroke="#2c5f86" stroke-width=".8"/><ellipse cx="0" cy="-9" rx="6" ry="1.6" fill="#7cc0ea" stroke="#2c5f86" stroke-width=".6"/><path d="M-6 -9Q0 -17 6 -9" fill="none" stroke="#5a5f66" stroke-width=".7"/></g>`+
+  [[6,192],[44,194],[70,195],[118,196],[208,196],[252,195],[276,193],[314,192]].map(([x,y],i)=>buschel(x,y,4+sr(i+40)*3,i+400,gras[i%gras.length])).join('')+
+  (nacht?'':[[36,190,'#f4d03f'],[12,186,'#e8508f'],[284,189,'#ffffff'],[262,193,'#f4d03f'],[96,195,'#e8508f']].map(([x,y,c])=>`<path d="M${x} ${y}V${y-5}" stroke="#4f8a4a" stroke-width=".7"/><circle cx="${x}" cy="${y-5.5}" r="1.5" fill="${c}"/><circle cx="${x}" cy="${y-5.5}" r=".55" fill="#e2b24a"/>`).join(''));
+ const wolke=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})" fill="${nacht?'#3c4a6e':'#fff'}" opacity="${nacht?.55:.9}"><ellipse rx="18" ry="5.5"/><circle cx="-8" cy="-3" r="6.5"/><circle cx="2" cy="-5.5" r="8"/><circle cx="10" cy="-2" r="5.5"/></g>`;
+ const kr=nacht?['#24452f','#2f5a3a']:['#4f8a4a','#7cbf6a'];
  return`<svg id="trsz" class="trsz" viewBox="0 0 320 196" role="img" aria-label="${esc(H.name)} ${TQ&&TQ.id=='re'?'mit dir im Sattel':'an der Longe'}"><defs><linearGradient id="trhim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.t}"/><stop offset=".55" stop-color="${P.m}"/><stop offset="1" stop-color="${P.b}"/></linearGradient>`+
-  `<radialGradient id="trsand" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#ecd9a8"/><stop offset="1" stop-color="#cfb27b"/></radialGradient></defs>`+
-  `<rect width="320" height="196" fill="url(#trhim)"/>`+(P.n=='nacht'?`<circle cx="60" cy="30" r="8" fill="#f4f1de"/>`:`<circle cx="262" cy="${P.sy||30}" r="10" fill="${P.n=='tag'?'#fff3c4':P.glow}"/>`)+
-  `<path d="M0 84Q50 66 110 80T230 74T320 80V196H0Z" fill="${P.far}"/><path d="M0 98Q80 84 160 96T320 92V196H0Z" fill="${P.mid}"/><rect y="100" width="320" height="96" fill="${P.g1}"/>`+
-  [[30,104,9],[290,102,8],[110,100,6]].map(([x,y,r])=>busch(x,y,r,P.bu)).join('')+
-  ring(0)+pf(0)+`<ellipse cx="${cx}" cy="${cy}" rx="${TRZ.rx+18}" ry="${TRZ.ry+10}" fill="url(#trsand)"/><ellipse cx="${cx}" cy="${cy}" rx="${TRZ.rx}" ry="${TRZ.ry}" fill="none" stroke="#b9975d" stroke-width="7" opacity=".35"/>`+
+  `<radialGradient id="trsand" cx=".5" cy=".4" r=".62"><stop offset="0" stop-color="#f0dfb2"/><stop offset=".75" stop-color="#e2c993"/><stop offset="1" stop-color="#c9a873"/></radialGradient>`+
+  `<linearGradient id="trwiese" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.g1}"/><stop offset="1" stop-color="${P.g2}"/></linearGradient>`+
+  `<radialGradient id="trglow"><stop offset="0" stop-color="${nacht?'#f4f1de':P.glow||'#fff3c4'}" stop-opacity=".7"/><stop offset="1" stop-color="${nacht?'#f4f1de':P.glow||'#fff3c4'}" stop-opacity="0"/></radialGradient></defs>`+
+  `<rect width="320" height="196" fill="url(#trhim)"/>`+
+  (nacht?[...Array(18)].map((_,i)=>`<circle cx="${r1(sr(i+3)*320)}" cy="${r1(sr(i+90)*62)}" r="${r1(.4+sr(i)*.7)}" fill="#fff" opacity="${(.5+sr(i+7)*.4).toFixed(2)}"/>`).join('')+`<circle cx="60" cy="30" r="22" fill="url(#trglow)"/><circle cx="60" cy="30" r="8" fill="#f4f1de"/>`
+   :`<circle cx="262" cy="${P.sy||30}" r="26" fill="url(#trglow)"/><circle cx="262" cy="${P.sy||30}" r="10" fill="${P.n=='tag'?'#fff3c4':P.glow}"/>`)+
+  wolke(96,26,.9)+wolke(196,16,.7)+wolke(300,46,.6)+
+  `<path d="M0 84Q50 66 110 80T230 74T320 80V196H0Z" fill="${P.far}"/><path d="M0 98Q80 84 160 96T320 92V196H0Z" fill="${P.mid}"/>`+
+  [[118,97,5],[150,95,4],[206,95,5],[236,94,4]].map(([x,y,r])=>busch(x,y,r,P.bu)).join('')+
+  // Wiese vor Scheune und Bäumen zeichnen, sonst verdeckt sie deren Schatten und Fuß (nach der Code-Prüfung)
+  `<rect y="98" width="320" height="98" fill="url(#trwiese)"/>`+
+  // Scheune links hinten, Bäume links und rechts
+  `<g transform="translate(64 100)"><ellipse cx="0" cy="1" rx="22" ry="2.4" fill="#000" opacity=".12"/><path d="M-17 0V-14L0 -27L17 -14V0Z" fill="#b0412f" stroke="#6e2b20" stroke-width=".8"/><path d="M-19.5 -13L0 -28.5L19.5 -13" fill="none" stroke="#f1e4c8" stroke-width="2" stroke-linejoin="round"/>`+
+  `<rect x="-6" y="-11" width="12" height="11" fill="#7a2a1e"/><path d="M-6 -11L6 0M6 -11L-6 0" stroke="#f1e4c8" stroke-width="1"/><rect x="-6" y="-11" width="12" height="11" fill="none" stroke="#f1e4c8" stroke-width="1"/><rect x="-3" y="-22" width="6" height="5" fill="#f4e9d0" stroke="#6e2b20" stroke-width=".5"/></g>`+
+  baum(22,104,.55,kr[0],kr[1])+baum(290,102,.6,kr[0],kr[1])+
+  // hinterer Zaun, Sandplatz mit Rand, Hufspur, Rechenspuren, Steinchen, ausgetretene Mitte
+  zaun(0)+tor+`<ellipse cx="${cx}" cy="${cy+1.5}" rx="${TRZ.rx+19}" ry="${TRZ.ry+10.5}" fill="#b08d5c" opacity=".55"/><ellipse cx="${cx}" cy="${cy}" rx="${TRZ.rx+18}" ry="${TRZ.ry+10}" fill="url(#trsand)"/>`+
+  rechen+`<ellipse cx="${cx}" cy="${cy}" rx="${TRZ.rx}" ry="${TRZ.ry}" fill="none" stroke="#b9975d" stroke-width="9" opacity=".38"/><ellipse cx="${cx}" cy="${cy}" rx="${TRZ.rx}" ry="${TRZ.ry}" fill="none" stroke="#a5804c" stroke-width="2" opacity=".25"/>`+
+  steine+`<ellipse cx="${TRZ.fx}" cy="${TRZ.fy}" rx="15" ry="4.5" fill="#c4a36c" opacity=".5"/>`+
   `<g id="trhinten"></g>`+(TQ&&TQ.id=='re'?(trLehrerin()?`<g id="trfig" class="lehrerin" transform="translate(${TRZ.fx} ${TRZ.fy}) scale(${TRZ.ls})">${figurBild(LEHRERIN)}</g>`:''):`<g id="trfig" transform="translate(${TRZ.fx} ${TRZ.fy}) scale(${TRZ.fs})">${figurBild(k.f)}</g>`)+
   (trMitte()?`<path id="trlonge" fill="none" stroke="#f4f1de" stroke-width=".9"/>`:'')+
-  `<g id="trvorn"><g id="trpf"><g id="trpfs">${PF.bild('tr_',pfSpec(H,stg(k)))}</g></g></g>`+ring(1)+pf(1)+
+  `<g id="trvorn"><g id="trpf"><g id="trpfs">${PF.bild('tr_',pfSpec(H,stg(k)))}</g></g></g>`+zaun(1)+vorn+
   `<rect width="320" height="196" fill="${P.tint}" opacity="${P.ta}" pointer-events="none"/></svg>`}
 // Reiterin (Seitenansicht, nach rechts schauend) in den Farben der eigenen Figur. Sie wird in den Körper des gezeichneten Pferds
 // (#tr_koerper) gesetzt und schaukelt deshalb mit. Sattelpunkt: Mulde der Körperform bei (-8, -154), Zügel zum Maul (#tr_kopfForm, 132/-157).
@@ -167,8 +208,8 @@ function trReiter(k){const ko=document.getElementById('tr_koerper'),kf=document.
  kf.parentNode.appendChild(a1);
  const kg=kp&&kp.parentNode;if(kg){const a2=document.createElementNS(ns,'g');a2.id='trtrense';
   a2.innerHTML='<path d="M99 -213L118 -169M110 -180Q123 -183 135 -171M95 -205Q100 -213 107 -213" fill="none" stroke="#3b2414" stroke-width="2.4" stroke-linecap="round"/><circle cx="127" cy="-161" r="2.2" fill="none" stroke="#c9c9c9" stroke-width="1.2"/>';kg.appendChild(a2)}}
-// TRRS: Größe der Reiterin im Verhältnis zum Pferd (bis 2026-10-24 1,6, wirkte zu klein; jetzt 2,0)
-const TRRS=2.0;
+// TRRS: Größe der Reiterin im Verhältnis zum Pferd (bis 2026-10-24 1,6, dann 2,0; seit 2026-10-26 2,4, wirkte immer noch zu klein)
+const TRRS=2.4;
 let TRRAF=0,TRL=0,TRRIG=null;
 function trSync(){if(v!='train'||!TQ||!$('#trsz')){if(TRRAF)cancelAnimationFrame(TRRAF);TRRAF=0;TRRIG=null;return}
  TRRIG=new PF.Rig('tr_');if(TQ.id=='re')trReiter(kid());trZeichne(0);if(RM)return;if(!TRRAF){TRL=performance.now();TRRAF=requestAnimationFrame(trFrame)}}
@@ -193,7 +234,8 @@ function trZeichne(dt){if(!TQ)return;const pf=$('#trpf');if(!pf||!TRRIG)return;
  // Die Longe wandert mit: hinten hinter die Figur (nach dem Pferd), vorne vor die Figur (unter das Pferd, der Kopf deckt das Ende)
  const ziel=$(sn>=0?'#trvorn':'#trhinten');if(pf.parentNode!==ziel){const lo=$('#trlonge');if(sn>=0){if(lo)ziel.insertBefore(lo,ziel.firstChild);ziel.appendChild(pf)}else{ziel.appendChild(pf);if(lo)ziel.appendChild(lo)}}
  // Hand der Figur bzw. der Reitlehrerin (ungefähr) und Kopf des Pferds
- const fsk=TQ.id=='re'?TRZ.ls/TRZ.fs:1,hx=TRZ.fx+(dir>0?1:-1)*6*fsk,hy=TRZ.fy-25*fsk,kx=x+sx*112,ky=y-sc*175;
+ // Hand in Figuren-Einheiten (13,6 seitlich, 57 hoch) mal Größe, so passt die Longe zu jeder Figurengröße
+ const fsk=TQ.id=='re'?TRZ.ls:TRZ.fs,hx=TRZ.fx+(dir>0?1:-1)*13.6*fsk,hy=TRZ.fy-57*fsk,kx=x+sx*112,ky=y-sc*175;
  const lo=$('#trlonge');
  if(lo)lo.setAttribute('d',`M${r1(hx)} ${r1(hy)}Q${r1((hx+kx)/2)} ${r1((hy+ky)/2+6)} ${r1(kx)} ${r1(ky)}`);
  // Zeitbalken

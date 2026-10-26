@@ -1,4 +1,4 @@
-// Pferdehof Mathe: QR-Code-Erzeuger (seit 2026-10-20), selbst geschrieben, ohne fremde Bibliothek und ohne Internet.
+// Rechenhof: QR-Code-Erzeuger (seit 2026-10-20), selbst geschrieben, ohne fremde Bibliothek und ohne Internet.
 // Verfahren nach der QR-Norm (ISO/IEC 18004): Byte-Modus, Fehlerkorrektur Stufe M (etwa 15 % dürfen fehlen), Versionen 1 bis 15.
 // qrMatrix(text) liefert ein Quadrat aus true (dunkel) und false (hell), qrSvg(text, px) ein fertiges SVG mit Ruhezone.
 // Aufbau: Daten kodieren -> Reed-Solomon-Fehlerkorrektur je Block -> Blöcke verschränken -> Muster zeichnen ->

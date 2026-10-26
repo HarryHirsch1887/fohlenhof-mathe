@@ -246,3 +246,78 @@ body.holz main button.big.hbox{justify-content:flex-start;gap:12px;padding:9px 2
 .hschild{flex:1;min-width:0;background:#f5e7c8;color:#3b2414;text-shadow:none;border-radius:6px;padding:4px 10px;box-shadow:inset 0 0 0 2px #b5835a;font-weight:400;line-height:1.3}
 .hschild b{display:block;font:700 18px Georgia,"Palatino Linotype",serif}.hschild .small{display:block}
 .hbox .ap{flex:none}
+/* Werbespruch unter dem App-Namen (seit 2026-10-26, „Rechenhof“ – „Pferdestark in Mathe!“) */
+p.spruch{margin:-6px 0 10px;font:italic 700 16px "Palatino Linotype",Palatino,Georgia,serif;color:var(--gr)}
+/* ---------- Aufgabenseiten je Ansicht (seit 2026-10-26, aufgabeSeite in menue.js) ---------- */
+.qbild{max-width:300px}.qloes{white-space:pre-line;font-size:16px}
+.qhufe i.neu,.qseg i.neu{animation:pop .5s cubic-bezier(.2,1.6,.4,1) both}
+/* A Pferdehof: Schiefertafel im Holzrahmen, Hufeisen, Stempel, Tipp als Zettel (Knöpfe in Holz über body.holz) */
+.qhufe{display:flex;justify-content:center;gap:5px;margin:10px 0 4px}
+.qhufe i{width:15px;height:14px;border:3px solid #c9bfa8;border-bottom:0;border-radius:8px 8px 0 0}
+.qhufe i.ok{border-color:#e2b24a}.qhufe i.no{border-color:#b0412f}.qhufe i.jetzt{border-color:#3b2414}
+.qtafel{position:relative;margin:10px 0 18px;padding:10px 14px 16px;border-radius:8px;background:radial-gradient(circle at 30% 20%,#3f5a48,#2d4436);color:#f4f1e6;border:8px solid #8a5a32;box-shadow:inset 0 0 0 2px #5e3d22,0 4px 0 #4a2f1a}
+.qtafel .qinfo{font-variant:small-caps;letter-spacing:.04em;margin:0 0 4px;opacity:.85}
+.qtafel .q{font-family:"Segoe Print","Comic Sans MS","Trebuchet MS",sans-serif;color:#f4f1e6;margin:6px 0}
+.qtafel .zeich{margin:8px 0 2px}
+.qdein{font-family:"Segoe Print","Comic Sans MS","Trebuchet MS",sans-serif;font-weight:700;font-size:18px;margin:6px 0 0}.qdein.ok{color:#9fd18f}.qdein.no{color:#ffb3a4}
+.qstempel{position:absolute;right:10px;top:-14px;transform:rotate(-10deg);border:3px solid #9fd18f;color:#9fd18f;border-radius:8px;padding:0 10px;font-weight:800;font-size:19px;background:#2d4436}
+.qstempel.no{border-color:#ff9a86;color:#ff9a86}
+.qtafel .kreide{position:absolute;right:14px;bottom:-15px;width:34px;height:7px;border-radius:3px;background:#f6f3ea;box-shadow:0 1px 0 #0003}
+/* Rahmen als Schatten nach innen: Feld und "Prüfen" sind so genau gleich hoch */
+.qa .antwort{max-width:none}.qa .antw{background:#fffaf0;border:0;box-shadow:inset 0 0 0 2px #8a5a32;border-radius:8px;padding:0 10px;align-items:stretch}
+.qa #ans{border:0;background:transparent;font-weight:700;color:#3b2414;margin:0;padding:10px 0}.qa .einheit{color:#6b4423;align-self:center}
+body.holz main .qa button.tipp,.qa .qhinweis{display:inline-block;margin:12px 4px 4px;padding:6px 14px;background:#fff6b0;color:#3b2414;text-shadow:none;border-radius:2px;box-shadow:0 2px 4px #0002;transform:rotate(-1.5deg);font-weight:400;font-size:14px;text-decoration:none;opacity:1;position:relative}
+body.holz main .qa button.tipp::before,.qa .qhinweis::before{content:"";position:absolute;left:50%;top:-5px;width:9px;height:9px;margin-left:-4px;border-radius:50%;background:#b0412f}
+.qa .qhinweis{display:block;transform:rotate(-.6deg)}
+/* B Bunte Kacheln: klare Karte, Striche, Rückmeldung als Leiste unten */
+.qkopfb{display:flex;align-items:center;gap:8px}
+button.qzu{width:40px;height:40px;flex:none;border-radius:50%;padding:0;background:var(--card);color:var(--ink);box-shadow:0 1px 4px #0002;font-weight:700;font-size:17px}
+.qpill{flex:1;min-width:0;background:var(--card);border-radius:20px;padding:5px 12px;font-size:14px;font-weight:700;box-shadow:0 1px 4px #0001}.qpill .dots{white-space:nowrap}
+.qseg{display:flex;gap:4px;margin:12px 0 10px}.qseg i{flex:1;height:8px;border-radius:4px;background:var(--line)}.qseg i.ok{background:#4f8a4a}.qseg i.no{background:#e08a77}.qseg i.jetzt{background:#e2b24a}
+.qkarte{background:var(--card);border-radius:20px;padding:14px 16px 16px;box-shadow:0 6px 18px #0001,0 1px 3px #0001;margin:6px 0 12px}
+.qkarte .small{margin:0}.qkarte .q{font-size:clamp(18px,5vw,22px);font-weight:700}
+.qb .antwort{flex-direction:column;align-items:stretch;max-width:none;gap:12px;margin-top:12px}
+.qb .antw,.qgegeben{display:flex;align-items:center;height:58px;border-radius:16px;background:var(--bg);border:2px solid #4f8a4a;padding:0 10px 0 16px;max-width:none}
+.qb #ans{border:0;background:transparent;font-size:26px;font-weight:700;margin:0;padding:0;height:100%;max-width:none}
+.qb .einheit,.qgegeben .einheit{margin-left:auto;background:#4f8a4a;color:#fff;border-radius:10px;padding:2px 10px;font-size:16px}
+.qb button.pruefen{height:56px;border-radius:16px;font-size:19px;box-shadow:0 4px 0 #b38420;padding:0}
+.qb button.tipp{display:block;margin:4px auto 0;text-decoration:none;font-weight:700;opacity:.85}.qb button.tipp:not(.qwarum)::before{content:"💡 "}
+.qgegeben{margin-top:12px;font-size:26px;font-weight:700}.qgegeben.ok{background:#e3f2d9;color:#26331f}.qgegeben.no{border-color:#c0563f;background:#fbe6e1;color:#26331f}.qgegeben.no .einheit{background:#c0563f}
+.qbanner{position:sticky;bottom:0;z-index:5;margin:14px -16px 0;padding:16px 16px 20px;border-radius:22px 22px 0 0;color:#fff;box-shadow:0 -4px 14px #0002}
+.qbanner.ok{background:#4f8a4a}.qbanner.no{background:#c0563f}
+.qbanner p.ok,.qbanner p.no{color:#fff;margin:0 0 8px;font-size:18px}
+.qbanner button.qweiter{width:100%;height:50px;margin-top:4px;border-radius:14px;background:#fff;color:#26331f;font-size:18px}
+.qb .qloes{background:var(--card);border-radius:16px;border:0;box-shadow:0 2px 8px #0001}
+/* C Turniermodus: Parcours, Sprechblase, Zahlenblock */
+button.qende{background:none;color:var(--ink);padding:6px 4px;font-weight:700}
+.qparc{position:relative;height:56px;margin:4px 6px 0}
+.qparc .boden{position:absolute;left:-6px;right:-6px;bottom:6px;height:4px;border-radius:2px;background:#a9cf98}
+.qparc .hin{position:absolute;bottom:9px;width:14px;height:16px;margin-left:-7px;border-left:2px solid #f4f1ea;border-right:2px solid #f4f1ea}
+.qparc .hin::before{content:"";position:absolute;left:-2px;right:-2px;top:3px;height:3px;border-radius:1px;background:repeating-linear-gradient(90deg,#b0412f 0 3px,#fff 3px 6px)}
+.qparc .hin.ok::before{background:#4f8a4a}.qparc .hin.no::before{top:11px;transform:rotate(22deg);background:repeating-linear-gradient(90deg,#9a9a9a 0 3px,#fff 3px 6px)}
+.qparc .hin.jetzt::before{box-shadow:0 0 0 1.5px #e2b24a}
+.qpf{position:absolute;bottom:8px;width:40px;margin-left:-46px;line-height:0;transform-origin:50% 100%}.qpf svg{width:100%;height:auto}
+.qpf.springt{margin-left:-20px;transform:translateY(-40%) rotate(-12deg)}
+@keyframes qsprung{0%{transform:translate(-14px,0) rotate(0)}55%{transform:translate(-4px,-65%) rotate(-16deg)}100%{transform:translateY(-40%) rotate(-12deg)}}
+.qpf.neu{animation:qsprung .6s ease-out both}
+.qblase{position:relative;background:var(--card);border-radius:18px;padding:12px 14px;margin:12px 0;box-shadow:0 3px 10px #0001}
+.qblase::before{content:"";position:absolute;left:28px;top:-9px;border:9px solid transparent;border-bottom-color:var(--card);border-top:0}
+.qblase .small{margin:0}.qblase .q{margin:6px 0 0}
+.qc .antwort{display:block;max-width:460px}
+.qc .antw,.qc .qgegeben{display:flex;align-items:center;height:56px;border-radius:14px;background:var(--card);border:3px solid var(--ink);padding:0 14px;margin-bottom:10px;max-width:none}
+.qc #ans{border:0;background:transparent;font-size:28px;font-weight:800;margin:0;padding:0;height:100%;max-width:none;min-width:0;flex:1}
+.qc .einheit,.qc .qgegeben .einheit{margin-left:auto;background:none;color:var(--ink);opacity:.7;font-size:18px}
+.qc .qgegeben.ok{border-color:#4f8a4a;color:#2e6a2a;background:var(--card)}.qc .qgegeben.no{border-color:#c0563f;color:#a33a26;background:var(--card)}
+.qpad{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.qpad button{height:52px;border-radius:12px;padding:0;background:var(--card);color:var(--ink);font-size:23px;font-weight:700;box-shadow:0 3px 0 var(--line)}
+.qpad button.grau{background:var(--bg);font-size:19px}.qpad button:disabled{opacity:.4}
+.qpad button.pruefen{grid-row:span 2;height:auto;background:var(--bar);color:#fff;font-size:16px;box-shadow:0 3px 0 #7a2a1e}
+.qpad button.tipp{background:#fff6b0;color:#26331f;text-decoration:none;opacity:1;font-size:21px;padding:0}
+.qerg{border-radius:16px;padding:12px 14px;margin:0 0 10px;color:#26331f}.qerg.ok{background:#d7efc6}.qerg.no{background:#f6d6d0}
+.qerg p.ok,.qerg p.no{margin:0;color:#26331f}.qerg .card{background:transparent;border:0;padding:6px 0 0;margin:0;color:#26331f}.qerg button.tipp{color:#26331f}
+.qc button.qweiter{width:100%;height:52px;border-radius:26px;font-size:18px;font-weight:800;background:var(--bar);color:#fff;box-shadow:0 4px 0 #7a2a1e}
+@media(prefers-reduced-motion:reduce){.qhufe i.neu,.qseg i.neu,.qpf.neu,.qstempel.pop{animation:none}}
+@media(prefers-color-scheme:dark){.qhufe i.jetzt{border-color:#f1e3c8}.qc .qgegeben.ok{color:#9fd18f}.qc .qgegeben.no{color:#ff9a86}}
+/* Stempel ploppt auf und bleibt schräg (eigene Keyframes, .pop würde die Drehung überschreiben) */
+@keyframes qstempel{0%{transform:rotate(-10deg) scale(.3);opacity:0}100%{transform:rotate(-10deg) scale(1);opacity:1}}
+.qstempel.pop{animation:qstempel .5s cubic-bezier(.2,1.6,.4,1) .15s both}

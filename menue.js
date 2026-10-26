@@ -1,4 +1,4 @@
-// Pferdehof Mathe: Ansichten für Startseite, Kind-Ansicht und Themenwahl (seit 2026-10-26, Menü-Vorschläge B und C vom 2026-10-25)
+// Rechenhof: Ansichten für Startseite, Kind-Ansicht, Themenwahl und Aufgabenseite (seit 2026-10-26, Menü-Vorschläge vom 2026-10-25)
 // Wird vor app.js geladen. Alles aus app.js, hof.js, pferd.js, figur.js, training.js und pflege.js wird erst zur Laufzeit benutzt.
 //
 // Wahl über den Knopf "Ansicht" auf der Startseite, gespeichert als S.an: 'b' = Bunte Kacheln, 'c' = Turniermodus mit Leiste unten,
@@ -53,10 +53,10 @@ const nkOffen=()=>NKAUF||!!NKN||!!NKW||!S.kids.length;
 function nkAuf(){NKAUF=1;ui();const n=$('#nm');if(n){n.focus({preventScroll:true});n.scrollIntoView({block:'center',behavior:RM?'auto':'smooth'})}}
 const mLinks=()=>`<p class="row mlinks"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="infoAuf()">Für Eltern</button><button class="alt" onclick="ansichtAuf()">Ansicht</button></p>`;
 function homeB(zu){
- return`<h1>${S.kids.length?'Wer reitet heute?':'Pferdehof Mathe'}</h1>${zu?pinZuKarte():''}`+
+ return`<h1>${S.kids.length?'Wer reitet heute?':APPNAME}</h1>${S.kids.length?'':`<p class="spruch">${SPRUCH}</p>`}${zu?pinZuKarte():''}`+
   S.kids.map((k,i)=>`<button class="mk mkind" onclick="sel(${k.id})"${zu?' disabled':''}><span class="mbild" style="background:${MKF[i%MKF.length]}">${kindBild(k)}</span><span class="mwt"><b>${esc(k.name)}</b>${k.h?` <span class="small">mit ${esc(k.h.name)}</span>`:''}<br><span class="small">Klasse ${k.g} · ${k.h?stufeN(stg(k)):'noch ohne Pferd'}</span><br><span class="ap">${k.ap||0} ${AP}</span></span></button>`).join('')+
   `<div class="mgrid">${kachel('mf6','neu','Neues Kind','','nkAuf()')}${kachel('mf3','flug','Flug über die Koppel','','flyOn()')}</div>`+(nkOffen()?nkKarte(zu):'')+mLinks()}
-// C Startseite (seit 2026-10-26, Florians Wunsch): Pferdekopf mit etwas Hals statt der Startnummer. Das Pferd wird ganz gezeichnet,
+// C Startseite (seit 2026-10-26, auf Wunsch): Pferdekopf mit etwas Hals statt der Startnummer. Das Pferd wird ganz gezeichnet,
 // nach dem Seitenaufbau misst kopfAusschnitt() Kopf und oberen Hals und setzt den Bildausschnitt (wie itBilder bei den Hof-Gegenständen).
 // Lage und Größe des Kopfs hängen von Wachstumsstufe und Rasse ab, deshalb gemessen statt fest eingetragen.
 // Ohne Pferd: Kopf der Figur, ohne Figur die Startnummer.
@@ -73,7 +73,7 @@ function kopfAusschnitt(){document.querySelectorAll('#app svg.mkopfbild[data-p]'
  // quadratisch, waagerecht fast mittig (vor dem Maul bleibt etwas Luft), oben Luft für die Ohrspitzen
  s.setAttribute('viewBox',`${r1((x0+x1)/2-g*.46)} ${r1((y0+y1)/2-g*.53)} ${r1(g)} ${r1(g)}`);s.removeAttribute('data-p')})}
 function homeC(zu){
- return`<h1>${S.kids.length?'Wer startet heute?':'Pferdehof Mathe'}</h1>${zu?pinZuKarte():''}`+
+ return`<h1>${S.kids.length?'Wer startet heute?':APPNAME}</h1>${S.kids.length?'':`<p class="spruch">${SPRUCH}</p>`}${zu?pinZuKarte():''}`+
   S.kids.map((k,i)=>`<button class="mk mnr" onclick="sel(${k.id})"${zu?' disabled':''}><span class="nr" aria-hidden="true">${kopfBild(k,i)}</span><span class="mwt"><b>${esc(k.name)}</b> <span class="small">${k.h?'auf '+esc(k.h.name):'noch ohne Pferd'}</span><br><span class="small">Klasse ${k.g} · ${k.ap||0} Äpfel</span></span></button>`).join('')+
   `<button class="mk mros" onclick="nkAuf()">${mi('neu',34)}<b>Neues Kind anmelden</b></button>`+(nkOffen()?nkKarte(zu):'')+
   `<button class="mk mros" onclick="flyOn()">${mi('flug',34)}<b>Flug über die Koppel</b></button>`+mLinks()}
@@ -150,6 +150,57 @@ function themenC(k){const K=KAT[k.g],kz=(k.kn||0)>=KNMAX,fr=frueher(k);
  return mBand('Schulstoff Klasse '+k.g,'#4f8a4a')+K.schul.map(x=>sternZeile(k,x)).join('')+mBand('Mathe-Olympiade & Knobeln','#3d7fb3')+(kz?`<p class="small knsperre">${KNHINWEIS}</p>`:'')+K.oly.map(x=>sternZeile(k,x)).join('')+
   mBand('Sudoku','#b0412f')+K.sud.map(x=>sternZeile(k,x)).join('')+
   (fr.length?`<details class="wdh"><summary>Wiederholen: Klasse ${undListe(fr)}</summary><p class="small">Bei Themen früherer Klassen gibt es weniger Äpfel: auf Stufe 4 und 5 nur 1 statt 2.${wdhOben(k)}</p>${wdhListe(k).map(([g,L2])=>mBand('Schulstoff Klasse '+g,'#8a6a3a')+L2.map(x=>sternZeile(k,x)).join('')).join('')}</details>`:'')}
+
+// ---------- Aufgabenseite je Ansicht (seit 2026-10-26, Vorschläge vom 2026-10-26) ----------
+// A Pferdehof: Schiefertafel im Holzrahmen, Fortschritt als zehn Hufeisen, Stempel „Richtig!“/„Falsch“, Tipp als Zettel (Holz-Optik über body.holz).
+// B Bunte Kacheln: klare weiße Karte, Einheit als grünes Schildchen im Feld, zehn Striche, Rückmeldung als farbige Leiste unten.
+// C Turniermodus: Parcours mit zehn Hindernissen (das eigene Pferd springt), Aufgabe in einer Sprechblase, eigener Zahlenblock statt Handy-Tastatur.
+// In allen drei gleich (Tests und Animationen hängen daran): #ans, .antwort/.antw/.einheit, button.pruefen (chk), button.tipp (tip), #apz,
+// p.ok/p.no mit .funkeln/.wackel, .card mit „So geht’s“ bzw. „Darum ist es richtig“, .rein/.rein2, Weiter (nx).
+// Q.erg merkt richtig/falsch je Aufgabe, Q.ein die Eingabe (beides in chk, app.js).
+function aufgabeSeite(){const k=kid(),s=ts(k,Q.key),t=THEMA[Q.key],q=Q.q,[ft,fe]=frageTeile(q[0]),neuQ=!Q.fb&&Q.az!==Q.i,neuF=!!Q.fb&&Q.af!==Q.i,fliegt=neuF&&Q.fb.ok&&!RM,an=mAn()||'a';
+ if(Q.fb)Q.af=Q.i;else Q.az=Q.i;ANI={apfel:fliegt};
+ const erg=Q.erg||[],stand=i=>erg[i]===true?'ok':erg[i]===false?'no':i==Q.i?'jetzt':'',
+  fort=cls=>`<div class="${cls}" role="img" aria-label="Aufgabe ${Q.i+1} von 10, ${Q.right} richtig">${[...Array(10)].map((_,i)=>`<i class="${stand(i)}${neuF&&i==Q.i?' neu':''}"></i>`).join('')}</div>`,
+  apz=`<span class="ap" id="apz">${(k.ap||0)-(fliegt?Q.fb.a:0)} ${AP}</span>`,
+  beenden=`if(ausZeit(kid()))bye();else{v='kid';ui()}`,
+  info=`Aufgabe ${Q.i+1} von 10${Q.rp?' · <b>Nochmal versuchen:</b> Die kennst du schon aus dem Fehlerheft':''}`,
+  frage=`<div class="${neuQ?'rein':''}">${zeichnung(q[4])}<div class="q">${esc(ft)}</div></div>`,
+  hinweis=Q.hint&&q[2]?`<p class="small qhinweis">Tipp: ${esc(de(q[2]))}</p>`:'',
+  bild=Q.fb&&Q.fb.ok&&k.h?`<div class="qbild">${scene(k,Q.fb.an)}</div>`:'',
+  meldung=Q.fb?`<p class="${Q.fb.ok?'ok':'no'}${neuF?(Q.fb.ok?' funkeln':' wackel'):''}">${neuF&&Q.fb.ok&&!RM?STERNE:''}<b>${Q.fb.ok?'Richtig! +'+Q.fb.g+' Erfahrung, +'+Q.fb.a+(Q.fb.a==1?' Apfel':' Äpfel'):'Leider falsch. Richtig ist '+mitEinheit(q[1],fe)+'.'}</b>${Q.fb.m?' '+Q.fb.m:''}</p>`:'',
+  weg=Q.fb?(!Q.fb.ok&&q[3]?`<div class="card qloes${neuF?' rein2':''}"><b>So geht’s:</b>\n${esc(de(q[3]))}</div>`:'')+
+   (Q.fb.ok&&q[3]?(warumOffen()?`<div class="card warum qloes"><b>Darum ist es richtig:</b>\n${esc(de(q[3]))}</div>`:`<button class="tipp qwarum" onclick="Q.warum=1;ui()">Warum ist das richtig?</button>`):''):'',
+  // Weiter erst 0,4 s nach dem Prüfen (ein schneller zweiter Tipp auf "Prüfen" träfe sonst schon "Weiter", nach der Code-Prüfung)
+  weiter=`<button class="go qweiter" onclick="if(!Q.ts||Date.now()-Q.ts>400)nx()">${Q.i==9?'Fertig':'Weiter'} (Enter)</button>`,
+  feld=extra=>`<span class="antw"><input id="ans" autocomplete="off"${extra||''} aria-label="Antwort${fe?' in '+esc(fe):''}" onkeydown="if(event.key=='Enter')chk()">${fe?`<span class="einheit">${esc(fe)}</span>`:''}</span>`,
+  tipp=q[2]&&!Q.hint?'<button class="tipp" onclick="tip()">Tipp anzeigen (halbe Punkte)</button>':'',
+  gegeben=()=>`<span class="antw qgegeben ${Q.fb.ok?'ok':'no'}"><span class="qwert">${esc(Q.ein||'')}</span>${fe?`<span class="einheit">${esc(fe)}</span>`:''}</span>`;
+ // B: Klare Karte
+ if(an=='b')return`<div class="qb"><div class="qkopfb"><button class="qzu" onclick="${beenden}" aria-label="Beenden">✕</button><span class="qpill">${t[1]} ${dots(s.d)}</span>${apz}</div>${fort('qseg')}`+
+  `<div class="qkarte"><p class="small">${info}</p>${frage}${hinweis}${Q.fb?gegeben():`<div class="antwort${neuQ?' rein2':''}">${feld()}<button class="go pruefen" onclick="chk()">✓ Prüfen</button></div>`}</div>`+
+  // Leiste unten nur mit Meldung und Weiter; Lösungsweg und Bild stehen normal darüber (sonst verdeckt die Leiste lange Erklärungen)
+  (Q.fb?weg+bild+`<div class="qbanner ${Q.fb.ok?'ok':'no'}">${meldung}${weiter}</div>`:tipp)+`</div>`;
+ // C: Parcours und Zahlenblock
+ // Hindernisse bei 13 % bis 98 %, damit das Pferd vor dem ersten noch ganz im Bild steht (steht: links vor dem Hindernis, springt: darüber)
+ if(an=='c'){const hx=i=>r1(13+i*9.4),x=hx(Q.i),
+   parc=`<div class="qparc" role="img" aria-label="Aufgabe ${Q.i+1} von 10, ${Q.right} richtig"><span class="boden"></span>${[...Array(10)].map((_,i)=>`<i class="hin ${stand(i)}" style="left:${hx(i)}%"></i>`).join('')}`+
+    `<span class="qpf${Q.fb&&Q.fb.ok?' springt':''}${neuF&&Q.fb.ok&&!RM?' neu':''}" style="left:${x}%">${k.h?`<svg viewBox="${PFVB}" aria-hidden="true">${pfBild(pfSpec(k.h,stg(k)))}</svg>`:mi('figur',26)}</span></div>`,
+   T=(z,l,c)=>`<button class="${c||''}" onclick="qTaste('${z}')" aria-label="${l||z}">${l||z}</button>`,
+   pad=`<div class="qpad">${T('7')}${T('8')}${T('9')}${T('<','⌫','grau')}${T('4')}${T('5')}${T('6')}`+
+    (q[2]&&!Q.hint?`<button class="tipp" onclick="tip()" aria-label="Tipp anzeigen (halbe Punkte)">💡</button>`:`<button class="grau" disabled aria-hidden="true"></button>`)+
+    `${T('1')}${T('2')}${T('3')}<button class="go pruefen" onclick="chk()">Prüfen</button>${T('-','−','grau')}${T('0')}${T(',',',','grau')}</div>`;
+  return`<div class="qc"><div class="row sp"><button class="qende" onclick="${beenden}">✕ Beenden</button>${apz}</div>${parc}`+
+   `<div class="qblase"><p class="small">${t[1]} · Stufe ${s.d} · ${info}</p>${frage}${hinweis}</div>`+
+   (Q.fb?gegeben()+`<div class="qerg ${Q.fb.ok?'ok':'no'}">${meldung}${weg}</div>`+bild+weiter:`<div class="antwort${neuQ?' rein2':''}">${feld(' inputmode="none"')}${pad}</div>`)+`</div>`}
+ // A: Schiefertafel (Kopfzeile wie bisher)
+ // Stufe als Text (die Hufeisen darunter zeigen den Fortschritt der Runde, zwei Hufeisen-Reihen würden verwirren)
+ return`<div class="qa"><div class="row sp qkopf"><button class="alt" onclick="${beenden}">Beenden</button><span class="qthema">${t[1]}<br><span class="small">Stufe ${s.d} von 5</span></span>${apz}</div>${fort('qhufe')}`+
+  `<div class="qtafel"><p class="small qinfo">${info}</p>${frage}`+
+  (Q.fb?`<p class="qdein ${Q.fb.ok?'ok':'no'}">${Q.fb.ok?mitEinheit(q[1],fe)+' ✓':'Deine Antwort: '+esc(Q.ein||'')+(fe?' '+esc(fe):'')}</p><span class="qstempel ${Q.fb.ok?'ok':'no'}${neuF&&!RM?' pop':''}">${Q.fb.ok?'Richtig!':'Falsch'}</span>`:'')+`<span class="kreide" aria-hidden="true"></span></div>`+
+  hinweis+(Q.fb?bild+meldung+weg+weiter:`<div class="antwort${neuQ?' rein2':''}">${feld()}<button class="go pruefen" onclick="chk()">Prüfen</button></div>${tipp}`)+`</div>`}
+// Zahlenblock (C): Ziffer, Komma oder Minus anhängen, "<" löscht das letzte Zeichen. Die Handy-Tastatur bleibt zu (inputmode="none").
+function qTaste(z){const e=$('#ans');if(!e)return;if(z=='<')e.value=e.value.slice(0,-1);else if(e.value.length<16)e.value+=z;try{e.focus({preventScroll:true})}catch(_){}}
 
 // ---------- Leiste unten (C) ----------
 // In Kind-Ansicht, Wunschbaum und Pferderassen, nur für Kinder mit Pferd. Der Wunschbaum ist bei gesperrtem Hof aus.

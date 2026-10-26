@@ -1,7 +1,7 @@
 {
-  "name": "Pferdehof Mathe",
-  "short_name": "Pferdehof",
-  "description": "Mathe üben mit einem Pferd, das mitwächst.",
+  "name": "Rechenhof – Mathe mit Pferd",
+  "short_name": "Rechenhof",
+  "description": "Pferdestark in Mathe! Mathe üben mit einem Pferd, das mitwächst.",
   "lang": "de",
   "start_url": "./index.html",
   "scope": "./",

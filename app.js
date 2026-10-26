@@ -1,4 +1,5 @@
-// Pferdehof Mathe (früher Fohlenhof Mathe): Spiellogik, Oberfläche und Speicher (benötigt aufgaben.js)
+// Rechenhof – Mathe mit Pferd (seit 2026-10-26, vorher Pferdehof Mathe, davor Fohlenhof Mathe): Spiellogik, Oberfläche und Speicher (benötigt aufgaben.js)
+// APPNAME: angezeigter Name, SPRUCH: Werbespruch unter dem Namen
 // Nur der angezeigte Name hat sich geändert. Adresse, Repository und Speicherschlüssel heißen weiter "fohlenhof".
 const BD=[['a','Erster Schritt',k=>k.total>=1],['b','Serie von 5',k=>k.best>=5],['c','Serie von 10',k=>k.best>=10],['d','Fehlerfreie Runde',k=>k.perfect>0],['e','100 richtig',k=>k.r>=100],['f','Auf Stufe 5',k=>Object.values(k.t).some(x=>x.d==5)]];
 // Fellfarben: [Name, Fell, Mähne, Schecke (1 = weiße Flecken), dunkle Beine und Aalstrich (Farbe)]
@@ -91,7 +92,8 @@ const AP='<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><ci
 // Speicherschlüssel: neuer Name, alte Stände unter 'mathegipfel1' werden beim ersten Start übernommen (und dort nicht gelöscht)
 const KEY='fohlenhof1',OLDKEY='mathegipfel1';
 // Copyright-Vermerk mit Vorname und Initial (ausdrücklicher Wunsch): seit 2026-10-25 zuerst auf der Erklärseite für Eltern, jetzt als Fußzeile auf jeder Seite
-const COPYJAHR=2026,COPY=`© ${COPYJAHR} Florian N. – Pferdehof Mathe. Alle Rechte vorbehalten.`;// Fußzeile: ui()
+const APPNAME='Rechenhof',SPRUCH='Pferdestark in Mathe!';
+const COPYJAHR=2026,COPY=`© ${COPYJAHR} Florian N. – ${APPNAME}. Alle Rechte vorbehalten.`;// Fußzeile: ui()
 // Prüft und bereinigt einen Spielstand (aus dem Browser oder einer importierten Datei). Gibt null zurück, wenn er unbrauchbar ist.
 const nn=(x,lo=0,hi=1e9)=>{x=+x;return Number.isFinite(x)?Math.min(hi,Math.max(lo,Math.floor(x))):lo};
 const ct=(x,n)=>String(x==null?'':x).slice(0,n);
@@ -239,7 +241,7 @@ function ui(){let h='';PZ=0;
  else if(v=='home'){const zu=pinZu();// PIN-Sperre (seit 2026-10-24): Hinweis oben, Kinder-Knöpfe aus
  // Ansichten B und C (seit 2026-10-26, menue.js), sonst A "Pferdehof": Holzschilder (body.holz), jedes Kind an einer Boxentür mit Namensschild
  if(S.an=='b')h=homeB(zu);else if(S.an=='c')h=homeC(zu);else
- h=`<h1>Pferdehof Mathe</h1>${zu?pinZuKarte():''}<p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big hbox" onclick="sel(${k.id})"${zu?' disabled':''}><span class="htuer" aria-hidden="true">${kindBild(k)}</span><span class="hschild"><b>${esc(k.name)}</b><span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name)+' · '+stufeN(stg(k)):''}</span></span><span class="ap">${k.ap||0} ${AP}</span></button>`).join('')+
+ h=`<h1>${APPNAME}</h1><p class="spruch">${SPRUCH}</p>${zu?pinZuKarte():''}<p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big hbox" onclick="sel(${k.id})"${zu?' disabled':''}><span class="htuer" aria-hidden="true">${kindBild(k)}</span><span class="hschild"><b>${esc(k.name)}</b><span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name)+' · '+stufeN(stg(k)):''}</span></span><span class="ap">${k.ap||0} ${AP}</span></button>`).join('')+
  nkKarte(zu)+`<p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button><button class="alt" onclick="infoAuf()">Für Eltern</button><button class="alt" onclick="ansichtAuf()">Ansicht</button></p>`}
  // Auswahl der Ansicht (seit 2026-10-26, menue.js)
  if(v=='ansicht')h=ansichtSeite();
@@ -341,13 +343,9 @@ function ui(){let h='';PZ=0;
   `<div class="grid">${Object.keys(COATS).map(c=>{const hat=H.coats.includes(c),zu=gesperrt(k,'coat',hat);return`<button class="pick ${H.coat==c?'on':''}${zu?' gesperrt':''}" onclick="wish('coat','${c}')"${zu?' disabled':''}><svg viewBox="${PFVB}">${pfBild({...pfSpec(H,st),coat:c,bl:0,so:0})}</svg>${COATS[c][0]}<br>${H.coat==c?'gewählt':hat?'freigeschaltet':zu?'gesperrt':'25 '+AP}</button>`}).join('')}</div>`}
  // Animationen (seit 2026-10-19): neue Aufgabe gleitet herein, Balken füllt sich nach jeder Antwort, bei richtig funkelt es und ein Apfel fliegt
  // in den Apfelzähler, bei falsch wackelt die Meldung. Jede Animation läuft nur einmal (Q.az/Q.af merken, was schon gezeigt wurde, z. B. nicht erneut beim Tipp).
- if(v=='quiz'){let k=kid(),s=ts(k,Q.key),t=THEMA[Q.key],q=Q.q,[ft,fe]=frageTeile(q[0]),neuQ=!Q.fb&&Q.az!==Q.i,neuF=!!Q.fb&&Q.af!==Q.i,bw=(Q.i+(Q.fb?1:0))*10,ba=Q.bw==null?bw:Q.bw,fliegt=neuF&&Q.fb.ok&&!RM;
- if(Q.fb)Q.af=Q.i;else Q.az=Q.i;Q.bw=bw;ANI={apfel:fliegt};
- h=`<div class="row sp qkopf"><button class="alt" onclick="if(ausZeit(kid()))bye();else{v='kid';ui()}">Beenden</button><span class="qthema">${t[1]} ${dots(s.d)}</span><span class="ap" id="apz">${(k.ap||0)-(fliegt?Q.fb.a:0)} ${AP}</span></div><div class="bar" style="margin:12px 0"><b style="width:${ba}%" data-w="${bw}"></b></div><p class="small">Aufgabe ${Q.i+1} von 10${Q.rp?' · <b>Nochmal versuchen:</b> Die kennst du schon aus dem Fehlerheft':''}</p><div class="${neuQ?'rein':''}">${zeichnung(q[4])}<div class="q">${esc(ft)}</div></div>`+
- (Q.hint&&q[2]?`<p class="small">Tipp: ${esc(de(q[2]))}</p>`:'')+
- (Q.fb?`${Q.fb.ok&&k.h?`<div style="max-width:300px">${scene(k,Q.fb.an)}</div>`:''}<p class="${Q.fb.ok?'ok':'no'}${neuF?(Q.fb.ok?' funkeln':' wackel'):''}">${neuF&&Q.fb.ok&&!RM?STERNE:''}<b>${Q.fb.ok?'Richtig! +'+Q.fb.g+' Erfahrung, +'+Q.fb.a+(Q.fb.a==1?' Apfel':' Äpfel'):'Leider falsch. Richtig ist '+mitEinheit(q[1],fe)+'.'}</b>${Q.fb.m?' '+Q.fb.m:''}</p>${!Q.fb.ok&&q[3]?`<div class="card${neuF?' rein2':''}" style="white-space:pre-line;font-size:16px"><b>So geht’s:</b>\n${esc(de(q[3]))}</div>`:''}${Q.fb.ok&&q[3]?(warumOffen()?`<div class="card warum" style="white-space:pre-line;font-size:16px"><b>Darum ist es richtig:</b>\n${esc(de(q[3]))}</div>`:`<button class="tipp" onclick="Q.warum=1;ui()">Warum ist das richtig?</button>`):''}<button class="go" onclick="nx()">${Q.i==9?'Fertig':'Weiter'} (Enter)</button>`:
- // Eingabe (seit 2026-10-19): Feld mit Einheit und "Prüfen" in einer Zeile, der Tipp als unauffälliger Link darunter
- `<div class="antwort${neuQ?' rein2':''}"><span class="antw"><input id="ans" autocomplete="off" aria-label="Antwort${fe?' in '+esc(fe):''}" onkeydown="if(event.key=='Enter')chk()">${fe?`<span class="einheit">${esc(fe)}</span>`:''}</span><button class="go pruefen" onclick="chk()">Prüfen</button></div>${q[2]&&!Q.hint?'<button class="tipp" onclick="tip()">Tipp anzeigen (halbe Punkte)</button>':''}`)}
+ // Seit 2026-10-26 je Ansicht eigene Aufgabenseite (Schiefertafel, Klare Karte, Parcours mit Zahlenblock): aufgabeSeite() in menue.js.
+ // Fortschritt als Hufeisen, Striche bzw. Hindernisse statt des Balkens; Animationen (Hereingleiten, Funkeln, Apfelflug, Wackeln) wie bisher.
+ if(v=='quiz')h=aufgabeSeite();
  // Rundenende: Konfetti und Hufeisen bei 10 von 10, neue Abzeichen und Wachstum ploppen auf (nur beim ersten Anzeigen)
  if(v=='done'){let k=kid(),fw=!k.h&&k.r>=FOHLEN,neuE=!Q.ende;Q.ende=1;ANI={konfetti:neuE&&Q.right==10};h=`<h1>Geschafft!</h1><div class="card">${k.h?scene(k):`<div style="text-align:center">${figurMini(k.f,120)}</div>`}`+
  (k.h?'':fw?`<p class="ok"><b>Super, ${FOHLEN} Aufgaben richtig! Jetzt darfst du dir dein Fohlen aussuchen.</b></p>`:`<p class="small">Noch ${FOHLEN-k.r} richtige Aufgabe${FOHLEN-k.r>1?'n':''} bis zu deinem Fohlen.</p>`)+`<p><b>${Q.right} von 10</b> richtig, <b>+${Q.gain} Erfahrung</b> und <b class="ap">+${Q.ap} ${AP}</b>${Q.hu?` und <b class="ap">+1 Hufeisen ${HU}</b>`:''}${Q.huvoll?` <span class="small">(Dein Hufeisen-Vorrat ist voll: ${huMax(k)})</span>`:''}.</p>${Q.grow?`<p class="ok${neuE?' pop':''}"><b>${esc(k.h.name)} ist jetzt ein ${Q.grow}!</b></p>`:''}${Q.tg?`<p class="small">${Q.tg}</p>`:''}${Q.frei?`<p class="ok"><b>Super! Der Hof ist wieder offen.</b></p>`:''}${Q.zu?`<p class="no">Für den Hof brauchst du mindestens ${FREI} von 10 richtig. Versuch es gleich noch einmal! Du kannst jedes Thema nehmen.</p>`:''}${knobelZu(k,Q.key)?`<p class="no">${KNHINWEIS}</p>`:''}${Q.knzu?`<p class="no">Für das Knobeln brauchst du eine Runde Schulstoff mit mindestens ${FREI} von 10. Versuch es gleich noch einmal!</p>`:''}${Q.knfrei?`<p class="ok"><b>Super! Knobeln ist wieder frei.</b></p>`:''}${Q.mast?`<p class="ok"><b>${Q.mast} Aufgabe${Q.mast>1?'n':''} aus dem Fehlerheft gemeistert!</b></p>`:''}${Q.newb.map((b,i)=>`<span class="badge${neuE?' pop':''}" style="animation-delay:${.3+i*.2}s">Neues Abzeichen: ${b}</span>`).join('')}</div>`+
@@ -360,7 +358,7 @@ function ui(){let h='';PZ=0;
  if(v=='bye'){let k=kid(),rf=reinFrage(k);h=`<h1>Bis morgen, ${esc(k.name)}!</h1><div class="card">${k.h&&!byeHof()?scene(k):''}<p>Für heute sind deine ${limM(k)} Minuten auf dem Hof um.${k.h?` ${esc(k.h.name)} freut sich, wenn du morgen wiederkommst.`:''}</p>${k.h&&stg(k)<3&&heute(k)?'<p class="small">Heute hast du gerechnet, der Tag zählt fürs Wachstum.</p>':''}</div>${rf}<button class="${rf.includes('reinfrage')?'alt':'go'}" onclick="v='home';ui()">${rf.includes('reinfrage')?'Nein, tschüss':'Tschüss'}</button>`}
  // Erklärseite für Eltern (seit 2026-10-24, Brain Dump): offen für alle, ohne Hof im Hintergrund, Zahlen kommen aus den Konstanten
  if(v=='info'){const li=a=>`<ul class="info">${a.map(x=>`<li>${x}</li>`).join('')}</ul>`,zur=`<button class="alt" onclick="infoZu()">Zurück</button>`;
-  h=zur+`<h1>Pferdehof Mathe für Eltern</h1><p>Kurz erklärt: was die App macht, was du als Elternteil einstellen kannst und was mit den Daten passiert.</p>`+
+  h=zur+`<h1>${APPNAME} für Eltern</h1><p>Kurz erklärt: was die App macht, was du als Elternteil einstellen kannst und was mit den Daten passiert.</p>`+
   `<div class="card"><b>Worum es geht</b>`+li([`Mathe üben für die Klassen 4 bis 8 (Klasse 4 Grundschule, ab Klasse 5 Gymnasium). Jedes Kind hat ein eigenes Pferd, das vom Fohlen zum Pferd heranwächst, und einen eigenen Hof.`,
    `Für richtige Antworten gibt es Äpfel. Damit kauft das Kind Dinge für Pferd und Hof. Äpfel gibt es nur fürs Rechnen, nie für Geld.`,
    `Das Pferd wächst mit den Tagen, an denen gerechnet wurde (ein Tag zählt einmal), nicht mit der Spielzeit.`])+`</div>`+
@@ -397,8 +395,8 @@ function ui(){let h='';PZ=0;
  <div class="card"><b>PIN-Schutz</b>${S.pin?`<p class="small">Diese Ansicht ist mit einer PIN geschützt. Ohne PIN heißt sie „Einstellungen“ und ist für alle offen, zum Beispiel auf dem eigenen Handy eines Kindes.</p><button class="alt" onclick="npin()">PIN entfernen</button>`:`<p class="small">Ohne PIN kann jeder hier die Klasse ändern, Fortschritt zurücksetzen und Kinder löschen. Mit einer PIN (mindestens 4 Zeichen) wird daraus die geschützte Eltern-Ansicht.</p><input id="pin1" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp('pin1')"> <button onclick="sp('pin1')">PIN festlegen</button>`}<p class="no">${pw}</p></div>`+(S.pin?`<button class="alt" onclick="lock()">Sperren</button> `:'')+`<button class="alt" onclick="infoAuf()">So funktioniert die App</button>`}}
  // Ansicht C: Leiste unten (vor der Fußzeile, damit der Vermerk das letzte Element bleibt)
  const ml=leisteZeigen();if(ml)h+=leisteHtml();document.body.classList.toggle('mitleiste',ml);
- // Ansicht A "Pferdehof": Holz-Optik auf Startseite, Kind-Ansicht (mit Themen) und Rundenende
- document.body.classList.toggle('holz',!mAn()&&(v=='home'||v=='kid'||v=='done'));
+ // Ansicht A "Pferdehof": Holz-Optik auf Startseite, Kind-Ansicht (mit Themen), Aufgabenseite (Schiefertafel, seit 2026-10-26) und Rundenende
+ document.body.classList.toggle('holz',!mAn()&&(v=='home'||v=='kid'||v=='quiz'||v=='done'));
  $('#app').innerHTML='<div class="in">'+h+`<p class="small copyright">${COPY}</p>`+'</div>';if(v!='kid'&&v!='wish'&&v!='rassen')countdown(0);hofSync();d3Sync();trSync();nachZeichnen();itBilder();kopfAusschnitt();setTimeout(()=>{let a=$('#ans')||$('#pin')||$('#hn')||$('#pin0');a&&(v!='home'||a.id=='pin0')&&a.focus({preventScroll:a.id=='hn'})})}
 // ---------- Besuch per Code (seit 2026-10-20, siehe Notiz "Ideen Besuch per Code") ----------
 // Ein Kind lädt eine Freundin ein: Link mit QR-Code (qr.js). Hinter "#b=" stehen nur Vorname, Pferdename und das Aussehen von Pferd
@@ -441,7 +439,7 @@ const besuchKarte=k=>{const bs=besuche(k);return bs.length?`<div class="card sma
 // Link kopieren bzw. teilen (ohne Netzwerk, nur Zwischenablage bzw. Teilen-Menü des Geräts)
 function linkKopieren(){const el=$('#blink');if(!el)return;const ok=()=>{note='Link kopiert. Du kannst ihn jetzt in einer Nachricht einfügen.';ui()};
  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(el.value).then(ok).catch(()=>{el.select();try{document.execCommand('copy');ok()}catch(e){}});else{el.select();try{document.execCommand('copy');ok()}catch(e){}}}
-function linkTeilen(){const k=kid();if(navigator.share)navigator.share({title:'Pferdehof Mathe',text:`${k.name} besucht dich mit ${k.h.name}!`,url:besuchLink(k)}).catch(()=>{})}
+function linkTeilen(){const k=kid();if(navigator.share)navigator.share({title:APPNAME,text:`${k.name} besucht dich mit ${k.h.name}!`,url:besuchLink(k)}).catch(()=>{})}
 addEventListener('hashchange',()=>{if(besuchAusLink()){v='besuch';note='';ui();scrollTo(0,0)}});
 // ---------- Animationen nach dem Seitenaufbau (seit 2026-10-19) ----------
 // ANI wird in ui() je Ansicht gesetzt: apfel = Apfel fliegt in den Zähler, konfetti = Konfetti und Hufeisen (10 von 10)
@@ -496,7 +494,7 @@ function npin(){if(!confirm('PIN entfernen? Danach kann jeder diese Einstellunge
 // Ist schon eine PIN gesetzt, braucht auch der Kind-Modus die PIN (sie wird dabei entfernt), damit ein Kind die Sperre nicht umgeht.
 // EIN = aktueller Schritt: '' Auswahl, 'e' PIN, 'k' Kind, 'kinder' Kinder anlegen (nach dem Eltern-Schritt).
 let EIN='',EINPIN=false;// EINPIN: Kind-Modus auf Gerät mit PIN, PIN wurde richtig eingegeben (entfernt wird sie erst am Ende)
-const VORTEILE=`<div class="card small vorteile"><b>Pferdehof Mathe für Eltern</b><ul style="margin:6px 0 0;padding-left:20px"><li>Keine Werbung, keine Käufe durch Kinder</li><li>Kein Konto, keine Anmeldung: Alle Daten bleiben auf diesem Gerät</li><li>Zeitlimit für jedes Kind, Standard ${LIMIN} Minuten am Tag</li><li>Eltern-Ansicht mit PIN: Statistik, Klasse, Zeitlimit, Sicherung</li><li>Aufgaben für Klasse 4 bis 8 mit Tipps und Lösungswegen</li></ul><button class="alt" style="margin-top:8px" onclick="infoAuf()">Alles für Eltern ansehen</button></div>`;
+const VORTEILE=`<div class="card small vorteile"><b>${APPNAME} für Eltern</b><ul style="margin:6px 0 0;padding-left:20px"><li>Keine Werbung, keine Käufe durch Kinder</li><li>Kein Konto, keine Anmeldung: Alle Daten bleiben auf diesem Gerät</li><li>Zeitlimit für jedes Kind, Standard ${LIMIN} Minuten am Tag</li><li>Eltern-Ansicht mit PIN: Statistik, Klasse, Zeitlimit, Sicherung</li><li>Aufgaben für Klasse 4 bis 8 mit Tipps und Lösungswegen</li></ul><button class="alt" style="margin-top:8px" onclick="infoAuf()">Alles für Eltern ansehen</button></div>`;
 // Erklärseite für Eltern öffnen und wieder zurück (seit 2026-10-24). Gemerkt werden Ansicht und Schritt der Startabfrage
 // (nur Auswahl, Elternteil oder Kind, nie "Kinder anlegen": Der Schritt gilt nur direkt nach der PIN).
 let INFOZ=null;
@@ -504,7 +502,7 @@ function infoAuf(){INFOZ={v,EIN:['','e','k'].includes(EIN)?EIN:''};v='info';ui()
 function infoZu(){const z=INFOZ||{v:'home',EIN:''};INFOZ=null;v=z.v=='info'?'home':z.v;ui();if(v=='home'&&z.EIN){EIN=z.EIN;ui()}scrollTo(0,0)}
 const klassenWahl=()=>`<select id="gr" aria-label="Klasse">${KL.map(c=>`<option value="${c}"${c==5?' selected':''}>Klasse ${c}</option>`).join('')}</select>`;
 function startAbfrage(){
- const kopf='<h1>Pferdehof Mathe</h1>',zur=`<button class="alt" onclick="EIN='';EINPIN=false;warn='';ui()">Zurück</button>`,
+ const kopf=`<h1>${APPNAME}</h1><p class="spruch">${SPRUCH}</p>`,zur=`<button class="alt" onclick="EIN='';EINPIN=false;warn='';ui()">Zurück</button>`,
   pinFeld=(fn,txt)=>`<input id="pin0" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')${fn}()"> <button onclick="${fn}()">${txt}</button>${PINMSG?`<p class="ok">${PINMSG}</p>`:''}<p class="no">${warn}</p>`;
  if(EIN=='kinder')return kopf+`<div class="card"><b>Kinder anlegen</b><p class="small">Jedes Kind bekommt einen eigenen Hof. Name, Klasse und Zeit pro Tag lassen sich später in der Eltern-Ansicht ändern.</p>`+
   S.kids.map(k=>`<div class="row sp" style="align-items:center"><span>${esc(k.name)} <span class="small">Klasse ${k.g}</span></span><select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></div>`).join('')+
@@ -726,6 +724,8 @@ function eingabe(v){const t=String(v).trim().replace(/(\d)\s+(?=\d{3}(?!\d))/g,'
 const warumOffen=()=>!!(Q&&(Q.warum||Q.key==='logik'));
 function chk(){let k=kid(),s=ts(k,Q.key),w=eingabe($('#ans').value);if(!w.length)return $('#ans').focus();
  let ok=w.some(x=>Math.abs(x-Q.q[1])<1e-9),g=0,a=0,m='';k.total++;s.n++;
+ // Für die Aufgabenseiten (menue.js): richtig/falsch je Aufgabe (Hufeisen, Striche, Hindernisse) und die Eingabe zum Anzeigen
+ (Q.erg||(Q.erg=[]))[Q.i]=ok;Q.ein=String($('#ans').value).trim().slice(0,20);
  if(ok){s.r++;k.r++;k.s++;k.best=Math.max(k.best,k.s);Q.right++;g=Math.round((8+3*s.d)*(Q.hint?.5:1))+(k.s>=5?5:0);a=1+(s.d>=4?1:0);if(frueherThema(k,Q.key))a=Math.ceil(a/2);k.xp+=g;k.ap=(k.ap||0)+a;Q.gain+=g;Q.ap+=a;s.run=s.run>0?s.run+1:1;
   glMerken(k,Q.key,s.d,Q.q);
   if(s.run>=3&&s.d<5){s.d++;s.run=0;m='Stufe '+s.d+' erreicht!'}}
@@ -791,7 +791,7 @@ const limOptionen=k=>[0,...Array.from({length:LIMMAX/5},(_,i)=>(i+1)*5)].map(m=>
 function lim(id,m){let k=S.kids.find(x=>x.id==id);m=+m;if(!k||!Number.isInteger(m)||m<0||m>LIMMAX||m%5)return;k.lm=m;save();ui()}
 function rst(id){if(!confirm('Fortschritt wirklich zurücksetzen? Das Pferd beginnt wieder als Fohlen.'))return;let k=S.kids.find(x=>x.id==id);delete k.ld;delete k.hl;delete k.hu;delete k.mt;Object.assign(k,{kn:0,xp:0,st:0,sd:0,hz:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},mist:[]});delete k.gl;if(k.h){k.h.coats=[k.h.coat];k.h.own={};k.h.bl=0;k.h.so=0;k.h.tr={};k.h.tl={};delete k.h.tz;k.h.au={};delete k.h.hs;delete k.h.ge;k.h.it={};k.h.lp=[];k.h.ko={n:1,u:[0,0,0],z:{}}}delete k.h2;save();ui()}
 function del(id){if(!confirm('Kind samt Fortschritt löschen?'))return;S.kids=S.kids.filter(x=>x.id!=id);save();ui()}
-function exp(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='pferdehof-sicherung.json';a.click()}
+function exp(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='rechenhof-sicherung.json';a.click()}
 function imp(el){let f=el.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=clean(JSON.parse(r.result));if(!d)throw 0;if(!confirm('Aktuellen Stand durch die Sicherung ersetzen? Der PIN-Schutz wird aus der Sicherung übernommen.'))return;if(!d.pin)d.np=1;if(!d.mo)d.mo=d.pin?'e':'k';S=d;save();ui()}catch(e){warn='Datei konnte nicht gelesen werden.';ui()}};r.readAsText(f)}
 document.addEventListener('keydown',e=>{if(e.key=='Enter'&&!e.repeat&&v=='quiz'&&Q&&Q.fb&&Date.now()-Q.ts>250&&document.activeElement.tagName!='BUTTON'){e.preventDefault();nx()}});
 // Wiehern: wird beim Klick live per Web Audio erzeugt (keine Audiodatei, kein Netzwerk)

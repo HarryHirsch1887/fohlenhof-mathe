@@ -1,4 +1,4 @@
-// Pferdehof Mathe: animierte Weide als Hintergrund, persönlicher Hof und Rundflug.
+// Rechenhof: animierte Weide als Hintergrund, persönlicher Hof und Rundflug.
 // Greift auf Funktionen und Daten aus app.js erst zur Laufzeit zu (horse, kid, hh, neigh, S, v ...),
 // deshalb darf diese Datei vor app.js geladen werden.
 
@@ -6,7 +6,8 @@
 const PFS=.5;
 // Eigene Figur auf dem Hof: weiter vorn auf der Wiese (Füße bei GY+y) und etwas größer, damit sie nicht an Trog und Gebäude klebt
 // (seit 2026-10-20). geb = Lage (Anteil der Koppel) mit Unterstand oder Stall, frei = ohne Gebäude
-const FIGX={geb:.405,frei:.47,y:36,s:.44,besuch:[.535,.59,.355]};// besuch: Plätze der Besuchsfiguren
+// s: Größe der Figur auf dem Hof, seit 2026-10-26 .34 wie in Pflege-Szene und Flugmodus (vorher .44, die Figur schrumpfte beim Putzen und wuchs danach wieder; Brain Dump: kleiner wirkt realistischer)
+const FIGX={geb:.405,frei:.47,y:36,s:.34,besuch:[.535,.59,.355]};// besuch: Plätze der Besuchsfiguren
 const WH=200,GY=124,sr=n=>{let x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x)};
 // Gegenstände für den Hof: [id, Name, Preis in Äpfeln, Lage auf der Weide (Anteil der Weltbreite)]
 // Drei Blumenwiesen (seit 2026-10-19): bunt (Mitte), Mohn (links neben dem Teich), Lavendel (rechts hinter der Eiche)
@@ -375,8 +376,7 @@ function hofBuild(kind){
   [[.12,.06],[.52,.13],[.9,.05]].map(([a,b],i)=>busch(a*WW,GY+1,6+b*40,i%2?P.bu:'#4f8a4a')).join('')+
   // Figuren der anderen Kinder (auf dem Startbild: aller Kinder) stehen hinter dem Zaun und schauen den Pferden zu
   figs.zaun.map((x,i)=>`<g class="fig" data-k="${x.id}" transform="translate(${r1(OX+(H0&&H0.ko.u[0]?[.545,.565,.355,.375,.585][i]:.43+i*.022)*WK)} ${GY-3}) scale(.3)">${figurBild(x.f)}</g>`).join('')+
-  // Gras hinter dem Zaun (seit 2026-10-21): wird vor dem Zaun gezeichnet, damit die Latten davor liegen
-  grasStreifen(WW,Math.round(WW/9),GY-5,GY+3,2.4,4,350,gras,frei)+
+  // Hinter dem Zaun kein Gras mehr (seit 2026-10-26, Brain Dump: die Halme standen vor den Büschen), Gras nur noch vor dem Zaun und ganz vorn
   `<g fill="#a9805a">${[GY-6,GY].map(y=>`<rect x="0" y="${y-1}" width="${WW}" height="2.2" rx=".8"/><rect x="0" y="${y+1.2}" width="${WW}" height=".8" fill="#7d5c3c" opacity=".5"/>`).join('')}</g>`+
   [...Array(Math.ceil(WW/28)+1)].map((_,i)=>`<rect x="${i*28}" y="${GY-12}" width="3.2" height="18" rx=".8" fill="#9b7449"/><rect x="${i*28}" y="${GY-12}" width="1.1" height="18" rx=".5" fill="#b78c5e"/>`).join('')+
   ITEMS.filter(i=>items.includes(i[0])&&DR[i[0]]).map(i=>{const z=DR[i[0]](Math.round(OX+i[3]*WK)),u=UMRISS[i[0]]?umrGruppe(i[0],z,UMR[i[0]]):z;

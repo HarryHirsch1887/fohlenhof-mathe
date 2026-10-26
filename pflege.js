@@ -1,5 +1,6 @@
-// Pferdehof Mathe: Gesundheit und Pflege (seit 2026-10-25, Plan in der Notiz "Ideen Reiten und Pferdepflege", Etappe 5)
+// Rechenhof: Gesundheit und Pflege (seit 2026-10-25, Plan in der Notiz "Ideen Reiten und Pferdepflege", Etappe 5)
 // Wird vor app.js geladen. Alles aus app.js, hof.js, pferd.js und figur.js wird erst zur Laufzeit benutzt.
+// Ausnahme seit 2026-10-26: GPFS liest beim Laden FIGX aus hof.js (hof.js muss deshalb vor pflege.js stehen, siehe index.html).
 //
 // Regeln:
 // - Pflege: mit Pflegekiste, Halfter und Führstrick (Wunschbaum, AUSR in app.js; Halfter seit 2026-10-25), höchstens PFLMAX-mal am Pflegetag. Der Pflegetag beginnt um 6 Uhr.
@@ -109,6 +110,8 @@ const WZ={
  stetho:'<g><path d="M0 0q-3 -6 -8 -8" fill="none" stroke="#5a6470" stroke-width="1.2"/><circle cx="0" cy="2.2" r="2.8" fill="#c9ced3" stroke="#2b1d12" stroke-width=".7"/></g>',
  lampe:'<g transform="rotate(-60)"><rect x="-1.3" y="-8" width="2.6" height="8" rx=".8" fill="#5a6470" stroke="#2b1d12" stroke-width=".5"/><circle cy="-8.6" r="1.6" fill="#fff6b0" stroke="#2b1d12" stroke-width=".5"/></g>',
  hammer:'<g transform="rotate(-30)"><rect x="-1" y="-12" width="2" height="13" fill="#8b5a2b" stroke="#2b1d12" stroke-width=".5"/><rect x="-4.6" y="-15" width="9.2" height="4" rx=".8" fill="#5a5f66" stroke="#2b1d12" stroke-width=".5"/></g>',
+ // Zusammengelegte Pferdedecke (seit 2026-10-26)
+ decke:'<g transform="rotate(-8)"><rect x="-8" y="-2" width="16" height="9" rx="2" fill="#b0412f" stroke="#2b1d12" stroke-width=".7"/><path d="M-7.6 4.6H7.6" stroke="#e2b24a" stroke-width="1.3"/><path d="M-7.6 1H7.6" stroke="#7a2a1e" stroke-width=".5" opacity=".7"/></g>',
  raspel:'<g transform="rotate(-10)"><rect x="-1.4" y="0" width="2.8" height="5" fill="#8b5a2b"/><rect x="-1.9" y="-12" width="3.8" height="12" rx=".6" fill="#7b8087" stroke="#2b1d12" stroke-width=".5"/><path d="M-1.6 -10h3.2M-1.6 -8h3.2M-1.6 -6h3.2M-1.6 -4h3.2M-1.6 -2h3.2" stroke="#4b4f55" stroke-width=".4"/></g>'};
 // Erwachsene Person, Ansicht von vorn (wie figur.js): Tierarzt (weißer Kittel, Stethoskop, Brille, Arzttasche) oder Hufschmied
 // (Hemd, Lederschürze, Schirmmütze, Bart). Füße auf y = 0, Kopf oben bei etwa y = -126. Der rechte Arm (.parm) dreht sich um die Schulter (12.8, -90).
@@ -148,8 +151,9 @@ function kling(f=2400,dauer=.3,laut=.2){if(S.snd===0)return;try{AC=AC||new(windo
 const gpL=(p,a,b)=>a+(b-a)*Math.max(0,Math.min(1,p)),gpSm=p=>p*p*(3-2*p);
 const gpS=(h,d)=>(.30+.20*d)*GS[h.st].s*PFS,gpY=d=>138+d*54;
 const BEIN={vn:50,vf:42,hn:-58,hf:-66};
-// GPFS: Größe von Figur, Tierarzt und Schmied während der Szene (die Figur schrumpft weich von FIGX.s darauf und wächst am Ende zurück)
-const GPFS=.34;
+// GPFS: Größe von Figur, Tierarzt und Schmied während der Szene. Seit 2026-10-26 gleich der Figurengröße auf dem Hof (FIGX.s in hof.js),
+// die Figur schrumpft und wächst also nicht mehr (fs/fsZ bleiben für den Fall, dass sich beides wieder unterscheiden soll)
+const GPFS=FIGX.s;
 // Hand der Figur (rechte Hand, Arm um a Grad gedreht) in Weltkoordinaten
 function gpHand(x,y,a,s=FIGX.s){const r=a*Math.PI/180,dx=3.6,dy=23.4;return[x+(11.6+dx*Math.cos(r)-dy*Math.sin(r))*s,y+(-75+dx*Math.sin(r)+dy*Math.cos(r))*s]}
 const gpBeinX=(F,b)=>F.HX+BEIN[b]*F.bx*F.hs;
@@ -163,7 +167,9 @@ function gpStart(k,art){const H=hh(k),u=unterkunft(H),st=stg(k);GPNOTE='';GPOK=1
  if(RM||v!='kid'||HF.kind!='kid'||!h||!h.g_||!HF.hw||!HF.figP){GPNOTE=gpFertigText(art,H,st,k);if(typeof hofSync=='function')hofSync(true);ui();return}
  const xs=Math.round(HF.OX+.477*HF.WK),AX=gpAX(H),hd=.55,hs=gpS(h,hd),gyT=gpY(hd),[fx,fy]=HF.figP;
  const F={art,L:[],i:0,t:0,T:0,xs,AX,AY:GPAY,hd,hs,gyT,HX:AX-112*hs,fx,fy,u,st,name:H.name,anb:!!(H.au&&H.au.pflege),hatStrick:!!(H.au&&H.au.strick&&H.au.halfter),hatHalfter:!!(H.au&&H.au.halfter),halfter:0,beug:0,flug:art=='pflege'&&HF.mode=='fly',bx:[.76,.87,.95,1][h.st]||1,
-  fig:[fx,fy],fs:FIGX.s,fsZ:GPFS,arm:0,wz:'',vorn:0,geht:0,hx:h.x,hdd:h.d,hdir:h.dir,pl:0,pg:'walk',pgr:0,pop:1,huf:null,strick:'',kiste:0,dreck:1,P:{},tl:[],camX:art=='arzt'&&u?xs+20:AX-20,horse:h};
+  fig:[fx,fy],fs:FIGX.s,fsZ:GPFS,arm:0,wz:'',vorn:0,geht:0,hx:h.x,hdd:h.d,hdir:h.dir,pl:0,pg:'walk',pgr:0,pop:1,huf:null,strick:'',kiste:0,dreck:1,P:{},tl:[],camX:art=='arzt'&&u?xs+20:AX-20,horse:h,
+  // Pferdedecke (seit 2026-10-26): Trägt das Pferd beim Putzen seine Decke, wird sie abgenommen und am Ende wieder aufgelegt (gpDeckeAb/gpDeckeAuf)
+  dkEl:art=='pflege'?h.g_.querySelector('.pdecke'):null};
  // Steht das Pferd drinnen: beim Tierarzt (mit Gebäude) bleibt es drin, sonst kommt es heraus
  if(h.drin){if(art=='arzt'&&u){F.drin=1;F.eigen=1;F.indoor=HF.hw.querySelector('#hdrin')}
   else{F.ausStall=1;h.drin=0;HF.hw.insertBefore(h.g_,HF.vorne);const w=HF.hw.querySelector('#hdrin');if(w)w.remove();F.hx=xs;F.hdd=0;F.hdir=1;F.pop=0;HF.ord=[]}}
@@ -226,7 +232,7 @@ function gpLoslassen(F,gang){
  gpGeh(F,1.6,[F.fx,F.fy],null,{a:F=>{F.vorn=0;F.arm=0;F.fsZ=FIGX.s}})}
 // Pflege: Bürste links und rechts, Mähne und Schweif, vier Hufe auskratzen (nahe Seite vorn und hinten, dann ferne Seite hinten und vorn)
 function gpPflegeSzene(F){const X=s=>F.HX+s*F.hs,KX=F.KX-8,KY=F.KY-2;
- gpHolen(F);gpZumAnbinder(F);
+ gpHolen(F);gpZumAnbinder(F);if(F.dkEl)gpDeckeAb(F);
  gpGeh(F,.7,[KX,KY],null,{f:(p,F)=>{F.kiste=gpSm(Math.max(0,p*2-1))}});
  gpPause(F,.4,(p,F)=>{F.arm=-40*Math.sin(Math.PI*p)},F=>{F.wz='buerste'});
  gpGeh(F,.6,[X(35),F.gyT+5]);
@@ -253,12 +259,43 @@ function gpPflegeSzene(F){const X=s=>F.HX+s*F.hs,KX=F.KX-8,KY=F.KY-2;
  gpGeh(F,.6,[X(-128),F.gyT+1],null,{a:F=>{F.huf=null;F.arm=0}});
  gpGeh(F,.8,[KX,KY],null,{a:F=>{F.vorn=1}});
  gpPause(F,.5,(p,F)=>{F.kiste=1-p},F=>{F.wz=''});
+ if(F.dkEl)gpDeckeAuf(F);
  gpLoslassen(F,'gallop');
  // Bei zwei Pferden wird das zweite anschließend mitgeputzt: Kamera hin, Schmutz verschwindet mit Glitzer, Herzen und Wiehern
  // (nur wenn es Schmutzflecken hat; erst schwenken, dann putzen)
  if(F.zw&&F.dr2.length){F.L.push({d:2.5,a:F=>{F.camX=F.flugX=F.zw.x},f:(p,F)=>{F.camX=F.flugX=F.zw.x},bis:F=>{const m=Math.min(60,HF.W*.2);return F.t>=.8&&F.zw.x>HF.cam+m&&F.zw.x<HF.cam+HF.W-m}});// warten, bis es im Bild ist
   gpPause(F,1.6,(p,F)=>{F.camX=F.flugX=F.zw.x;F.dr2.forEach(e=>e.style.opacity=Math.max(0,1-p).toFixed(2));const z=F.zw;if(z.sc&&Math.random()<.25){const s=z.sc*PFS;gpPartikel(F,'funkel',z.x+(Math.random()-.5)*120*s,z.gy-(90+Math.random()*80)*s)}
    if(p>.55&&!F.zwH&&z.sc){F.zwH=1;herzen([z]);if(S.snd!==0)neigh(z.st)}})}}
+// Pferdedecke beim Putzen (seit 2026-10-26, Brain Dump): Nach dem Anbinden zieht die Figur die Decke vom Rücken und hängt sie über die
+// Stange des Anbinders, mit Unterstand oder Stall über die untere Stalltür. Nach dem Putzen holt sie die Decke und legt sie wieder auf,
+// bevor das Pferd losgebunden wird. Die Decke am Pferd ist die Gruppe .pdecke aus pferd.js (wird nur versteckt, gpEnde zeigt sie sicher wieder).
+// Ort zum Aufhängen: [x, y der Oberkante, Breite]; Stand der Figur links daneben (die rechte Hand greift nach rechts, Arm −90°).
+// Ohne Gebäude: rechte Hälfte der Stange (der Ring bei AX bleibt frei). Mit Gebäude: untere Stalltür, die Figur steht dann hinter
+// dem angebundenen Pferd (hintere Ebene) und geht wie beim Bürsten hinten um das Pferd herum (Nachbesserung nach der Code-Prüfung).
+function gpDeckeOrt(F){if(F.u){const o=DRIN[F.u].o,x=F.xs+o[0]+o[2]/2;return{h:[x,GY+12+o[1]+o[3],o[2]+2],f:[x-12,GY+22]}}return{h:[F.AX+9,F.AY-13.6,15],f:[F.AX-3,F.gyT+6]}}
+// Hängende Decke: ohne Gebäude direkt hinter dem Anbinder (Besuchsfiguren bleiben davor), mit Gebäude ganz unten in der hinteren Ebene (Figur davor)
+function gpDeckeHaengen(F,an){if(F.dkHang){F.dkHang.remove();F.dkHang=null}if(!an)return;const [x,y,w]=gpDeckeOrt(F).h,h=r1(w*.42),a=w/2;
+ const svg=`<g class="deckehaengt" transform="translate(${r1(x)} ${r1(y)})"><path d="M${r1(-a)} 0Q0 -1.6 ${r1(a)} 0L${r1(a-.6)} ${h}Q0 ${r1(h+1.6)} ${r1(-a+.6)} ${h}Z" fill="${DECKE}" stroke="#7a2a1e" stroke-width=".5"/>`+
+  `<path d="M${r1(-a+.6)} ${r1(h-2)}Q0 ${r1(h-.4)} ${r1(a-.6)} ${r1(h-2)}" fill="none" stroke="#e2b24a" stroke-width="1"/></g>`;
+ const anb=!F.u&&HF.hw&&HF.hw.querySelector('.anbinder');
+ if(anb){anb.insertAdjacentHTML('afterend',svg);F.dkHang=anb.nextElementSibling}else{F.eh.insertAdjacentHTML('afterbegin',svg);F.dkHang=F.eh.firstElementChild}}
+// Weg zur Stalltür und zurück: hinten um das Pferd (wie beim Bürsten), dabei in die hintere bzw. vordere Ebene wechseln
+const gpZurTuer=(F,X,O)=>{gpGeh(F,.8,[X(-128),F.gyT+1],null,{a:F=>{F.arm=0}});gpGeh(F,1,O.f,null,{a:F=>{F.vorn=0}})};
+const gpVonTuer=(F,X)=>{gpGeh(F,1,[X(-128),F.gyT+1],null,{a:F=>{F.vorn=0;F.arm=0}});gpGeh(F,.6,[X(-10),F.gyT+5],null,{a:F=>{F.vorn=1}})};
+function gpDeckeAb(F){const X=s=>F.HX+s*F.hs,O=gpDeckeOrt(F);
+ gpGeh(F,.6,[X(-10),F.gyT+5],null,{a:F=>{F.vorn=1;F.arm=0}});
+ gpPause(F,1,(p,F)=>{F.arm=-150+30*p;F.fig=[X(-10)+12*gpSm(p),F.gyT+5];if(p>.45&&F.dkEl.style.display!=='none'){F.dkEl.style.display='none';F.wz='decke'}});
+ if(F.u)gpZurTuer(F,X,O);else gpGeh(F,1,O.f,null,{a:F=>{F.arm=0}});
+ gpPause(F,.7,(p,F)=>{F.arm=-90*Math.sin(Math.PI*p);if(p>.5&&!F.dkHang){gpDeckeHaengen(F,1);F.wz=''}});
+ if(F.u)gpVonTuer(F,X)}
+function gpDeckeAuf(F){const X=s=>F.HX+s*F.hs,O=gpDeckeOrt(F);
+ if(F.u)gpZurTuer(F,X,O);else gpGeh(F,1,O.f,null,{a:F=>{F.vorn=1;F.arm=0}});
+ gpPause(F,.6,(p,F)=>{F.arm=-90*Math.sin(Math.PI*p);if(p>.5&&F.dkHang){gpDeckeHaengen(F,0);F.wz='decke'}});
+ if(F.u)gpVonTuer(F,X);
+ gpGeh(F,.8,[X(2),F.gyT+5],null,{a:F=>{F.vorn=1;F.arm=0}});
+ gpPause(F,1,(p,F)=>{F.arm=-120-30*p;F.fig=[X(2)-12*gpSm(p),F.gyT+5];if(p>.55&&F.dkEl.style.display==='none'){F.dkEl.style.display='';F.wz=''}});
+ // zurück zum Anbinder, dort wird losgebunden
+ gpGeh(F,.8,[F.AX+4,F.gyT+6],null,{a:F=>{F.arm=0}})}
 // Hufschmied: kommt mit Amboss, je Huf altes Eisen ab, raspeln, neues Eisen glühend anpassen (dampft), dreimal hämmern, Glitzer.
 // Beim Jährling nur ausschneiden und raspeln. Danach scharrt das Pferd, der Schmied tippt an die Mütze und geht.
 function gpSchmiedSzene(F){const eisen=F.st>=2;
@@ -403,6 +440,7 @@ function gpSchritt(h,dt){const F=HF.fuehr;F.horse=h;if(dt>0){F.t+=dt;F.T+=dt}
  gpZeichnen(F,h,dt)}
 function gpEnde(F,h){HF.fuehr=null;
  F.tl.forEach(q=>q.el.remove());if(F.tuer)gpTuerArzt(F,0);if(F.eigen)gpHeraus(F);
+ if(F.dkEl)F.dkEl.style.display='';if(F.dkHang)F.dkHang.remove();// Decke sicher wieder am Pferd, keine hängende Decke übrig (auch wenn die Szene vorzeitig endet)
  if(F.temp)F.fe.remove();else{const vor=F.feNext&&F.feNext.parentNode===HF.hw?F.feNext:HF.hap;HF.hw.insertBefore(F.fe,vor);if(F.wa)F.wa.removeAttribute('transform');if(F.wzEl)F.wzEl.remove();fuehrFigur(F.fx,F.fy,0)}
  [F.eh,F.ev].forEach(e=>e&&e.remove());
  h.huf=null;halfterZeigen(h,0);h.g_.style.opacity='';h.x=F.hx;h.d=F.hdd;h.dir=F.hdir;h.ziel=null;
