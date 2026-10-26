@@ -6,6 +6,8 @@ const COATS={fuchs:['Fuchs','#b5612b','#6e3414'],braun:['Brauner','#7b4a2a','#1c
  falbe:['Falbe','#cfae7c','#4a3b31',0,'#3b2f28'],wind:['Windfarben','#2b2628','#ece2c8']};
 // Wachstumsstufen: x = Erfahrung ab, s = Größe in der Szene, rx/ry = Körper, h = Kopfgröße, l = sichtbare Beinlänge
 const GS=[{n:'Fohlen',x:0,s:.72,rx:33,ry:17,h:1.05,l:66,w:5.5,nk:.45},{n:'Jährling',x:250,s:.8,rx:42,ry:21,h:1.0,l:58,w:7.5,nk:.7},{n:'Jungpferd',x:700,s:.9,rx:50,ry:24,h:.97,l:51,w:9,nk:.88},{n:'Pferd',x:1500,s:1,rx:58,ry:28,h:.95,l:46,w:10,nk:1}];
+// Stufe als Beschriftung mit Zahl, z. B. "Jährling 2/4" (seit 2026-10-26, Brain Dump). In Sätzen ("wenn Roy ein Jährling ist") bleibt GS[st].n.
+const stufeN=st=>`${GS[st].n} ${st+1}/${GS.length}`;
 // Wachstum über Tage mit Mathe (seit 2026-10-16): Ein Tag zählt, wenn an ihm mindestens eine Runde fertig gerechnet wurde (höchstens einmal pro Tag).
 // Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten.
 // x (Erfahrung) wird nur noch für alte Spielstände gebraucht: Sie behalten ihre bisher erreichte Stufe. Erfahrung schaltet künftig Extras frei.
@@ -237,7 +239,7 @@ function ui(){let h='';PZ=0;
  else if(v=='home'){const zu=pinZu();// PIN-Sperre (seit 2026-10-24): Hinweis oben, Kinder-Knöpfe aus
  // Ansichten B und C (seit 2026-10-26, menue.js), sonst A "Pferdehof": Holzschilder (body.holz), jedes Kind an einer Boxentür mit Namensschild
  if(S.an=='b')h=homeB(zu);else if(S.an=='c')h=homeC(zu);else
- h=`<h1>Pferdehof Mathe</h1>${zu?pinZuKarte():''}<p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big hbox" onclick="sel(${k.id})"${zu?' disabled':''}><span class="htuer" aria-hidden="true">${kindBild(k)}</span><span class="hschild"><b>${esc(k.name)}</b><span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name)+' · '+GS[stg(k)].n:''}</span></span><span class="ap">${k.ap||0} ${AP}</span></button>`).join('')+
+ h=`<h1>Pferdehof Mathe</h1>${zu?pinZuKarte():''}<p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big hbox" onclick="sel(${k.id})"${zu?' disabled':''}><span class="htuer" aria-hidden="true">${kindBild(k)}</span><span class="hschild"><b>${esc(k.name)}</b><span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name)+' · '+stufeN(stg(k)):''}</span></span><span class="ap">${k.ap||0} ${AP}</span></button>`).join('')+
  nkKarte(zu)+`<p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button><button class="alt" onclick="infoAuf()">Für Eltern</button><button class="alt" onclick="ansichtAuf()">Ansicht</button></p>`}
  // Auswahl der Ansicht (seit 2026-10-26, menue.js)
  if(v=='ansicht')h=ansichtSeite();
@@ -281,9 +283,9 @@ function ui(){let h='';PZ=0;
  if(v=='kid'&&kid().h&&(S.an=='b'||S.an=='c'))h=kindMenue(kid());
  else if(v=='kid'&&kid().h){let k=kid(),st=stg(k),nx=GS[st+1],se=serie(k),pr=nx?se/TAGE[st]*100:100,rest=Math.max(1,Math.ceil((limS(k)-zeit(k))/60));
  h=`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button><button class="alt" onclick="figurEdit()">Figur</button><button class="alt" onclick="snd()" aria-pressed="${S.snd!==0}">Ton: ${S.snd===0?'aus':'an'}</button></div>
- ${k.f?'':`<div class="card row sp" style="margin-top:8px"><span><b>Neu!</b> Erstelle deine eigene Figur. Sie steht dann auf deinem Hof.</span><button class="go" onclick="figurEdit()">Figur erstellen</button></div>`}${wartetHinweis(k)}${besuchKarte(k)}<p class="small" style="margin:8px 0 0">${k.hl?'Tippe oben auf dein Pferd, um es zu streicheln.</p>'+SPERRINFO:`Tippe oben auf dein Pferd, um es zu streicheln. Probier auch Apfelbaum, Windrad und Teich aus, wenn du sie gebaut hast.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button><button class="alt" onclick="v='einladen';note='';ui();scrollTo(0,0)">Freundin einladen</button></div>`}${fuehrKnopf(k)}<div class="row sp"><h1>${esc(k.h.name)} <span class="small">${GS[st].n} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}${k.hu?` · ${k.hu}${k.hu>=huMax(k)?' (voll)':''} ${HU}`:''}</span></div>
+ ${k.f?'':`<div class="card row sp" style="margin-top:8px"><span><b>Neu!</b> Erstelle deine eigene Figur. Sie steht dann auf deinem Hof.</span><button class="go" onclick="figurEdit()">Figur erstellen</button></div>`}${wartetHinweis(k)}${besuchKarte(k)}<p class="small" style="margin:8px 0 0">${k.hl?'Tippe oben auf dein Pferd, um es zu streicheln.</p>'+SPERRINFO:`Tippe oben auf dein Pferd, um es zu streicheln. Probier auch Apfelbaum, Windrad und Teich aus, wenn du sie gebaut hast.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button><button class="alt" onclick="v='einladen';note='';ui();scrollTo(0,0)">Freundin einladen</button></div>`}${fuehrKnopf(k)}<div class="row sp"><h1>${esc(k.h.name)} <span class="small">${stufeN(st)} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}${k.hu?` · ${k.hu}${k.hu>=huMax(k)?' (voll)':''} ${HU}`:''}</span></div>
  <div class="bar" style="margin:6px 0"><b style="width:${pr}%"></b></div><p class="small">${nx?`Tag ${se} von ${TAGE[st]} bis „${nx.n}“ · ${heute(k)?'heute schon gerechnet':'rechne heute eine Runde, damit der Tag zählt'}`:'Dein Pferd ist ausgewachsen!'}</p>
- ${k.h2?`<div class="card row sp" style="align-items:center;padding:8px 12px"><span class="small">Dein zweites Pferd: <b>${esc(k.h2.name)}</b> (${GS[k.h2.st||0].n})</span><button class="alt" onclick="wechsel()">Mit ${esc(k.h2.name)} rechnen</button></div>`:''}
+ ${k.h2?`<div class="card row sp" style="align-items:center;padding:8px 12px"><span class="small">Dein zweites Pferd: <b>${esc(k.h2.name)}</b> (${stufeN(k.h2.st||0)})</span><button class="alt" onclick="wechsel()">Mit ${esc(k.h2.name)} rechnen</button></div>`:''}
  <p class="small">${limS(k)?`Noch ${rest} Minute${rest>1?'n':''} für heute · `:''}${k.xp} Erfahrung · Serie ${k.s} · Rekord ${k.best}${mcount(k)?` · Fehlerheft: ${mcount(k)} zum Wiederholen`:''}</p>
  ${st<D3AB?'':`${d3Fenster('')}<p class="small" style="margin-top:0">Wische über das Bild, um ${esc(k.h.name)} von allen Seiten zu sehen.</p>`}
  <h2 id="themen">Thema wählen</h2>`+themen(k)+
@@ -387,7 +389,7 @@ function ui(){let h='';PZ=0;
  if(S.pin&&!open&&pinZu())h+=pinZuKarte();// PIN-Sperre (seit 2026-10-24)
  else if(S.pin&&!open)h+=`<div class="card pinkarte"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p>${pinI()}</div>`+pinResetKarte();
  else{h+=S.kids.map(k=>`<div class="card"><div class="row sp"><b>${esc(k.name)}</b><span>Klasse <select onchange="gr(${k.id},this.value)" aria-label="Klasse">${KL.map(c=>`<option ${k.g==c?'selected':''}>${c}</option>`).join('')}</select></span></div>
- <p class="small">${k.h?esc(k.h.name)+' · '+GS[stg(k)].n+' · ':''}${k.h2?'zweites Pferd '+esc(k.h2.name)+' · '+GS[k.h2.st||0].n+' · ':''}${k.h&&stg(k)<3?`Tag ${serie(k)} von ${TAGE[stg(k)]} bis „${GS[stg(k)+1].n}“ · `:''}heute ${limS(k)?`${Math.min(limM(k),Math.floor(zeit(k)/60))} von ${limM(k)} Minuten`:`${Math.floor(zeit(k)/60)} Minuten (kein Limit)`} · ${k.xp} Erfahrung · ${k.ap||0} Äpfel · ${k.hu||0} Hufeisen · ${k.r} von ${k.total} Aufgaben richtig (${k.total?Math.round(k.r/k.total*100):0} %) · Rekordserie ${k.best} · Fehlerheft ${mcount(k)} offen</p>
+ <p class="small">${k.h?esc(k.h.name)+' · '+stufeN(stg(k))+' · ':''}${k.h2?'zweites Pferd '+esc(k.h2.name)+' · '+stufeN(k.h2.st||0)+' · ':''}${k.h&&stg(k)<3?`Tag ${serie(k)} von ${TAGE[stg(k)]} bis „${GS[stg(k)+1].n}“ · `:''}heute ${limS(k)?`${Math.min(limM(k),Math.floor(zeit(k)/60))} von ${limM(k)} Minuten`:`${Math.floor(zeit(k)/60)} Minuten (kein Limit)`} · ${k.xp} Erfahrung · ${k.ap||0} Äpfel · ${k.hu||0} Hufeisen · ${k.r} von ${k.total} Aufgaben richtig (${k.total?Math.round(k.r/k.total*100):0} %) · Rekordserie ${k.best} · Fehlerheft ${mcount(k)} offen</p>
  <p class="small" style="margin:6px 0"><label>Zeit pro Tag: <select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></label></p>${ndListe(k)}
  <table><tr><th>Thema</th><th>Stufe</th><th>Aufgaben</th><th>Richtig</th></tr>${elternThemen(k).map(t=>{let s=ts(k,t[0]);return`<tr><td>${t[1]}</td><td>${s.d}</td><td>${s.n}</td><td>${s.n?Math.round(s.r/s.n*100)+' %':'–'}</td></tr>`}).join('')}</table>
  <p class="small">Ein Thema wechselt hoch nach 3 richtigen Antworten in Folge und runter nach 2 falschen.</p><div class="row"><button class="alt" onclick="rst(${k.id})">Fortschritt zurücksetzen</button><button class="alt" onclick="del(${k.id})">Kind löschen</button></div></div>`).join('')||'<p>Noch keine Kinder angelegt.</p>';
@@ -551,11 +553,19 @@ const figurMini=(f,h)=>`<svg class="figmini" viewBox="-21 -114 42 118" width="${
 // Größen & Einheiten: "5 m 8 cm = ? cm" wird zu "5 m 8 cm = ?" mit Einheit cm.
 // Neue Zeile nach . ? ! vor Großbuchstabe, Ziffer, Klammer oder einer Variablen wie "x = ?" (nicht bei "die 3. binomische Formel").
 const EINH=/\s*\(in ([^()]{1,14})\)\?$|\s+in (€|Cent|cm²|cm|m²|m|km|kg|g|°)\?$/,EINH2=/=\s*\?\s+([a-zA-ZäöüÄÖÜ²³€]{1,4})$/;
+// Seit 2026-10-26 (Brain Dump): Steht die Einheit mitten in der Frage ("Wie viele Minuten dauert die Fahrt?", "In wie vielen Jahren …",
+// "Wie viel cm² bleiben …"), erscheint sie zusätzlich neben dem Eingabefeld, der Text bleibt. Nur im letzten Satz, nur echte Einheiten
+// (nicht "Wie viele Flaschen"). EINW: Wort → Zeichen neben dem Feld.
+const EINH3=/(?:^|\s)(?:[Ww]ie viele?|[Ii]n wie vielen|Fläche in)\s+(Minuten|Sekunden|Stunden|Tagen?|Wochen|Monaten?|Jahren?|Gramm|Kilogramm|Liter|Milliliter|Meter|Zentimeter|Kilometer|Euro|Cent|cm²|m²|cm|mm|km|kg|ml|g|m|l|€)(?=[\s?.,!]|$)/;
+const EINW={Minuten:'min',Sekunden:'s',Stunden:'h',Tag:'Tage',Tagen:'Tage',Monaten:'Monate',Jahren:'Jahre',Gramm:'g',Kilogramm:'kg',Liter:'l',Milliliter:'ml',Meter:'m',Zentimeter:'cm',Kilometer:'km',Euro:'€'};
 function frageTeile(t){t=String(t);let e='',m=t.match(EINH);if(m){e=m[1]||m[2];t=t.slice(0,m.index)+'?'}
  else if(m=t.match(EINH2)){e=m[1];t=t.slice(0,m.index)+'= ?'}
+ else if(m=t.split(/[.!?]\s+/).pop().match(EINH3))e=EINW[m[1]]||m[1];// letzter Satz (ohne Lookbehind, das ältere iPads nicht kennen)
  return[de(t).replace(/([.?!])[ \t]+(?=[A-ZÄÖÜ„(0-9]|[a-z]\s*=)/g,'$1\n'),e]}
 // Antwort mit Einheit: 60° (ohne Leerzeichen), sonst 12 cm, 40 €. Ganze Zahlen ab 10 000 mit schmalem Leerzeichen (seit 2026-10-24, gzf in aufgaben.js)
-const mitEinheit=(v,e)=>(e=='€'&&!Number.isInteger(+v)?de((+v).toFixed(2)):de(Number.isInteger(+v)?gzf(+v):v))+(e?(e=='°'?'°':' '+e):'');// Geld immer mit zwei Nachkommastellen
+// Zeit-Wörter bei genau 1 in der Einzahl ("1 Tag", seit 2026-10-26)
+const EINZ={Tage:'Tag',Wochen:'Woche',Monate:'Monat',Jahre:'Jahr'};
+const mitEinheit=(v,e)=>(e=='€'&&!Number.isInteger(+v)?de((+v).toFixed(2)):de(Number.isInteger(+v)?gzf(+v):v))+(e?(e=='°'?'°':' '+(+v===1&&EINZ[e]||e)):'');// Geld immer mit zwei Nachkommastellen
 // Themen als Knöpfe, geordnet nach Kategorien (KAT in aufgaben.js): Schulstoff der eigenen Klasse, Mathe-Olympiade & Knobeln,
 // aufklappbar der Schulstoff früherer Klassen zum Wiederholen
 // Knobel-Regel (seit 2026-10-20): Nach KNMAX fertigen Knobelrunden (Olympiade und Sudoku, KNOBEL in aufgaben.js) hintereinander

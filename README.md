@@ -97,8 +97,8 @@ Dann `http://localhost:3000` öffnen. Auf `localhost` lässt sich die App auch a
 | `menue.js` | Ansichten „Bunte Kacheln“ und „Turniermodus“ für Startseite, Kind-Ansicht und Themenwahl, Auswahlseite „Ansicht“ (die Holz-Optik von „Pferdehof“ steht in `style.css`) |
 | `manifest.webmanifest` | Angaben für die Installation als App |
 | `sw.js` | Service Worker für die Offline-Nutzung |
-| `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | App-Symbole |
-| `icon-maskable-192.png`, `icon-maskable-512.png` | App-Symbole für Android (werden rund oder abgerundet zugeschnitten, Motiv liegt in der Sicherheitszone) |
+| `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | App-Symbole: Pferdekopf mit Plus-Blesse auf dem Hof, darüber „1 + 2 = 3“ und „¾ % x²“ |
+| `icon-maskable-192.png`, `icon-maskable-512.png` | App-Symbole für Android (werden rund oder abgerundet zugeschnitten, sichtbar bleibt die Mitte mit Pferdekopf und Plus-Blesse) |
 
 | `3d/vorschau.js` | 3D-Fenster für das eigene Pferd (wird erst bei Bedarf geladen) |
 | `3d/three.module.js`, `3d/three.core.js`, `3d/addons/` | Bibliothek three.js 0.186.1 (MIT-Lizenz, siehe `3d/LICENSE-three.txt`), Importe auf feste Pfade umgeschrieben |

@@ -54,7 +54,7 @@ function nkAuf(){NKAUF=1;ui();const n=$('#nm');if(n){n.focus({preventScroll:true
 const mLinks=()=>`<p class="row mlinks"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="infoAuf()">Für Eltern</button><button class="alt" onclick="ansichtAuf()">Ansicht</button></p>`;
 function homeB(zu){
  return`<h1>${S.kids.length?'Wer reitet heute?':'Pferdehof Mathe'}</h1>${zu?pinZuKarte():''}`+
-  S.kids.map((k,i)=>`<button class="mk mkind" onclick="sel(${k.id})"${zu?' disabled':''}><span class="mbild" style="background:${MKF[i%MKF.length]}">${kindBild(k)}</span><span class="mwt"><b>${esc(k.name)}</b>${k.h?` <span class="small">mit ${esc(k.h.name)}</span>`:''}<br><span class="small">Klasse ${k.g} · ${k.h?GS[stg(k)].n:'noch ohne Pferd'}</span><br><span class="ap">${k.ap||0} ${AP}</span></span></button>`).join('')+
+  S.kids.map((k,i)=>`<button class="mk mkind" onclick="sel(${k.id})"${zu?' disabled':''}><span class="mbild" style="background:${MKF[i%MKF.length]}">${kindBild(k)}</span><span class="mwt"><b>${esc(k.name)}</b>${k.h?` <span class="small">mit ${esc(k.h.name)}</span>`:''}<br><span class="small">Klasse ${k.g} · ${k.h?stufeN(stg(k)):'noch ohne Pferd'}</span><br><span class="ap">${k.ap||0} ${AP}</span></span></button>`).join('')+
   `<div class="mgrid">${kachel('mf6','neu','Neues Kind','','nkAuf()')}${kachel('mf3','flug','Flug über die Koppel','','flyOn()')}</div>`+(nkOffen()?nkKarte(zu):'')+mLinks()}
 // C Startseite (seit 2026-10-26, Florians Wunsch): Pferdekopf mit etwas Hals statt der Startnummer. Das Pferd wird ganz gezeichnet,
 // nach dem Seitenaufbau misst kopfAusschnitt() Kopf und oberen Hals und setzt den Bildausschnitt (wie itBilder bei den Hof-Gegenständen).
@@ -94,7 +94,7 @@ function trainKurz(k){const H=hh(k);if(stg(k)<1)return'ab '+GS[1].n;const g=gpSp
  const n=Object.values(H.tr||{}).reduce((a,b)=>a+(+b||0),0);return n?`${n} Stern${n>1?'e':''}`:'noch keine Sterne'}
 // Teile, die B und C mit der klassischen Ansicht gemeinsam haben
 const mFigurNeu=k=>k.f?'':`<div class="card row sp" style="margin-top:8px"><span><b>Neu!</b> Erstelle deine eigene Figur. Sie steht dann auf deinem Hof.</span><button class="go" onclick="figurEdit()">Figur erstellen</button></div>`;
-const mZweit=k=>k.h2?`<div class="card row sp" style="align-items:center;padding:8px 12px"><span class="small">Dein zweites Pferd: <b>${esc(k.h2.name)}</b> (${GS[k.h2.st||0].n})</span><button class="alt" onclick="wechsel()">Mit ${esc(k.h2.name)} rechnen</button></div>`:'';
+const mZweit=k=>k.h2?`<div class="card row sp" style="align-items:center;padding:8px 12px"><span class="small">Dein zweites Pferd: <b>${esc(k.h2.name)}</b> (${stufeN(k.h2.st||0)})</span><button class="alt" onclick="wechsel()">Mit ${esc(k.h2.name)} rechnen</button></div>`:'';
 const mApfel=k=>`<span class="ap">${k.ap||0} ${AP}${k.hu?` · ${k.hu}${k.hu>=huMax(k)?' (voll)':''} ${HU}`:''}</span>`;
 // Infozeilen unter den Kacheln (wie klassisch). ohneZeit: Die Restzeit steht schon auf der Kachel "Rechnen" (B).
 function mInfo(k,ohneZeit){const nx=GS[stg(k)+1],rest=Math.max(1,Math.ceil((limS(k)-zeit(k))/60));
@@ -107,7 +107,7 @@ const mSperre=(k,wo)=>k.hl?SPERRINFO.replace('Such dir unten ein beliebiges Them
 function kindMenue(k){if(KT)return kindTeil(k);return mAn()=='c'?kindC(k):kindB(k)}
 function kindB(k){const H=hh(k),st=stg(k),zu=k.hl,nx=GS[st+1],rest=Math.max(1,Math.ceil((limS(k)-zeit(k))/60)),[pk,pw]=pflegeKurz(k),frei=zu?'erst rechnen':'';
  return`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button>${mTon()}</div>`+
-  `<div class="mkopf"><span class="mava">${k.f?figurKopf(k.f,50):mi('figur',40)}</span><span class="mkt"><b>Hallo ${esc(k.name)}!</b><br><span class="small">${esc(H.name)} · ${GS[st].n}${nx?` · Tag ${serie(k)} von ${TAGE[st]}`:''}</span></span>${mApfel(k)}</div>`+mBalken(k)+
+  `<div class="mkopf"><span class="mava">${k.f?figurKopf(k.f,50):mi('figur',40)}</span><span class="mkt"><b>Hallo ${esc(k.name)}!</b><br><span class="small">${esc(H.name)} · ${stufeN(st)}${nx?` · Tag ${serie(k)} von ${TAGE[st]}`:''}</span></span>${mApfel(k)}</div>`+mBalken(k)+
   mFigurNeu(k)+wartetHinweis(k)+besuchKarte(k)+mSperre(k,'Tippe auf „Rechnen“ und such dir ein beliebiges Thema aus.')+fuehrKnopf(k)+mZweit(k)+
   `<div class="mgrid">`+kachel('mfg','rechnen','Rechnen',limS(k)?`Noch ${rest} Minute${rest>1?'n':''} für heute`:'Thema wählen',"mGeh('themen')",{breit:1,id:'themen'})+
   kachel('mf2','baum','Wunschbaum',frei||'Rasse, Mähne, Hof','mWunsch()',{zu,id:'wish'})+kachel('mf4','hindernis','Training',frei||trainKurz(k),"mGeh('training')",{zu,id:'training'})+
@@ -120,7 +120,7 @@ function cHinweise(k){const H=hh(k);if(stg(k)<1)return'';
  return['t','s'].filter(a=>gpStand(H,a).faellig).map(a=>{const ta=a=='t',G=gpStand(H,a);return`<button class="mk mros mwarnk" data-gp="${a}" onclick="mGeh('pflege')">${mi(ta?'arzt':'huf',34)}<span class="mwt"><b>${ta?'Tierarzt':'Hufschmied'} ist fällig</b><br><span class="small">${ta?TAPREIS:SCHPREIS} Hufeisen${G.ueber?' · bis dahin kein Training':''}</span></span></button>`}).join('')}
 function kindC(k){const H=hh(k),st=stg(k),zu=k.hl,nx=GS[st+1],mini=(ic,t,js,o={})=>`<button class="mk"${o.id?` data-k="${o.id}"`:''} onclick="${js}"${o.zu?' disabled':''}>${mi(ic,30)}${t}</button>`;
  return`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button>${mTon()}</div>`+
-  `<div class="row sp" style="align-items:baseline"><h1 style="margin-bottom:0">${esc(H.name)}</h1>${mApfel(k)}</div><p class="small" style="margin:0">${GS[st].n} von ${esc(k.name)}${nx?` · noch ${tageBis(k,st+1)} Tag${tageBis(k,st+1)==1?'':'e'} mit Mathe bis „${nx.n}“`:''}</p>`+mBalken(k)+
+  `<div class="row sp" style="align-items:baseline"><h1 style="margin-bottom:0">${esc(H.name)}</h1>${mApfel(k)}</div><p class="small" style="margin:0">${stufeN(st)} von ${esc(k.name)}${nx?` · noch ${tageBis(k,st+1)} Tag${tageBis(k,st+1)==1?'':'e'} mit Mathe bis „${nx.n}“`:''}</p>`+mBalken(k)+
   mFigurNeu(k)+wartetHinweis(k)+besuchKarte(k)+mSperre(k,'Tippe auf „Los, rechnen!“ und such dir ein beliebiges Thema aus.')+
   `<button class="mk mcta" data-k="themen" onclick="mGeh('themen')">${mi('rechnen',26)}Los, rechnen!</button>`+cHinweise(k)+fuehrKnopf(k)+mZweit(k)+
   `<div class="mmini">${mini('hindernis','Training',"mGeh('training')",{zu,id:'training'})}${mini('flug','Rundflug','flyOn()',{zu,id:'flug'})}${mini('freund','Freundin',"v='einladen';note='';ui();scrollTo(0,0)",{zu,id:'einladen'})}`+

@@ -41,11 +41,12 @@ function masse(sp) {
 }
 
 // ---------- Haare ----------
-function straehne(bx, by, dx, dy, len, w, bend, cls) {
+// offen: Grundkante ohne Strich (unteres Stück des Schweifs, seit 2026-10-26), die Fläche schließt sich trotzdem
+function straehne(bx, by, dx, dy, len, w, bend, cls, offen) {
   const nx = -dy, ny = dx, tx = bx + dx * len + nx * bend, ty = by + dy * len + ny * bend;
   const c1x = bx + dx * len * .55 + nx * (w * .55 + bend * .6), c1y = by + dy * len * .55 + ny * (w * .55 + bend * .6);
   const c2x = bx + dx * len * .5 - nx * (w * .4 - bend * .6), c2y = by + dy * len * .5 - ny * (w * .4 - bend * .6);
-  return `<path class="${cls}" d="M${r1(bx + nx * w / 2)} ${r1(by + ny * w / 2)}Q${r1(c1x)} ${r1(c1y)} ${r1(tx)} ${r1(ty)}Q${r1(c2x)} ${r1(c2y)} ${r1(bx - nx * w / 2)} ${r1(by - ny * w / 2)}Z"/>`;
+  return `<path class="${cls}" d="M${r1(bx + nx * w / 2)} ${r1(by + ny * w / 2)}Q${r1(c1x)} ${r1(c1y)} ${r1(tx)} ${r1(ty)}Q${r1(c2x)} ${r1(c2y)} ${r1(bx - nx * w / 2)} ${r1(by - ny * w / 2)}${offen ? '' : 'Z'}"/>`;
 }
 const qb = (a, c, b, t) => [0, 1].map(i => (1 - t) * (1 - t) * a[i] + 2 * (1 - t) * t * c[i] + t * t * b[i]);
 const qbT = (a, c, b, t) => { const v = [0, 1].map(i => 2 * (1 - t) * (c[i] - a[i]) + 2 * t * (b[i] - c[i])), l = Math.hypot(v[0], v[1]); return [v[0] / l, v[1] / l]; };
@@ -90,15 +91,37 @@ function gelenkMaehne(art, laenge) {
   }
   return `<g id="gelenk">${s}</g>`;
 }
-function schweif(tl, fohlen) {
-  let s = '', hell = '';
-  const n = fohlen ? 8 : 12;
+// Schweif (seit 2026-10-26 biegsam, Brain Dump "nicht so steif"): Jede Strähne besteht aus einem oberen Stück (Gruppe schweif,
+// dreht an der Wurzel) und einem unteren Stück (Gruppe schweif2 darin, dreht um ihren Drehpunkt data-px/data-py und schwingt in
+// Rig.pose verzögert nach). Die Stücke überlappen (unten beginnt bei SW_AB, oben endet bei SW_BIS), die Naht deckt das untere Stück zu.
+// Ruhelage als leichter Bogen: oben SW_OBEN Grad weiter nach hinten, unten SW_UNTEN Grad mehr hängend.
+const SW_OBEN = 16, SW_UNTEN = -9, SW_AB = .42, SW_BIS = .5;
+const drehe = (dx, dy, g) => { const r = g * Math.PI / 180, c = Math.cos(r), s = Math.sin(r); return [dx * c - dy * s, dx * s + dy * c]; };
+// Oberes Stück: Band von der Wurzel (Breite w) bis zur Länge len (Breite w2), endet gerade. Liefert [Pfad, Startpunkt des unteren Stücks].
+// Die gerade Endkante ist die offene Schlusskante (ohne Strich), so entsteht an der Naht keine Querlinie.
+function schweifOben(bx, by, dx, dy, len, w, w2, bend, cls) {
+  const nx = -dy, ny = dx, e = [bx + dx * len + nx * bend, by + dy * len + ny * bend], c = [bx + dx * len * .5 + nx * bend * .6, by + dy * len * .5 + ny * bend * .6];
+  const d = `M${r1(e[0] - nx * w2 / 2)} ${r1(e[1] - ny * w2 / 2)}Q${r1(c[0] - nx * w * .45)} ${r1(c[1] - ny * w * .45)} ${r1(bx - nx * w / 2)} ${r1(by - ny * w / 2)}` +
+    `L${r1(bx + nx * w / 2)} ${r1(by + ny * w / 2)}Q${r1(c[0] + nx * w * .45)} ${r1(c[1] + ny * w * .45)} ${r1(e[0] + nx * w2 / 2)} ${r1(e[1] + ny * w2 / 2)}`;
+  return [`<path class="${cls}" d="${d}"/>`, qb([bx, by], c, e, SW_AB / SW_BIS)];
+}
+function schweif(tl, fohlen, idle) {
+  let o = '', oh = '', u = '', uh = '', px = 0, py = 0;
+  const n = fohlen ? 8 : 12, strang = (i, x, y, dx, dy, len, w, bend, cls) => {
+    // Oberes Ende (.6 w) schmaler als der Anfang des unteren Stücks (.8 w): die Ecken bleiben auch im Knick verdeckt
+    const [ox, oy] = drehe(dx, dy, SW_OBEN), [ux, uy] = drehe(dx, dy, SW_UNTEN), w2 = w * .8;
+    const [p, st] = schweifOben(x, y, ox, oy, len * SW_BIS, w, w * .6, bend * .25, cls);
+    return [p, straehne(st[0], st[1], ux, uy, len * (1 - SW_AB), w2, bend * .75, cls, 1), st];
+  };
   for (let i = 0; i < n; i++) {
     let dx = -.3 - i * .016 + (rnd(i * 2.2) - .5) * .12, dy = .95; const l = Math.hypot(dx, dy);
-    s += straehne(-85 + i * .5, -151 + i * 1.1, dx / l, dy / l, (84 + rnd(i * 4.1) * 18) * tl, fohlen ? 15 : 13, (7 + (rnd(i * 5.3) - .4) * 14) * Math.min(1, tl + .2), 'ha1');
-    if (i % 4 === 1) hell += straehne(-84 + i * .5, -150 + i * 1.1, dx / l, dy / l, (76 + rnd(i * 4.1) * 14) * tl, 4.5, 9 + (rnd(i * 5.3) - .4) * 10, 'ha2');
+    const [a, b, st] = strang(i, -85 + i * .5, -151 + i * 1.1, dx / l, dy / l, (84 + rnd(i * 4.1) * 18) * tl, fohlen ? 15 : 13, (7 + (rnd(i * 5.3) - .4) * 14) * Math.min(1, tl + .2), 'ha1');
+    o += a; u += b; px += st[0] / n; py += st[1] / n;
+    if (i % 4 === 1) { const [a2, b2] = strang(i, -84 + i * .5, -150 + i * 1.1, dx / l, dy / l, (76 + rnd(i * 4.1) * 14) * tl, 4.5, 9 + (rnd(i * 5.3) - .4) * 10, 'ha2'); oh += a2; uh += b2; }
   }
-  return s + hell + '<ellipse class="kK" cx="-85" cy="-149" rx="7.5" ry="6" transform="rotate(-38 -85 -149)"/>';
+  // Ruhebild (idle): das untere Stück pendelt etwas verzögert zum oberen
+  const p2 = `${r1(px)} ${r1(py)}`, anim = idle ? `<animateTransform attributeName="transform" type="rotate" values="0 ${p2};-4 ${p2};0 ${p2};5 ${p2};0 ${p2}" dur="3.4s" begin="-.9s" repeatCount="indefinite"/>` : '';
+  return o + oh + `<g id="schweif2" data-px="${r1(px)}" data-py="${r1(py)}">${anim}${u}${uh}</g>` + '<ellipse class="kK" cx="-85" cy="-149" rx="7.5" ry="6" transform="rotate(-38 -85 -149)"/>';
 }
 const stirnschopf = f => [0, 1, 2].map(i => straehne(96 + i * 2.2, -214 + i * .8, .52 + i * .06, .85, (13 + i * 2.5) * f, 7, 2 - i * 2, i === 1 ? 'ha2' : 'ha1')).join('');
 
@@ -210,7 +233,7 @@ function bild(P, sp, opt = {}) {
  <g class="fuell"><g id="fernTeile">${bein('vf', vorderbein, 1)}${bein('hf', hinterbein, 1)}</g></g>
  <use href="#nahTeile" class="umriss"/>
  <g class="fuell"><g id="nahTeile">
-  <g transform="translate(${tx} ${ty}) scale(${r1(ks * 100) / 100}) translate(85 150)"><g id="schweif">${idle ? SMIL('-85 -150', 7, 3.4) : ''}${schweif(m.tl, m.fohlen)}</g></g>
+  <g transform="translate(${tx} ${ty}) scale(${r1(ks * 100) / 100}) translate(85 150)"><g id="schweif">${idle ? SMIL('-85 -150', 7, 3.4) : ''}${schweif(m.tl, m.fohlen, idle)}</g></g>
   ${bein('hn', hinterbein, 0)}${bein('vn', vorderbein, 0)}
   <g transform="translate(0 ${r1(-100 * m.ls)}) scale(${m.bx} ${m.by}) translate(0 100)">
    <path id="koerperForm" class="kK" d="${KOERPER}"/>
@@ -274,6 +297,8 @@ class Rig {
     this.B = Object.fromEntries(['vn', 'vf', 'hn', 'hf'].map(k => [k, { typ: k[0], g: [1, 2, 3].map(n => $(k + n)) }]));
     const root = $('pferd');
     this.MH = root ? [...root.querySelectorAll(`#${P}nahTeile .mh`)].map(el => ({ el, teil: +el.dataset.t, p: [+el.dataset.x, +el.dataset.y] })) : [];
+    // Unteres Stück des Schweifs (seit 2026-10-26): Drehpunkt und Zustand der gedämpften Feder (sw Winkel, sv Geschwindigkeit)
+    this.S2 = $('schweif2'); this.S2p = this.S2 ? [+this.S2.dataset.px, +this.S2.dataset.py] : null; this.sw = null; this.sv = 0;
     Object.assign(this, { zeit: Math.random() * 9, blinzeln: 1 + Math.random() * 3, ohrZeit: 2 + Math.random() * 2, schlagen: 0, schlagZeit: 2 + Math.random() * 4 });
   }
   // a: g Gangart (walk/trot/gallop), am 0..1 Bewegung, ph Phase 0..1, gr 0..1 Grasen, hop Hüpfer nach oben,
@@ -302,7 +327,16 @@ class Rig {
     const wind = (gal ? am * 14 : 0) + Math.sin(this.zeit * 2.1) * 1.5, hm = h1 + k2 * .5;
     for (const mh of this.MH) rot(mh.el, -(mh.teil === 1 ? h1 : mh.teil === 3 ? hm : h2) * .8 + wind, mh.p);
     if (dt > 0) { this.schlagZeit -= dt; if (this.schlagZeit <= 0) { this.schlagen = 1; this.schlagZeit = 3 + Math.random() * 5; } this.schlagen = Math.max(0, this.schlagen - dt * 1.6); }
-    rot(this.G.schweif, 3 * Math.sin(this.zeit * 1.4) + am * (gal ? 26 : tr ? 12 : 6 * Math.sin(ph * Math.PI * 2)) + 16 * Math.sin(this.schlagen * Math.PI * 3) * this.schlagen + (hop > 5 ? 18 : 0), [-85, -150]);
+    const aS = 3 * Math.sin(this.zeit * 1.4) + am * (gal ? 26 : tr ? 12 : 6 * Math.sin(ph * Math.PI * 2)) + 16 * Math.sin(this.schlagen * Math.PI * 3) * this.schlagen + (hop > 5 ? 18 : 0);
+    rot(this.G.schweif, aS, [-85, -150]);
+    // Unteres Stück: folgt dem oberen verzögert (gedämpfte Feder, schwingt leicht über), dazu ein Hauch Wind; im Galopp weht es weiter nach hinten
+    if (this.S2) {
+      if (this.sw === null) this.sw = aS;
+      // zwei Teilschritte, bis 0,1 s pro Bild (Sparmodus und Fire-Tablet laufen so in echter Zeit); Knick höchstens ±12°,
+      // weil alle unteren Stücke um einen gemeinsamen Drehpunkt drehen (sonst verrutschen die äußeren Strähnen sichtbar)
+      if (dt > 0) { const d = Math.min(dt, .1) / 2; for (let i = 0; i < 2; i++) { this.sv += ((aS - this.sw) * 30 - this.sv * 7) * d; this.sw += this.sv * d; } }
+      rot(this.S2, Math.max(-12, Math.min(12, (this.sw - aS) * 1.3 + 4 * Math.sin(this.zeit * 1.9 + .8) + am * (gal ? 12 : tr ? 5 : 0))), this.S2p);
+    }
     if (dt > 0) { this.blinzeln -= dt; if (this.blinzeln <= 0) this.blinzeln = 2.5 + Math.random() * 4; this.ohrZeit -= dt; if (this.ohrZeit <= 0) this.ohrZeit = 2 + Math.random() * 4; }
     this.G.auge.setAttribute('transform', this.blinzeln < .13 ? 'translate(0 -196.5) scale(1 .12) translate(0 196.5)' : '');
     rot(this.G.ohr, this.ohrZeit < .35 ? -14 * Math.sin(this.ohrZeit / .35 * Math.PI) : 0, [101, -213]);
