@@ -36,7 +36,7 @@ function trStatus(k,id){if(!k||!k.h)return{txt:`Ab ${GS[1].n}`};const H=hh(k),st
  if(s>=mx)return{voll:1,txt:st<3&&A.max[st+1]>mx?`Alle Sterne geschafft. Mehr gibt es, wenn ${H.name} ein ${GS[st+1].n} ist.`:'Alle Sterne geschafft!'};
  if(!(Array.isArray(A.spiel)?A.spiel[st]:A.spiel))return{bald:1,txt:'Kommt bald'};
  // Tierarzt oder Hufschmied überfällig (seit 2026-10-25, pflege.js): kein Training
- const gs=gpSperre(k);if(gs)return{gp:1,txt:gs.includes(' und ')?'Erst müssen Tierarzt und Hufschmied kommen. Ruf sie unten unter „Gesundheit und Pflege“.':`Erst muss der ${gs} kommen. Ruf ihn unten unter „Gesundheit und Pflege“.`};
+ const gs=gpSperre(k);if(gs)return{gp:1,txt:gs.includes(' und ')?'Erst müssen Tierarzt und Hufschmied kommen. Ruf sie unter „Gesundheit und Pflege“.':`Erst muss der ${gs} kommen. Ruf ihn unter „Gesundheit und Pflege“.`};// ohne "unten": passt auch zu den Ansichten B und C (eigene Seite)
  // Anreiten und Reiten nur mit Sattel (mit Sattelgurt), Satteldecke und Trense (seit 2026-10-22, Kauf im Wunschbaum, AUSR in app.js)
  if(id=='re'&&!reitfertig(H))return{ausr:1,txt:`Zum ${A.n(st)} braucht ${H.name} Sattel mit Sattelgurt, Satteldecke und Trense. Du bekommst sie im Wunschbaum unter „Reitausrüstung & Pflege“.`};
  const tl=(H.tl||{})[id],ab=(A.alle||[])[st]||1;

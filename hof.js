@@ -617,7 +617,7 @@ function hofRun(){
 // Wird nach jeder Änderung der Ansicht aufgerufen (aus ui()).
 function hofSync(force){
  // Abschiedsseite (bye) zeigt den Hof nur mit Unterstand oder Stall, zum Hineinbringen des Pferds (seit 2026-10-24, byeHof in app.js)
- const svg=$('#hof'),root=document.documentElement.style,fly=HF.mode=='fly',show=fly||['home','choose','figur','kid','wish','rassen','done','einladen','besuch'].includes(v)||(v=='bye'&&byeHof());
+ const svg=$('#hof'),root=document.documentElement.style,fly=HF.mode=='fly',show=fly||['home','ansicht','choose','figur','kid','wish','rassen','done','einladen','besuch'].includes(v)||(v=='bye'&&byeHof());
  document.body.classList.toggle('nohof',!show);
  if(!show){hofStop();const we=document.getElementById('hwetter');if(we)we.classList.add('ruhig');svg.style.display='none';root.setProperty('--wh','0px');return}
  svg.style.display='block';root.setProperty('--wh',(fly?0:Math.max(210,Math.min(360,Math.round(innerHeight*.34))))+'px');

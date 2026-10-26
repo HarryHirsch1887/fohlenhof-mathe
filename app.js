@@ -118,6 +118,7 @@ function clean(d){
  // Obergrenze für nn ausdrücklich angeben, sonst begrenzt nn auf 1e9 und ein Zeitstempel wäre immer abgelaufen.
  if(o.pin){const jetzt=Date.now(),pf=nn(d.pf,0,PINMAX-1),ps=nn(d.ps,0,jetzt+PINSPERRE);if(pf)o.pf=pf;if(ps>jetzt)o.ps=ps}
  if(d.snd===0)o.snd=0;if(d.calm)o.calm=1;if(d.mo==='e'||d.mo==='k')o.mo=d.mo;// mo: Startabfrage beantwortet (Elternteil/Kind)
+ if(d.an==='b'||d.an==='c')o.an=d.an;// an: Ansicht (seit 2026-10-26, menue.js): b = Bunte Kacheln, c = Turniermodus, ohne = A "Pferdehof"
  for(const k of d.kids.slice(0,20)){if(!k||typeof k!=='object')continue;
   const c={id:nn(k.id,1,Number.MAX_SAFE_INTEGER),name:ct(k.name,20)||'Kind',g:KL.includes(+k.g)?+k.g:5,xp:nn(k.xp),ap:nn(k.ap),s:nn(k.s),best:nn(k.best),total:nn(k.total),r:nn(k.r),perfect:nn(k.perfect),b:[],t:{},mist:[]};
   // st = Wachstumsstufe, sd = gesammelte Tage für die nächste Stufe, ld = letzter gezählter Tag, zd/zt = Spielzeit (Sekunden) an diesem Tag
@@ -226,17 +227,20 @@ const scene=(k,an,idle)=>{let h=k.h,st=stg(k),s=GS[st].s;return`<svg class="scen
 const pick=(c)=>`<button class="pick ${CH==c?'on':''}" onclick="CH='${c}';ui()" aria-pressed="${CH==c}"><svg viewBox="${PFVB}">${pfBild({coat:c,st:0})}</svg>${COATS[c][0]}</button>`;
 function ui(){let h='';PZ=0;
  if(v=='koppeln')v='wish';// seit 2026-10-21 stehen Koppeln, Unterstände und Stall direkt im Wunschbaum
- if(v!='home'){EIN='';EINPIN=false;NKN='';NKG=5}// Einrichtungsschritt gilt nur auf der Startseite (sonst käme z. B. "Kinder anlegen" ohne PIN zurück)
+ if(v!='home'){EIN='';EINPIN=false;NKN='';NKG=5;NKAUF=0}// Einrichtungsschritt gilt nur auf der Startseite (sonst käme z. B. "Kinder anlegen" ohne PIN zurück)
+ if(v=='home')KT='';// Ansichten B und C (menue.js): auf der Startseite beginnt die Kind-Ansicht wieder mit der Übersicht
  if(!pinSeite()){PINI=0;PINR=0}// verstecktes "i" der PIN-Seiten: beim Verlassen wieder unsichtbar
  if(v!='kid')TRNOTE='';// Hinweis im Training nur, solange die Kind-Ansicht offen ist
  if(v!='bye'&&v!='done')REIN=0;// "steht jetzt im Unterstand" nur auf der Abschiedsseite bzw. am Rundenende
  if(!S.mo&&v=='besuch')v='home';// Besuchs-Link auf einem neuen Gerät: erst die Startabfrage, der Besuch (BES) wartet
  if(v=='home'&&(!S.mo||EIN=='kinder')){h=startAbfrage()}
  else if(v=='home'){const zu=pinZu();// PIN-Sperre (seit 2026-10-24): Hinweis oben, Kinder-Knöpfe aus
- h=`<h1>Pferdehof Mathe</h1>${zu?pinZuKarte():''}<p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big" onclick="sel(${k.id})"${zu?' disabled':''}><span>${esc(k.name)} <span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name):''}</span></span><span class="ap">${k.h?GS[stg(k)].n+' · ':''}${k.ap||0} ${AP}</span></button>`).join('')+
- // Neues Kind: Gibt es schon ein Kind und ist eine PIN gesetzt, muss ein Elternteil mit der PIN bestätigen (seit 2026-10-24)
- `<div class="card"><b>Neues Kind</b><div class="row"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name" value="${esc(NKN)}"><select id="gr" aria-label="Klasse">${KL.map(c=>`<option value="${c}"${NKG==c?' selected':''}>Klasse ${c}</option>`).join('')}</select>${nkPin()?'':'<button onclick="add()">Hinzufügen</button>'}</div>`+
- (nkPin()&&zu?`<p class="small">Neue Kinder lassen sich ab ${pinUhr()} Uhr wieder anlegen.</p>`:nkPin()?`<p class="small">Ein weiteres Kind muss ein Elternteil mit der PIN bestätigen.</p><div class="row"><input id="nkpin" type="password" inputmode="numeric" maxlength="8" placeholder="Eltern-PIN" aria-label="Eltern-PIN" onkeydown="if(event.key=='Enter')add()"><button onclick="add()">Hinzufügen</button></div>`:'')+`<p class="no">${NKW}</p></div><p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button><button class="alt" onclick="infoAuf()">Für Eltern</button></p>`}
+ // Ansichten B und C (seit 2026-10-26, menue.js), sonst A "Pferdehof": Holzschilder (body.holz), jedes Kind an einer Boxentür mit Namensschild
+ if(S.an=='b')h=homeB(zu);else if(S.an=='c')h=homeC(zu);else
+ h=`<h1>Pferdehof Mathe</h1>${zu?pinZuKarte():''}<p>Wer geht heute auf den Hof?</p>`+S.kids.map(k=>`<button class="big hbox" onclick="sel(${k.id})"${zu?' disabled':''}><span class="htuer" aria-hidden="true">${kindBild(k)}</span><span class="hschild"><b>${esc(k.name)}</b><span class="small">Klasse ${k.g}${k.h?' · '+esc(k.h.name)+' · '+GS[stg(k)].n:''}</span></span><span class="ap">${k.ap||0} ${AP}</span></button>`).join('')+
+ nkKarte(zu)+`<p class="row"><button class="alt" onclick="v='parent';ui()">${S.pin?'Eltern-Ansicht':'Einstellungen'}</button><button class="alt" onclick="flyOn()">Flug über die Koppel</button><button class="alt" onclick="infoAuf()">Für Eltern</button><button class="alt" onclick="ansichtAuf()">Ansicht</button></p>`}
+ // Auswahl der Ansicht (seit 2026-10-26, menue.js)
+ if(v=='ansicht')h=ansichtSeite();
  // Figur erstellen oder ändern (FE: Entwurf, wird erst mit "Fertig" bzw. "Speichern" übernommen)
  // Koppeln, Unterstände und Stall: bauen, ausbauen, Pferde verteilen
  // Leggings- und Shirtfarben: anprobieren kostenlos, beim Speichern werden neue Farben gekauft
@@ -273,7 +277,9 @@ function ui(){let h='';PZ=0;
  <div class="card row" style="align-items:center;flex-wrap:nowrap">${figurMini(k.f,90)}<div><h1 style="margin:0">Hallo ${esc(k.name)}!</h1><p class="small" style="margin:4px 0 0">${n?`Löse ${n} Aufgabe${n>1?'n':''} richtig, dann darfst du dir dein Fohlen aussuchen.`:'Du darfst dir jetzt dein Fohlen aussuchen!'}</p></div></div>
  ${n?`<div class="bar" style="margin:6px 0"><b style="width:${(FOHLEN-n)/FOHLEN*100}%"></b></div>`:`<button class="go" onclick="v='choose';ui();scrollTo(0,0)">Fohlen aussuchen</button>`}
  <h2 id="themen">Thema wählen</h2>${themen(k)}`}
- if(v=='kid'&&kid().h){let k=kid(),st=stg(k),nx=GS[st+1],se=serie(k),pr=nx?se/TAGE[st]*100:100,rest=Math.max(1,Math.ceil((limS(k)-zeit(k))/60));
+ // Kind mit Pferd: Ansichten B und C (seit 2026-10-26, menue.js), sonst A "Pferdehof" (alles auf einer Seite, Holz-Optik per CSS)
+ if(v=='kid'&&kid().h&&(S.an=='b'||S.an=='c'))h=kindMenue(kid());
+ else if(v=='kid'&&kid().h){let k=kid(),st=stg(k),nx=GS[st+1],se=serie(k),pr=nx?se/TAGE[st]*100:100,rest=Math.max(1,Math.ceil((limS(k)-zeit(k))/60));
  h=`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button><button class="alt" onclick="figurEdit()">Figur</button><button class="alt" onclick="snd()" aria-pressed="${S.snd!==0}">Ton: ${S.snd===0?'aus':'an'}</button></div>
  ${k.f?'':`<div class="card row sp" style="margin-top:8px"><span><b>Neu!</b> Erstelle deine eigene Figur. Sie steht dann auf deinem Hof.</span><button class="go" onclick="figurEdit()">Figur erstellen</button></div>`}${wartetHinweis(k)}${besuchKarte(k)}<p class="small" style="margin:8px 0 0">${k.hl?'Tippe oben auf dein Pferd, um es zu streicheln.</p>'+SPERRINFO:`Tippe oben auf dein Pferd, um es zu streicheln. Probier auch Apfelbaum, Windrad und Teich aus, wenn du sie gebaut hast.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button><button class="alt" onclick="v='einladen';note='';ui();scrollTo(0,0)">Freundin einladen</button></div>`}${fuehrKnopf(k)}<div class="row sp"><h1>${esc(k.h.name)} <span class="small">${GS[st].n} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}${k.hu?` · ${k.hu}${k.hu>=huMax(k)?' (voll)':''} ${HU}`:''}</span></div>
  <div class="bar" style="margin:6px 0"><b style="width:${pr}%"></b></div><p class="small">${nx?`Tag ${se} von ${TAGE[st]} bis „${nx.n}“ · ${heute(k)?'heute schon gerechnet':'rechne heute eine Runde, damit der Tag zählt'}`:'Dein Pferd ist ausgewachsen!'}</p>
@@ -344,7 +350,7 @@ function ui(){let h='';PZ=0;
  if(v=='done'){let k=kid(),fw=!k.h&&k.r>=FOHLEN,neuE=!Q.ende;Q.ende=1;ANI={konfetti:neuE&&Q.right==10};h=`<h1>Geschafft!</h1><div class="card">${k.h?scene(k):`<div style="text-align:center">${figurMini(k.f,120)}</div>`}`+
  (k.h?'':fw?`<p class="ok"><b>Super, ${FOHLEN} Aufgaben richtig! Jetzt darfst du dir dein Fohlen aussuchen.</b></p>`:`<p class="small">Noch ${FOHLEN-k.r} richtige Aufgabe${FOHLEN-k.r>1?'n':''} bis zu deinem Fohlen.</p>`)+`<p><b>${Q.right} von 10</b> richtig, <b>+${Q.gain} Erfahrung</b> und <b class="ap">+${Q.ap} ${AP}</b>${Q.hu?` und <b class="ap">+1 Hufeisen ${HU}</b>`:''}${Q.huvoll?` <span class="small">(Dein Hufeisen-Vorrat ist voll: ${huMax(k)})</span>`:''}.</p>${Q.grow?`<p class="ok${neuE?' pop':''}"><b>${esc(k.h.name)} ist jetzt ein ${Q.grow}!</b></p>`:''}${Q.tg?`<p class="small">${Q.tg}</p>`:''}${Q.frei?`<p class="ok"><b>Super! Der Hof ist wieder offen.</b></p>`:''}${Q.zu?`<p class="no">Für den Hof brauchst du mindestens ${FREI} von 10 richtig. Versuch es gleich noch einmal! Du kannst jedes Thema nehmen.</p>`:''}${knobelZu(k,Q.key)?`<p class="no">${KNHINWEIS}</p>`:''}${Q.knzu?`<p class="no">Für das Knobeln brauchst du eine Runde Schulstoff mit mindestens ${FREI} von 10. Versuch es gleich noch einmal!</p>`:''}${Q.knfrei?`<p class="ok"><b>Super! Knobeln ist wieder frei.</b></p>`:''}${Q.mast?`<p class="ok"><b>${Q.mast} Aufgabe${Q.mast>1?'n':''} aus dem Fehlerheft gemeistert!</b></p>`:''}${Q.newb.map((b,i)=>`<span class="badge${neuE?' pop':''}" style="animation-delay:${.3+i*.2}s">Neues Abzeichen: ${b}</span>`).join('')}</div>`+
  (ausZeit(k)?(rf=>`<div class="card" id="limit"><b>Für heute ist Schluss.</b><p>Deine ${limM(k)} Minuten auf dem Hof sind um. Morgen geht es weiter${k.h?`, ${esc(k.h.name)} wartet auf dich`:''}!</p></div>${rf}<button class="${rf.includes('reinfrage')?'alt':'go'}" onclick="v='home';ui()">${rf.includes('reinfrage')?'Nein, tschüss':'Tschüss, bis morgen'}</button>`)(reinFrage(k)):
- `<div class="row">${fw?`<button class="go" onclick="v='choose';ui();scrollTo(0,0)">Fohlen aussuchen</button>`:''}${knobelZu(k,Q.key)?`<button class="go" onclick="andersThema()">Schulstoff wählen</button>`:`<button class="${fw?'alt':'go'}" onclick="start('${Q.key}')">Nochmal</button>${Q.zu?'':`<button class="alt" onclick="andersThema()">Anderes Thema</button>`}`}<button class="alt" onclick="v='kid';ui()">Zurück zum Hof</button></div>`+
+ `<div class="row">${fw?`<button class="go" onclick="v='choose';ui();scrollTo(0,0)">Fohlen aussuchen</button>`:''}${knobelZu(k,Q.key)?`<button class="go" onclick="andersThema()">Schulstoff wählen</button>`:`<button class="${fw?'alt':'go'}" onclick="start('${Q.key}')">Nochmal</button>${Q.zu?'':`<button class="alt" onclick="andersThema()">Anderes Thema</button>`}`}<button class="alt" onclick="KT='';v='kid';ui();scrollTo(0,0)">Zurück zum Hof</button></div>`+
  // Hof noch gesperrt: alle Themen direkt zur Auswahl
  (Q.zu?`<h2>Anderes Thema wählen</h2>${themen(k)}`:''))}
  if(v=='train')h=trSeite();
@@ -387,6 +393,10 @@ function ui(){let h='';PZ=0;
  <p class="small">Ein Thema wechselt hoch nach 3 richtigen Antworten in Folge und runter nach 2 falschen.</p><div class="row"><button class="alt" onclick="rst(${k.id})">Fortschritt zurücksetzen</button><button class="alt" onclick="del(${k.id})">Kind löschen</button></div></div>`).join('')||'<p>Noch keine Kinder angelegt.</p>';
  h+=`<div class="card"><b>Spielzeit und Wachstum</b><p class="small">Jedes Kind kann standardmäßig ${LIMIN} Minuten pro Tag auf den Hof. Bei jedem Kind lässt sich die Zeit im 5-Minuten-Raster ändern (5 bis ${LIMMAX} Minuten oder kein Limit). Eine laufende Runde wird nicht unterbrochen. Das Pferd wächst mit Tagen, an denen mindestens eine Runde gerechnet wurde (einmal pro Tag): Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten.</p><p class="small">Knobeln (Mathe-Olympiade und Sudoku) geht höchstens ${KNMAX} Runden am Stück. Danach muss erst eine Runde Schulstoff mit mindestens ${FREI} von 10 geschafft werden.</p></div><div class="card"><b>Anzeige</b><p class="small">Der animierte Hintergrund kann ruhig gestellt werden, zum Beispiel bei älteren Geräten oder um den Akku zu schonen. Dann stehen die Pferde still.</p><button class="alt" onclick="S.calm=S.calm?0:1;save();ui()">Ruhiger Hintergrund: ${S.calm?'an':'aus'}</button></div><div class="card"><b>Sicherung</b><p class="small">Der Stand liegt nur in diesem Browser. Exportiere ihn regelmäßig als Datei, besonders vor dem Löschen von Browserdaten oder bei einem Gerätewechsel.</p><div class="row"><button onclick="exp()">Exportieren</button><input type="file" accept=".json" onchange="imp(this)" aria-label="Sicherung importieren"></div><p class="no">${warn}</p></div>
  <div class="card"><b>PIN-Schutz</b>${S.pin?`<p class="small">Diese Ansicht ist mit einer PIN geschützt. Ohne PIN heißt sie „Einstellungen“ und ist für alle offen, zum Beispiel auf dem eigenen Handy eines Kindes.</p><button class="alt" onclick="npin()">PIN entfernen</button>`:`<p class="small">Ohne PIN kann jeder hier die Klasse ändern, Fortschritt zurücksetzen und Kinder löschen. Mit einer PIN (mindestens 4 Zeichen) wird daraus die geschützte Eltern-Ansicht.</p><input id="pin1" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp('pin1')"> <button onclick="sp('pin1')">PIN festlegen</button>`}<p class="no">${pw}</p></div>`+(S.pin?`<button class="alt" onclick="lock()">Sperren</button> `:'')+`<button class="alt" onclick="infoAuf()">So funktioniert die App</button>`}}
+ // Ansicht C: Leiste unten (vor der Fußzeile, damit der Vermerk das letzte Element bleibt)
+ const ml=leisteZeigen();if(ml)h+=leisteHtml();document.body.classList.toggle('mitleiste',ml);
+ // Ansicht A "Pferdehof": Holz-Optik auf Startseite, Kind-Ansicht (mit Themen) und Rundenende
+ document.body.classList.toggle('holz',!mAn()&&(v=='home'||v=='kid'||v=='done'));
  $('#app').innerHTML='<div class="in">'+h+`<p class="small copyright">${COPY}</p>`+'</div>';if(v!='kid'&&v!='wish'&&v!='rassen')countdown(0);hofSync();d3Sync();trSync();nachZeichnen();itBilder();setTimeout(()=>{let a=$('#ans')||$('#pin')||$('#hn')||$('#pin0');a&&(v!='home'||a.id=='pin0')&&a.focus({preventScroll:a.id=='hn'})})}
 // ---------- Besuch per Code (seit 2026-10-20, siehe Notiz "Ideen Besuch per Code") ----------
 // Ein Kind lädt eine Freundin ein: Link mit QR-Code (qr.js). Hinter "#b=" stehen nur Vorname, Pferdename und das Aussehen von Pferd
@@ -467,9 +477,13 @@ function d3Sync(){const el=$('#d3');
 // Auf der Startseite (nicht beim Einrichten, dort ist die PIN schon eingegeben): ab dem zweiten Kind mit Eltern-PIN (seit 2026-10-24).
 // NKN/NKG/NKW: eingegebener Name, Klasse und Hinweis bleiben bei falscher PIN stehen.
 const nkPin=()=>!!S.pin&&S.kids.length>0&&v=='home'&&!EIN;
+// Karte "Neues Kind" auf der Startseite (seit 2026-10-26 eigene Funktion, auch für die Ansichten in menue.js). zu = PIN-Sperre läuft.
+// Gibt es schon ein Kind und ist eine PIN gesetzt, muss ein Elternteil mit der PIN bestätigen (seit 2026-10-24)
+const nkKarte=zu=>`<div class="card"><b>Neues Kind</b><div class="row"><input id="nm" placeholder="Name" maxlength="20" aria-label="Name" value="${esc(NKN)}"><select id="gr" aria-label="Klasse">${KL.map(c=>`<option value="${c}"${NKG==c?' selected':''}>Klasse ${c}</option>`).join('')}</select>${nkPin()?'':'<button onclick="add()">Hinzufügen</button>'}</div>`+
+ (nkPin()&&zu?`<p class="small">Neue Kinder lassen sich ab ${pinUhr()} Uhr wieder anlegen.</p>`:nkPin()?`<p class="small">Ein weiteres Kind muss ein Elternteil mit der PIN bestätigen.</p><div class="row"><input id="nkpin" type="password" inputmode="numeric" maxlength="8" placeholder="Eltern-PIN" aria-label="Eltern-PIN" onkeydown="if(event.key=='Enter')add()"><button onclick="add()">Hinzufügen</button></div>`:'')+`<p class="no">${NKW}</p></div>`;
 function add(){let n=$('#nm').value.trim();if(!n)return $('#nm').focus();
  if(nkPin()){const p=($('#nkpin')||{}).value||'',r=p||pinZu()?pinPruef(p):'Bitte gib die Eltern-PIN ein.';if(r!==true){NKN=n;NKG=+$('#gr').value;NKW=r;ui();NKW='';const f=$('#nkpin');if(f)f.focus();return}}
- NKN='';NKG=5;S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,gpa:1,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},neu:1});save();ui()}
+ NKN='';NKG=5;NKAUF=0;S.kids.push({id:Math.max(Date.now(),...S.kids.map(k=>k.id+1)),name:n,g:+$('#gr').value,gpa:1,xp:0,st:0,sd:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},neu:1});save();ui()}
 // PIN festlegen: ohne id beim ersten Start (Feld pin0), mit id='pin1' nachträglich in den Einstellungen
 function sp(id){let el=$('#'+(id||'pin0')),p=el?el.value.trim():'',m='Die PIN braucht mindestens 4 Zeichen.';if(p.length<4){if(id){pw=m;ui();pw=''}else{warn=m;ui();warn=''}return}S.pin=pinHash(p);delete S.np;delete S.pf;delete S.ps;S.mo='e';if(id)open=true;save();ui()}
 function nopin(){S.np=1;S.mo='k';save();ui()}
@@ -515,7 +529,7 @@ function einKind(){
 function einFertig(){EIN='';einWeiter()}
 function einWeiter(){v=BES?'besuch':'home';ui();scrollTo(0,0)}
 function sel(id){GPNOTE='';if(pinZu()){v='home';ui();return}// PIN-Sperre: kein Kind auf den Hof (seit 2026-10-24)
- cur=id;ZW=0;TRNOTE='';const k=kid();if(!k)return;if(!k.h&&!k.f)FE={...FIGUR0};v=ausZeit(k)?'bye':!k.h&&!k.f?'figur':'kid';ui();scrollTo(0,0)}
+ cur=id;ZW=0;TRNOTE='';KT='';const k=kid();if(!k)return;if(!k.h&&!k.f)FE={...FIGUR0};v=ausZeit(k)?'bye':!k.h&&!k.f?'figur':'kid';ui();scrollTo(0,0)}
 // Figur: Entwurf FE bearbeiten und übernehmen
 let FE={...FIGUR0};
 function figurEdit(){FE={...FIGUR0,...(kid().f||{})};note='';v='figur';ui();scrollTo(0,0)}
@@ -559,7 +573,8 @@ const wdhListe=k=>{const da=new Set(T[k.g].map(t=>t[0]));return frueher(k).map(g
 // Hinweis (seit 2026-10-25): Themen früherer Klassen, die es auch in der eigenen Klasse gibt (z. B. das Einmaleins in Klasse 4 und 5), stehen nur oben
 const wdhOben=k=>{const L=[...new Set(frueher(k).flatMap(g=>KAT[g].schul).filter(x=>KAT[k.g].schul.includes(x)))].map(x=>`„${THEMA[x][1]}“`);
  return L.length?(L.length>1?` Die Themen ${undListe(L)} stehen`:` Das Thema ${L[0]} steht`)+' oben bei deinem Schulstoff.':''};
-function themen(k){const K=KAT[k.g],fr=frueher(k),kz=(k.kn||0)>=KNMAX;
+function themen(k){if(S.an=='b')return themenB(k);if(S.an=='c')return themenC(k);// Ansichten B und C (seit 2026-10-26, menue.js)
+ const K=KAT[k.g],fr=frueher(k),kz=(k.kn||0)>=KNMAX;
  return`<h3 class="kat">Schulstoff Klasse ${k.g}</h3>${K.schul.map(x=>themaKnopf(k,x)).join('')}<h3 class="kat">Mathe-Olympiade & Knobeln</h3>${kz?`<p class="small knsperre">${KNHINWEIS}</p>`:''}${K.oly.map(x=>themaKnopf(k,x)).join('')}<h3 class="kat">Sudoku</h3>${K.sud.map(x=>themaKnopf(k,x)).join('')}`+
   (fr.length?`<details class="wdh"><summary>Wiederholen: Klasse ${undListe(fr)}</summary><p class="small">Bei Themen früherer Klassen gibt es weniger Äpfel: auf Stufe 4 und 5 nur 1 statt 2.${wdhOben(k)}</p>${wdhListe(k).map(([g,L])=>`<h3 class="kat">Schulstoff Klasse ${g}</h3>${L.map(x=>themaKnopf(k,x)).join('')}`).join('')}</details>`:'')}
 // Themen für die Eltern-Ansicht: eigene Klasse und wiederholte Themen früherer Klassen, die schon geübt wurden
@@ -591,12 +606,14 @@ function countdown(n){let el=document.getElementById('sperre');if(!n){if(el)el.h
  el.hidden=false;el.innerHTML=`Gleich wird wieder gerechnet … <b>${n}</b>`}
 const SPERRINFO=`<div class="card" id="sperrinfo"><b>Zeit zum Rechnen!</b><p>Du warst 3 Minuten auf dem Hof. Löse jetzt eine Runde mit mindestens ${FREI} von 10 richtig, dann ist der Hof wieder offen.</p><p class="small" style="margin-bottom:0">Such dir unten ein beliebiges Thema aus.</p></div>`;
 // Zu den Themen in der Kind-Ansicht springen
-function andersThema(){v='kid';ui();const e=$('#themen');if(e)e.scrollIntoView();else scrollTo(0,0)}
+// Ansichten B und C (menue.js): Die Themen haben dort eine eigene Seite
+function andersThema(){v='kid';if((S.an=='b'||S.an=='c')&&kid()&&kid().h){KT='themen';ui();scrollTo(0,0);return}ui();const e=$('#themen');if(e)e.scrollIntoView();else scrollTo(0,0)}
 // 3 Minuten Hof sind um: Rundflug beenden, zurück zur Kind-Ansicht, Hof sperren
-function sperren(k){k.hl=1;k.hz=0;countdown(0);if(HF.mode=='fly')flyOff();if(v=='wish'||v=='rassen'||v=='einladen')v='kid';save();ui();scrollTo(0,0)}
+// Ansichten B und C: von Training, Pflege und Abzeichen zurück zur Übersicht (dort steht der Hinweis), die Themenseite bleibt offen
+function sperren(k){k.hl=1;k.hz=0;countdown(0);if(HF.mode=='fly')flyOff();if(v=='wish'||v=='rassen'||v=='einladen')v='kid';if(KT&&KT!='themen')KT='';save();ui();scrollTo(0,0)}
 // Beim Verlassen nur speichern, wenn gerade Zeit gezählt wurde (sonst könnte ein frisch gelöschter oder importierter Stand überschrieben werden)
 document.addEventListener('visibilitychange',()=>{ZL=Date.now();if(document.visibilityState=='hidden'&&cur&&kid()&&ZV.includes(v))save()});
-function mk(){let k=kid();if(ZW)return mk2();k.h={coat:CH,coats:[CH],name:($('#hn').value.trim()||'Fohlen'),own:{},bl:0,so:0};save();v='kid';ui()}
+function mk(){let k=kid();if(ZW)return mk2();k.h={coat:CH,coats:[CH],name:($('#hn').value.trim()||'Fohlen'),own:{},bl:0,so:0};save();KT='';v='kid';ui()}// KT: Ansichten B und C beginnen mit der Übersicht
 // ---------- Zweites Pferd (seit 2026-10-19) ----------
 // ZW: Fohlenwahl für das zweite Pferd läuft gerade
 let ZW=0;
@@ -606,7 +623,7 @@ function zweitWahl(){const k=kid();note='';if(k.h2)return;if(!ausgewachsen(k)){n
 // Der Hof (Gegenstände, Lieblingspferde, Koppeln) wandert zum neuen Fohlen.
 function mk2(){const k=kid(),a=hh(k);if(k.h2||!ausgewachsen(k)||(k.ap||0)<ZWEIT){ZW=0;v='wish';ui();return}
  k.ap-=ZWEIT;const n={coat:CH,coats:[CH],name:($('#hn').value.trim()||'Fohlen'),own:{},bl:0,so:0,it:a.it,lp:a.lp,ko:a.ko};
- delete a.it;delete a.lp;delete a.ko;a.st=stg(k);a.sd=k.sd||0;k.h2=a;k.h=n;k.st=0;k.sd=0;ZW=0;save();v='kid';ui();scrollTo(0,0)}
+ delete a.it;delete a.lp;delete a.ko;a.st=stg(k);a.sd=k.sd||0;k.h2=a;k.h=n;k.st=0;k.sd=0;ZW=0;save();KT='';v='kid';ui();scrollTo(0,0)}
 // Umschalten: das andere Pferd rechnet ab jetzt mit. Stufe und gesammelte Tage gehören zum Pferd, der heute gezählte Tag (ld) zum Kind,
 // damit nicht durch Umschalten zwei Pferde am selben Tag wachsen.
 function wechsel(){const k=kid();if(!k||!k.h2)return;GPNOTE='';const a=hh(k),b=k.h2;

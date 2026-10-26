@@ -42,6 +42,7 @@ Die App ist ein privates Familienprojekt für Kinder der Klassen 4 bis 8 (Klasse
 - **Hof-Pause:** Nach 3 Minuten auf dem Hof (auch im Wunschbaum und im Rundflug) zählt ein Countdown 10 Sekunden herunter. Danach muss erst eine Runde mit mindestens 7 von 10 richtig geschafft werden, dann ist der Hof wieder offen.
 - **Besuch per Code:** Unter „Freundin einladen“ zeigt die App einen QR-Code und einen Link. Wer ihn öffnet, bekommt Pferd und Figur der Freundin als Besuch auf den eigenen Hof (höchstens 3, bis man sie verabschiedet). Im Code stehen nur Vorname, Pferdename und das Aussehen, hinter einem „#“, also nie auf einem Server. Der QR-Code wird in der App selbst erzeugt (`qr.js`), ohne fremde Bibliothek.
 - **3D-Ansicht:** Ab der Stufe „Jungpferd“ zeigen Kind-Ansicht und Wunschbaum es in einem kleinen 3D-Fenster, drehbar mit dem Finger. Fellfarbe, Abzeichen, Mähne und Zöpfe erscheinen dort sofort. Die 3D-Dateien (etwa 3,3 MB) werden erst beim ersten Öffnen geladen und danach offline gespeichert.
+- **Ansicht wählen (seit 2026-10-26):** Der Knopf „Ansicht“ auf der Startseite stellt um, wie Startseite, Hof und Themenwahl aussehen: „Pferdehof“ (Standard: Holzschilder wie im Reitstall, Kinder an Boxentüren, Stufe als Hufeisen, alles auf einer Seite), „Bunte Kacheln“ (große Bildkacheln, eigene Seiten für Rechnen, Training, Pflege und Abzeichen, Stufe als Ring) oder „Turniermodus“ (Leiste unten mit Hof, Rechnen, Wunschbaum und Pflege, Startnummern, Stufen als Sterne). Die Wahl gilt für das ganze Gerät.
 - **Eltern-Ansicht** mit Statistik, Einstellungen und Sicherung (Export und Import). Beim ersten Start wählbar: mit PIN geschützt oder ohne PIN als offene „Einstellungen“, zum Beispiel auf dem eigenen Handy eines Kindes. Lässt sich später im Kasten „PIN-Schutz“ umstellen.
 - Funktioniert ohne Konto und ohne Internetverbindung, sobald die App geladen und als App installiert ist.
 
@@ -93,6 +94,7 @@ Dann `http://localhost:3000` öffnen. Auf `localhost` lässt sich die App auch a
 | `app.js` | Spiellogik, Oberfläche, Speicher, Eltern-Ansicht, Pferd-Zeichnung |
 | `training.js` | Training des Pferds: Regeln, Sterne, Hufeisen, Longieren als Minispiel |
 | `pflege.js` | Gesundheit und Pflege: Putzen, Tierarzt, Hufschmied (Regeln und Animationen auf dem Hof) |
+| `menue.js` | Ansichten „Bunte Kacheln“ und „Turniermodus“ für Startseite, Kind-Ansicht und Themenwahl, Auswahlseite „Ansicht“ (die Holz-Optik von „Pferdehof“ steht in `style.css`) |
 | `manifest.webmanifest` | Angaben für die Installation als App |
 | `sw.js` | Service Worker für die Offline-Nutzung |
 | `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | App-Symbole |

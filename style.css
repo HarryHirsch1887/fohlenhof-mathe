@@ -168,3 +168,79 @@ button.big:disabled{opacity:.5}
 details.ndl{margin:6px 0}details.ndl summary{cursor:pointer;font-size:15px}.ndz{display:block;margin:4px 0;font-size:15px}.ndz input{width:auto;min-height:0;margin-right:6px}
 /* Gesundheit und Pflege (seit 2026-10-25, pflege.js): Glücks-Hufeisen erscheint nach dem ersten Hufschmied */
 @keyframes gpEin{from{opacity:0}to{opacity:1}}#hof .glueck.neu{animation:gpEin 1.2s ease-out}.gpk button{margin-top:6px}
+/* Ansichten "Bunte Kacheln" (B) und "Turnier" (C), seit 2026-10-26 (menue.js). Klassen mit m vorn, damit nichts mit dem Rest kollidiert. */
+/* --mgrau: Beschriftung der Leiste (C), --mleer: leere Sterne, --mgold: volle Sterne, --mon: aktiver Knopf der Leiste */
+:root{--mrand:#eadfc6;--mgrau:#5f6155;--mleer:#a3a596;--mgold:#c08a10;--mon:#b0412f}
+@media(prefers-color-scheme:dark){:root{--mrand:#3f5a40;--mgrau:#b6c2ae;--mleer:#6e8269;--mgold:#e8b84e;--mon:#f0b44a}}
+button.mk{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:8px 0;padding:10px 12px;color:var(--ink);background:var(--card);border:0;font-weight:400}
+.mwt{flex:1;min-width:0}
+/* Auswahlseite */
+button.mwahl{justify-content:flex-start;gap:14px;padding:10px 12px}button.mwahl.on{border:2px solid var(--bar)}.mvor{flex:none;line-height:0}
+.mlinks{justify-content:center;margin-top:16px}.mlinks button{padding:7px 13px;font-size:15px}
+/* B: Kinder auf der Startseite, Kopf der Kind-Ansicht */
+button.mkind{border-radius:18px;box-shadow:0 3px 10px #0002}button.mkind b{font-size:18px}
+.mbild{width:76px;height:70px;border-radius:16px;display:grid;place-items:center;overflow:hidden;flex:none}.mbild svg{display:block}
+.mkopf{display:flex;align-items:center;gap:10px;margin:10px 0 2px}.mkopf b{font-size:19px}
+.mava{width:56px;height:56px;border-radius:50%;background:var(--card);box-shadow:0 2px 6px #0002;display:grid;place-items:end center;overflow:hidden;flex:none}.mava svg{display:block}
+.mkt{flex:1;min-width:0;line-height:1.3}
+/* B: Kacheln (helle Farben mit dunkler Schrift, auch im dunklen Modus) */
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+button.mkach{margin:0;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:6px;min-height:96px;border-radius:16px;color:#26331f;font-weight:700;font-size:15px;line-height:1.25;box-shadow:0 3px 0 #0001,0 4px 10px #0001}
+button.mkach .ms{display:block;font-weight:400;font-size:12.5px;opacity:.8;margin-top:3px}button.mkach .ms.mwarn{color:#a3271a;font-weight:700;opacity:1}
+button.mkach.breit{grid-column:1/-1;flex-direction:row;justify-content:flex-start;align-items:center;gap:14px;min-height:76px;font-size:21px}
+button.mf1{background:#ffe9a8}button.mf2{background:#d7efc6}button.mf3{background:#cfe6f6}button.mf4{background:#f6d6d0}button.mf5{background:#e7dcf6}button.mf6{background:#fdf0d6}button.mfg{background:linear-gradient(135deg,#e2b24a,#f3cf7a)}
+/* B: Umschalter und Themen mit Ring */
+.mseg{display:flex;background:var(--line);border-radius:12px;padding:3px;margin:8px 0 10px}
+.mseg button{flex:1;background:transparent;color:var(--ink);padding:8px 4px;border-radius:9px;font-size:15px;font-weight:700}
+.mseg button.on{background:var(--card);box-shadow:0 1px 4px #0002}
+button.mtile{border:1px solid var(--line);border-radius:14px;padding:8px 12px;margin:7px 0;font-weight:700;box-shadow:0 2px 6px #0001}
+.mring{width:38px;height:38px;flex:none}.mring .rg0{stroke:var(--line)}.mring text{fill:var(--ink)}
+/* C: Startnummern, Karten mit Rosette, großer Knopf, kleine Kacheln */
+button.mnr{border:2px solid var(--mrand);border-radius:14px}button.mnr b{font-size:18px}
+.mnr .nr{width:54px;height:46px;border-radius:6px;background:#fff;color:#26331f;border:3px solid #26331f;display:grid;place-items:center;font:800 21px "Trebuchet MS",sans-serif;flex:none;box-shadow:2px 2px 0 #b0412f}
+button.mros{border:2px solid var(--mrand);border-radius:16px;font-size:17px}button.mros.mwarnk{border-color:#e2b24a}button.mros svg{flex:none}
+button.mcta{justify-content:center;gap:10px;margin:14px 0 10px;padding:15px;border-radius:30px;background:var(--bar);color:#fff;font-weight:800;font-size:20px;box-shadow:0 4px 0 #7a2a1e}
+.mmini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.mmini button.mk{flex-direction:column;justify-content:center;gap:2px;margin:0;padding:8px 4px;text-align:center;border:2px solid var(--mrand);border-radius:14px;font-size:13px;font-weight:700;line-height:1.2}
+/* C: Themen mit Bändern und Sternen */
+h3.mband{display:inline-block;padding:3px 18px 3px 9px;border-radius:4px;color:#fff;font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin:16px 0 2px;clip-path:polygon(0 0,100% 0,calc(100% - 9px) 50%,100% 100%,0 100%)}
+button.mzeile{justify-content:space-between;margin:0;padding:12px 4px;border-radius:0;background:transparent;border-bottom:1px solid var(--line);font-weight:700;font-size:16px}
+.msterne{color:var(--mgold);letter-spacing:1px;white-space:nowrap;font-size:16px}.msterne i{font-style:normal;color:var(--mleer)}
+/* C: Leiste unten (fest), Platz für sie unter dem Inhalt, Countdown darüber */
+.mleiste{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;justify-content:center;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 12px #0001;padding:4px 0 calc(4px + env(safe-area-inset-bottom,0px))}
+.mleiste button{flex:1;max-width:150px;display:flex;flex-direction:column;align-items:center;gap:1px;background:none;color:var(--mgrau);font-size:11.5px;font-weight:700;padding:4px 2px;border-radius:0}
+.mleiste button.on{color:var(--mon)}.mleiste button:disabled{opacity:.4}
+body.mitleiste main{padding-bottom:100px}body.mitleiste #sperre{bottom:84px}
+/* Ansicht A "Pferdehof" (seit 2026-10-26, Standard): Holzschilder auf Startseite, Kind-Ansicht und Rundenende (body.holz, gesetzt in ui()).
+   Nur Aussehen, der Aufbau der Seiten bleibt. Knöpfe sind Bretter (dunkles Holz), .alt helles Holz, .go goldenes Brett, breite Knöpfe mit zwei Nägeln. */
+/* --gr und --bar dunkler (hell) bzw. heller (dunkel), damit grüne und rote Hinweise auf dem Holzgrund gut lesbar bleiben */
+body.holz{--bg:#eadcc0;--ink:#3b2414;--card:#f8efdc;--line:#cdb48a;--gr:#3b6e37;--bar:#9a3424}
+body.holz main{background:linear-gradient(#efe4cf,#e3d1ae)}
+@media(prefers-color-scheme:dark){body.holz{--bg:#251c14;--ink:#f1e3c8;--card:#35281c;--line:#5c4630;--gr:#8cc47c;--bar:#f08a74}body.holz main{background:linear-gradient(#2a2017,#1f1812)}}
+body.holz main button{border:0;border-radius:8px;font-weight:700;color:#fff8e8;text-shadow:0 1px 0 #3b2414;
+ background:repeating-linear-gradient(90deg,#8a5a32 0 3px,#93623a 3px 7px,#8a5a32 7px 12px),#8a5a32;box-shadow:inset 0 2px 0 #b5835a,inset 0 -3px 0 #5e3d22,0 3px 0 #4a2f1a}
+body.holz main button.alt{color:#3b2414;text-shadow:0 1px 0 #f3e2c0;background:repeating-linear-gradient(90deg,#d8b585 0 3px,#dfbe90 3px 7px,#d8b585 7px 12px),#d8b585;box-shadow:inset 0 2px 0 #f0d6ac,inset 0 -3px 0 #a9824f,0 3px 0 #7d5c34}
+body.holz main button.go{color:#3b2414;text-shadow:0 1px 0 #f7e2a6;background:repeating-linear-gradient(90deg,#d9a73c 0 3px,#e2b24a 3px 7px,#d9a73c 7px 12px),#e2b24a;box-shadow:inset 0 2px 0 #f3cf7a,inset 0 -3px 0 #a87b22,0 3px 0 #7a5716}
+body.holz main button.big{position:relative;padding:12px 24px;margin:9px 0}
+body.holz main button.big::before,body.holz main button.big::after{content:"";position:absolute;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:#d9c7a3;box-shadow:inset -1px -1px 0 #7a6a50}
+body.holz main button.big::before{left:8px}body.holz main button.big::after{right:8px}
+body.holz main button.big .small{opacity:.92}body.holz main button:disabled{opacity:.55}
+/* Ausnahmen: verstecktes "i" der PIN-Seiten bleibt rund, die Karte der PIN-Sperre behält ihren roten Rand */
+body.holz main button.pini{border-radius:50%}body.holz .card.pinzu{border-color:#c0392b}
+/* Stufe als Hufeisen statt Punkte */
+body.holz .dots i{width:12px;height:11px;border-radius:6px 6px 0 0;background:none;border:2.5px solid #c9bfa8;border-bottom:0;margin-left:3px}
+body.holz .dots i.on{border-color:#e2b24a}
+/* Überschriften der Themengruppen mit gestrichelter Holzleiste */
+/* Kapitälchen statt Großbuchstaben: der Text bleibt normal geschrieben (Vorlesen, angezeigter Text) */
+body.holz h3.kat{font:700 15px Georgia,serif;font-variant:small-caps;letter-spacing:.05em;color:#6b4423;margin:18px 0 4px;display:flex;align-items:center;gap:8px}
+body.holz h3.kat::after{content:"";flex:1;height:2px;background:repeating-linear-gradient(90deg,#8a5a32 0 6px,transparent 6px 10px)}
+body.holz .card,body.holz details.wdh{border:2px solid #b5835a;border-radius:10px}
+body.holz input,body.holz select{border-color:#b5835a}
+@media(prefers-color-scheme:dark){body.holz h3.kat{color:#dcc092}body.holz h3.kat::after{background:repeating-linear-gradient(90deg,#b5835a 0 6px,transparent 6px 10px)}body.holz .card,body.holz details.wdh{border-color:#6e5136}}
+/* Startseite: Boxentür (Stroh, Pferd schaut heraus) und Namensschild */
+body.holz main button.big.hbox{justify-content:flex-start;gap:12px;padding:9px 24px 9px 20px}
+.htuer{width:66px;height:60px;flex:none;border-radius:6px;background:linear-gradient(#efdcaa,#d9bf80);border:4px solid #5e3d22;box-shadow:inset 0 0 0 1px #3b2414;display:grid;place-items:end center;overflow:hidden}
+.htuer svg{display:block;width:62px;height:auto;max-height:58px}
+.hschild{flex:1;min-width:0;background:#f5e7c8;color:#3b2414;text-shadow:none;border-radius:6px;padding:4px 10px;box-shadow:inset 0 0 0 2px #b5835a;font-weight:400;line-height:1.3}
+.hschild b{display:block;font:700 18px Georgia,"Palatino Linotype",serif}.hschild .small{display:block}
+.hbox .ap{flex:none}

@@ -59,7 +59,7 @@ function gpTeil(k){const H=hh(k),st=stg(k),n=esc(H.name),zu=k.hl,lauf=gpLaeuft()
  else h+=gpKarte(k,H,'t')+gpKarte(k,H,'s');
  // Zweites Pferd: Hinweis, wenn dort etwas fällig ist (gepflegt und versorgt wird das Pferd, das gerade mit dir rechnet)
  if(P2&&(P2.st||0)>=1){const f=['t','s'].filter(a=>gpStand(P2,a).faellig).map(a=>a=='t'?'der Tierarzt':'der Hufschmied');
-  if(f.length)h+=`<p class="small">Bei ${esc(P2.name)} ${f.length>1?'sind':'ist'} ${f.join(' und ')} fällig. Wechsle oben zu ${esc(P2.name)}, um ${f.length>1?'sie':'ihn'} zu rufen.</p>`}
+  if(f.length)h+=`<p class="small">Bei ${esc(P2.name)} ${f.length>1?'sind':'ist'} ${f.join(' und ')} fällig. Wechsle mit „Mit ${esc(P2.name)} rechnen“ zu ${esc(P2.name)}, um ${f.length>1?'sie':'ihn'} zu rufen.</p>`}// Knopf-Name statt "oben": passt auch zu den Ansichten B und C
  return h+(zu?`<p class="small">Pflege, Tierarzt und Hufschmied gehen wieder, wenn du eine Runde mit mindestens ${FREI} von 10 richtig geschafft hast.</p>`:'')}
 function gpKarte(k,H,art){const S=gpStand(H,art),ta=art=='t',preis=ta?TAPREIS:SCHPREIS,titel=ta?'Tierarzt':'Hufschmied',
  was=ta?'Kontrolle beim Tierarzt':stg(k)<2?'Hufe ausschneiden':'Hufe neu beschlagen',zu=k.hl,lauf=gpLaeuft();
