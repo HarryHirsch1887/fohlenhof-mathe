@@ -18,9 +18,11 @@ const LIMIT=30*60;// seit 2026-10-18 30 Minuten (vorher 20)
 const LIMIN=LIMIT/60;
 // Seit 2026-10-21 stellen Eltern das Tageslimit je Kind im 5-Minuten-Raster ein (k.lm in Minuten, 0 = kein Limit). Ohne Eintrag gilt der Standard LIMIT.
 const LIMMAX=180,limS=k=>k.lm==null?LIMIT:k.lm*60,limM=k=>limS(k)/60;
-// Hof-Sperre: Nach 3 Minuten auf dem Hof (Kind-Ansicht, Wunschbaum, Rundflug) läuft ein Countdown von 10 Sekunden,
-// danach muss erst wieder eine Runde mit mindestens 75 % (8 von 10) geschafft werden. Gespeichert: hz = Hofzeit in Sekunden, hl = gesperrt
+// Hof-Sperre: Nach der Hofzeit (Standard 3 Minuten) auf dem Hof (Kind-Ansicht, Wunschbaum, Rundflug) läuft ein Countdown von 10 Sekunden,
+// danach muss erst wieder eine Runde mit mindestens FREI von 10 geschafft werden. Gespeichert: hz = Hofzeit in Sekunden, hl = gesperrt
 const HOFZEIT=180,FREI=7;// FREI: seit 2026-10-18 reichen 7 von 10 (vorher 8)
+// Hofzeit je Kind (seit 2026-10-27, Brain Dump): Eltern stellen sie wie das Tageslimit ein, k.hm in Minuten aus HOFM. Ohne Eintrag gilt HOFZEIT.
+const HOFM=[3,4,5,6,7,8,9,10,15,20,25,30],HOFMAX=HOFM[HOFM.length-1]*60,hofS=k=>HOFM.includes(k.hm)?k.hm*60:HOFZEIT,hofM=k=>hofS(k)/60;
 // PIN-Sperre (seit 2026-10-24): nach PINMAX falschen PIN-Eingaben PINSPERRE Millisekunden gesperrt (hier oben, weil clean() sie beim Laden braucht)
 const PINMAX=3,PINSPERRE=36e5;
 // Neue Kinder erstellen zuerst ihre Figur (figur.js) und dürfen nach 5 richtigen Aufgaben ihr Fohlen aussuchen
@@ -127,7 +129,7 @@ function clean(d){
   const c={id:nn(k.id,1,Number.MAX_SAFE_INTEGER),name:ct(k.name,20)||'Kind',g:KL.includes(+k.g)?+k.g:5,xp:nn(k.xp),ap:nn(k.ap),s:nn(k.s),best:nn(k.best),total:nn(k.total),r:nn(k.r),perfect:nn(k.perfect),b:[],t:{},mist:[]};
   // st = Wachstumsstufe, sd = gesammelte Tage für die nächste Stufe, ld = letzter gezählter Tag, zd/zt = Spielzeit (Sekunden) an diesem Tag
   c.st=k.st==null?GS.reduce((a,g,i)=>c.xp>=g.x?i:a,0):nn(k.st,0,3);c.sd=nn(k.sd,0,999);c.zt=nn(k.zt,0,86400);
-  c.hz=nn(k.hz,0,HOFZEIT);if(k.hl)c.hl=1;
+  c.hz=nn(k.hz,0,HOFMAX);if(k.hl)c.hl=1;if(HOFM.includes(k.hm))c.hm=k.hm;// hm: Hofzeit in Minuten (seit 2026-10-27)
   if(typeof k.lm==='number'&&Number.isInteger(k.lm)&&k.lm>=0&&k.lm<=LIMMAX&&k.lm%5==0)c.lm=k.lm;// Tageslimit je Kind in Minuten, 0 = kein Limit
   // neu = 1: frisch angelegtes Kind, das noch keine Aufgabe begonnen hat (Tageslimit und Hofzeit zählen noch nicht, seit 2026-10-20)
   if(k.neu)c.neu=1;
@@ -285,7 +287,7 @@ function ui(){let h='';PZ=0;
  if(v=='kid'&&kid().h&&(S.an=='b'||S.an=='c'))h=kindMenue(kid());
  else if(v=='kid'&&kid().h){let k=kid(),st=stg(k),nx=GS[st+1],se=serie(k),pr=nx?se/TAGE[st]*100:100,rest=Math.max(1,Math.ceil((limS(k)-zeit(k))/60));
  h=`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button><button class="alt" onclick="figurEdit()">Figur</button><button class="alt" onclick="snd()" aria-pressed="${S.snd!==0}">Ton: ${S.snd===0?'aus':'an'}</button></div>
- ${k.f?'':`<div class="card row sp" style="margin-top:8px"><span><b>Neu!</b> Erstelle deine eigene Figur. Sie steht dann auf deinem Hof.</span><button class="go" onclick="figurEdit()">Figur erstellen</button></div>`}${wartetHinweis(k)}${besuchKarte(k)}<p class="small" style="margin:8px 0 0">${k.hl?'Tippe oben auf dein Pferd, um es zu streicheln.</p>'+SPERRINFO:`Tippe oben auf dein Pferd, um es zu streicheln. Probier auch Apfelbaum, Windrad und Teich aus, wenn du sie gebaut hast.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button><button class="alt" onclick="v='einladen';note='';ui();scrollTo(0,0)">Freundin einladen</button></div>`}${fuehrKnopf(k)}<div class="row sp"><h1>${esc(k.h.name)} <span class="small">${stufeN(st)} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}${k.hu?` · ${k.hu}${k.hu>=huMax(k)?' (voll)':''} ${HU}`:''}</span></div>
+ ${k.f?'':`<div class="card row sp" style="margin-top:8px"><span><b>Neu!</b> Erstelle deine eigene Figur. Sie steht dann auf deinem Hof.</span><button class="go" onclick="figurEdit()">Figur erstellen</button></div>`}${wartetHinweis(k)}${besuchKarte(k)}<p class="small" style="margin:8px 0 0">${k.hl?'Tippe oben auf dein Pferd, um es zu streicheln.</p>'+sperrInfo(k):`Tippe oben auf dein Pferd, um es zu streicheln. Probier auch Apfelbaum, Windrad und Teich aus, wenn du sie gebaut hast.</p><div class="row" style="margin:6px 0"><button class="alt" onclick="hofPet()">Pferd streicheln</button><button class="alt" onclick="flyOn()">Flug über den Hof</button><button class="alt" onclick="v='einladen';note='';ui();scrollTo(0,0)">Freundin einladen</button></div>`}${fuehrKnopf(k)}<div class="row sp"><h1>${esc(k.h.name)} <span class="small">${stufeN(st)} von ${esc(k.name)}</span></h1><span class="ap">${k.ap||0} ${AP}${k.hu?` · ${k.hu}${k.hu>=huMax(k)?' (voll)':''} ${HU}`:''}</span></div>
  <div class="bar" style="margin:6px 0"><b style="width:${pr}%"></b></div><p class="small">${nx?`Tag ${se} von ${TAGE[st]} bis „${nx.n}“ · ${heute(k)?'heute schon gerechnet':'rechne heute eine Runde, damit der Tag zählt'}`:'Dein Pferd ist ausgewachsen!'}</p>
  ${k.h2?`<div class="card row sp" style="align-items:center;padding:8px 12px"><span class="small">Dein zweites Pferd: <b>${esc(k.h2.name)}</b> (${stufeN(k.h2.st||0)})</span><button class="alt" onclick="wechsel()">Mit ${esc(k.h2.name)} rechnen</button></div>`:''}
  <p class="small">${limS(k)?`Noch ${rest} Minute${rest>1?'n':''} für heute · `:''}${k.xp} Erfahrung · Serie ${k.s} · Rekord ${k.best}${mcount(k)?` · Fehlerheft: ${mcount(k)} zum Wiederholen`:''}</p>
@@ -369,7 +371,7 @@ function ui(){let h='';PZ=0;
    `Im Training übt das Kind mit Aufgaben, die es schon einmal richtig gelöst hat.`,
    `Unter „Gesundheit und Pflege“ putzt das Kind sein Pferd (mit Pflegekiste, Halfter und Führstrick, höchstens ${PFLMAX}-mal am Tag, ein zweites Pferd wird gleich mitgeputzt) und ruft Tierarzt (alle ${TAZ} Tage mit Mathe, ${TAPREIS} Hufeisen) und Hufschmied (alle ${SCHZ} Tage, ${SCHPREIS} Hufeisen). Ist ein Besuch überfällig, gibt es kein Training. Hufeisen gibt es für gute Runden und Trainings-Sterne, nicht für Geld.`])+`</div>`+
   `<div class="card"><b>Was du als Elternteil im Griff hast</b><p class="small">In der Eltern-Ansicht, geschützt mit deiner PIN:</p>`+li([`Zeitlimit pro Kind und Tag: standardmäßig ${LIMIN} Minuten, einstellbar von 5 bis ${LIMMAX} Minuten oder ohne Limit. Eine laufende Runde wird nicht unterbrochen.`,
-   `Erst rechnen, dann spielen: Nach ${HOFZEIT/60} Minuten auf dem Hof braucht das Kind eine Runde mit mindestens ${FREI} von 10 richtig, bevor es weiterspielen kann.`,
+   `Erst rechnen, dann spielen: Nach ${HOFZEIT/60} Minuten auf dem Hof (Standard, einstellbar von ${HOFM[0]} bis ${HOFMAX/60} Minuten) braucht das Kind eine Runde mit mindestens ${FREI} von 10 richtig, bevor es weiterspielen kann.`,
    `Knobeln geht höchstens ${KNMAX} Runden am Stück. Danach ist erst wieder eine Runde Schulstoff mit mindestens ${FREI} von 10 dran.`,
    `Statistik für jedes Kind: je Thema Stufe, Anzahl der Aufgaben und Anteil richtig, dazu die offenen Aufgaben im Fehlerheft.`,
    `Schulstoff, der im Unterricht noch nicht dran war, nimmst du aus dem Training heraus. Üben kann das Kind ihn trotzdem.`,
@@ -388,10 +390,11 @@ function ui(){let h='';PZ=0;
  else if(S.pin&&!open)h+=`<div class="card pinkarte"><p>PIN eingeben:</p><input id="pin" type="password" inputmode="numeric" maxlength="8" aria-label="PIN" onkeydown="if(event.key=='Enter')unl()"> <button onclick="unl()">Öffnen</button><p class="no">${warn}</p>${pinI()}</div>`+pinResetKarte();
  else{h+=S.kids.map(k=>`<div class="card"><div class="row sp"><b>${esc(k.name)}</b><span>Klasse <select onchange="gr(${k.id},this.value)" aria-label="Klasse">${KL.map(c=>`<option ${k.g==c?'selected':''}>${c}</option>`).join('')}</select></span></div>
  <p class="small">${k.h?esc(k.h.name)+' · '+stufeN(stg(k))+' · ':''}${k.h2?'zweites Pferd '+esc(k.h2.name)+' · '+stufeN(k.h2.st||0)+' · ':''}${k.h&&stg(k)<3?`Tag ${serie(k)} von ${TAGE[stg(k)]} bis „${GS[stg(k)+1].n}“ · `:''}heute ${limS(k)?`${Math.min(limM(k),Math.floor(zeit(k)/60))} von ${limM(k)} Minuten`:`${Math.floor(zeit(k)/60)} Minuten (kein Limit)`} · ${k.xp} Erfahrung · ${k.ap||0} Äpfel · ${k.hu||0} Hufeisen · ${k.r} von ${k.total} Aufgaben richtig (${k.total?Math.round(k.r/k.total*100):0} %) · Rekordserie ${k.best} · Fehlerheft ${mcount(k)} offen</p>
- <p class="small" style="margin:6px 0"><label>Zeit pro Tag: <select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></label></p>${ndListe(k)}
+ <p class="small" style="margin:6px 0"><label>Zeit pro Tag: <select onchange="lim(${k.id},this.value)" aria-label="Zeit pro Tag für ${esc(k.name)}">${limOptionen(k)}</select></label></p>
+ <p class="small" style="margin:6px 0"><label>Hofzeit bis zur nächsten Runde: <select onchange="hofzeit(${k.id},this.value)" aria-label="Hofzeit bis zur nächsten Runde für ${esc(k.name)}">${hofOptionen(k)}</select></label></p>${ndListe(k)}
  <table><tr><th>Thema</th><th>Stufe</th><th>Aufgaben</th><th>Richtig</th></tr>${elternThemen(k).map(t=>{let s=ts(k,t[0]);return`<tr><td>${t[1]}</td><td>${s.d}</td><td>${s.n}</td><td>${s.n?Math.round(s.r/s.n*100)+' %':'–'}</td></tr>`}).join('')}</table>
  <p class="small">Ein Thema wechselt hoch nach 3 richtigen Antworten in Folge und runter nach 2 falschen.</p><div class="row"><button class="alt" onclick="rst(${k.id})">Fortschritt zurücksetzen</button><button class="alt" onclick="del(${k.id})">Kind löschen</button></div></div>`).join('')||'<p>Noch keine Kinder angelegt.</p>';
- h+=`<div class="card"><b>Spielzeit und Wachstum</b><p class="small">Jedes Kind kann standardmäßig ${LIMIN} Minuten pro Tag auf den Hof. Bei jedem Kind lässt sich die Zeit im 5-Minuten-Raster ändern (5 bis ${LIMMAX} Minuten oder kein Limit). Eine laufende Runde wird nicht unterbrochen. Das Pferd wächst mit Tagen, an denen mindestens eine Runde gerechnet wurde (einmal pro Tag): Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten.</p><p class="small">Knobeln (Mathe-Olympiade und Sudoku) geht höchstens ${KNMAX} Runden am Stück. Danach muss erst eine Runde Schulstoff mit mindestens ${FREI} von 10 geschafft werden.</p></div><div class="card"><b>Anzeige</b><p class="small">Der animierte Hintergrund kann ruhig gestellt werden, zum Beispiel bei älteren Geräten oder um den Akku zu schonen. Dann stehen die Pferde still.</p><button class="alt" onclick="S.calm=S.calm?0:1;save();ui()">Ruhiger Hintergrund: ${S.calm?'an':'aus'}</button></div><div class="card"><b>Sicherung</b><p class="small">Der Stand liegt nur in diesem Browser. Exportiere ihn regelmäßig als Datei, besonders vor dem Löschen von Browserdaten oder bei einem Gerätewechsel.</p><div class="row"><button onclick="exp()">Exportieren</button><input type="file" accept=".json" onchange="imp(this)" aria-label="Sicherung importieren"></div><p class="no">${warn}</p></div>
+ h+=`<div class="card"><b>Spielzeit und Wachstum</b><p class="small">Jedes Kind kann standardmäßig ${LIMIN} Minuten pro Tag auf den Hof. Bei jedem Kind lässt sich die Zeit im 5-Minuten-Raster ändern (5 bis ${LIMMAX} Minuten oder kein Limit). Eine laufende Runde wird nicht unterbrochen. Nach der Hofzeit (standardmäßig ${HOFZEIT/60} Minuten, je Kind einstellbar von ${HOFM[0]} bis ${HOFMAX/60} Minuten) muss das Kind erst eine Runde mit mindestens ${FREI} von 10 richtig rechnen. Wird die Hofzeit geändert, während der Hof gesperrt ist, bleibt er bis zu dieser Runde gesperrt. Das Pferd wächst mit Tagen, an denen mindestens eine Runde gerechnet wurde (einmal pro Tag): Jährling nach 3 Tagen, Jungpferd nach weiteren 5, Pferd nach weiteren 10. Fallen Tage aus, bleiben die gesammelten Tage erhalten.</p><p class="small">Knobeln (Mathe-Olympiade und Sudoku) geht höchstens ${KNMAX} Runden am Stück. Danach muss erst eine Runde Schulstoff mit mindestens ${FREI} von 10 geschafft werden.</p></div><div class="card"><b>Anzeige</b><p class="small">Der animierte Hintergrund kann ruhig gestellt werden, zum Beispiel bei älteren Geräten oder um den Akku zu schonen. Dann stehen die Pferde still.</p><button class="alt" onclick="S.calm=S.calm?0:1;save();ui()">Ruhiger Hintergrund: ${S.calm?'an':'aus'}</button></div><div class="card"><b>Sicherung</b><p class="small">Der Stand liegt nur in diesem Browser. Exportiere ihn regelmäßig als Datei, besonders vor dem Löschen von Browserdaten oder bei einem Gerätewechsel.</p><div class="row"><button onclick="exp()">Exportieren</button><input type="file" accept=".json" onchange="imp(this)" aria-label="Sicherung importieren"></div><p class="no">${warn}</p></div>
  <div class="card"><b>PIN-Schutz</b>${S.pin?`<p class="small">Diese Ansicht ist mit einer PIN geschützt. Ohne PIN heißt sie „Einstellungen“ und ist für alle offen, zum Beispiel auf dem eigenen Handy eines Kindes.</p><button class="alt" onclick="npin()">PIN entfernen</button>`:`<p class="small">Ohne PIN kann jeder hier die Klasse ändern, Fortschritt zurücksetzen und Kinder löschen. Mit einer PIN (mindestens 4 Zeichen) wird daraus die geschützte Eltern-Ansicht.</p><input id="pin1" type="password" inputmode="numeric" maxlength="8" aria-label="PIN festlegen" onkeydown="if(event.key=='Enter')sp('pin1')"> <button onclick="sp('pin1')">PIN festlegen</button>`}<p class="no">${pw}</p></div>`+(S.pin?`<button class="alt" onclick="lock()">Sperren</button> `:'')+`<button class="alt" onclick="infoAuf()">So funktioniert die App</button>`}}
  // Ansicht C: Leiste unten (steht im Inhaltsblock, fest am Bildschirmrand)
  const ml=leisteZeigen();if(ml)h+=leisteHtml();document.body.classList.toggle('mitleiste',ml);
@@ -607,18 +610,19 @@ setInterval(()=>{const now=Date.now(),dt=Math.min(5,(now-ZL)/1000);ZL=now;
  if(now-ZS>15000){ZS=now;save()}
  // Hofzeit: zählt nur in Kind-Ansicht und Wunschbaum (der Rundflug läuft über der Kind-Ansicht), nicht während einer Runde
  // Während Pflege, Tierarzt und Hufschmied (pflege.js) zählt die Hofzeit nicht
- if((v=='kid'||v=='wish'||v=='rassen'||v=='einladen')&&k.h&&!k.hl&&!(HF.fuehr&&HF.fuehr.art&&v=='kid')){k.hz=(k.hz||0)+dt;const r=HOFZEIT-k.hz;if(r<=0){sperren(k);return}countdown(r<=10?Math.ceil(r):0)}else countdown(0);
+ if((v=='kid'||v=='wish'||v=='rassen'||v=='einladen')&&k.h&&!k.hl&&!(HF.fuehr&&HF.fuehr.art&&v=='kid')){k.hz=(k.hz||0)+dt;const r=hofS(k)-k.hz;if(r<=0){sperren(k);return}countdown(r<=10?Math.ceil(r):0)}else countdown(0);
  if(!vor&&ausZeit(k)){save();if(v=='done')ui();else if(v!='quiz'&&v!='train')bye()}},1000);
 // Countdown-Anzeige oben (auch über dem Rundflug). n = 0 blendet sie aus.
 // Klasse cdlauf am body: solange der Countdown läuft, ist die Copyright-Zeile ausgeblendet (sie läge darunter)
 function countdown(n){let el=document.getElementById('sperre');document.body.classList.toggle('cdlauf',!!n);if(!n){if(el)el.hidden=true;return}
  if(!el){el=document.createElement('div');el.id='sperre';el.setAttribute('role','status');document.body.appendChild(el)}
  el.hidden=false;el.innerHTML=`Gleich wird wieder gerechnet … <b>${n}</b>`}
-const SPERRINFO=`<div class="card" id="sperrinfo"><b>Zeit zum Rechnen!</b><p>Du warst 3 Minuten auf dem Hof. Löse jetzt eine Runde mit mindestens ${FREI} von 10 richtig, dann ist der Hof wieder offen.</p><p class="small" style="margin-bottom:0">Such dir unten ein beliebiges Thema aus.</p></div>`;
+// Hinweis bei gesperrtem Hof, mit der eingestellten Hofzeit des Kindes (seit 2026-10-27 eine Funktion, vorher fester Text mit 3 Minuten)
+const sperrInfo=k=>`<div class="card" id="sperrinfo"><b>Zeit zum Rechnen!</b><p>Du warst ${hofM(k)} Minuten auf dem Hof. Löse jetzt eine Runde mit mindestens ${FREI} von 10 richtig, dann ist der Hof wieder offen.</p><p class="small" style="margin-bottom:0">Such dir unten ein beliebiges Thema aus.</p></div>`;
 // Zu den Themen in der Kind-Ansicht springen
 // Ansichten B und C (menue.js): Die Themen haben dort eine eigene Seite
 function andersThema(){v='kid';if((S.an=='b'||S.an=='c')&&kid()&&kid().h){KT='themen';ui();scrollTo(0,0);return}ui();const e=$('#themen');if(e)e.scrollIntoView();else scrollTo(0,0)}
-// 3 Minuten Hof sind um: Rundflug beenden, zurück zur Kind-Ansicht, Hof sperren
+// Hofzeit ist um: Rundflug beenden, zurück zur Kind-Ansicht, Hof sperren
 // Ansichten B und C: von Training, Pflege und Abzeichen zurück zur Übersicht (dort steht der Hinweis), die Themenseite bleibt offen
 function sperren(k){k.hl=1;k.hz=0;countdown(0);if(HF.mode=='fly')flyOff();if(v=='wish'||v=='rassen'||v=='einladen')v='kid';if(KT&&KT!='themen')KT='';save();ui();scrollTo(0,0)}
 // Beim Verlassen nur speichern, wenn gerade Zeit gezählt wurde (sonst könnte ein frisch gelöschter oder importierter Stand überschrieben werden)
@@ -738,7 +742,7 @@ function chk(){let k=kid(),s=ts(k,Q.key),w=eingabe($('#ans').value);if(!w.length
  Q.fb={ok,g,a,m,an:ok?trAnim(k.h):null};Q.ts=Date.now();save();ui()}
 function nx(){Q.i++;if(Q.i>=10){let k=kid();if(Q.right==10){k.perfect++;BD.forEach(b=>{if(!k.b.includes(b[0])&&b[2](k)){k.b.push(b[0]);Q.newb.push(b[1])}})}
   // Runde fertig: Der Tag zählt fürs Wachstum (einmal pro Tag)
-  // Hof-Sperre: Eine Runde mit mindestens 8 von 10 richtig öffnet den Hof und startet die 3 Minuten neu
+  // Hof-Sperre: Eine Runde mit mindestens FREI von 10 richtig öffnet den Hof und startet die Hofzeit neu
   if(Q.right>=FREI){k.hz=0;if(k.hl){delete k.hl;Q.frei=1}}else if(k.hl)Q.zu=1;
   // Hufeisen (seit 2026-10-22): eins für jede Runde mit mindestens FREI von 10, egal welches Thema
   if(Q.right>=FREI){Q.hu=huPlus(k);Q.huvoll=!Q.hu}
@@ -791,6 +795,11 @@ function ndSetz(id,key,dran){const k=S.kids.find(x=>x.id==id);if(!k||!KAT[k.g].s
 // Tageslimit je Kind (Eltern-Ansicht): 0 = kein Limit, sonst 5 bis LIMMAX Minuten in 5er-Schritten. Wirkt sofort, auch am selben Tag.
 const limOptionen=k=>[0,...Array.from({length:LIMMAX/5},(_,i)=>(i+1)*5)].map(m=>`<option value="${m}"${limM(k)==m?' selected':''}>${m?m+' Minuten':'kein Limit'}</option>`).join('');
 function lim(id,m){let k=S.kids.find(x=>x.id==id);m=+m;if(!k||!Number.isInteger(m)||m<0||m>LIMMAX||m%5)return;k.lm=m;save();ui()}
+// Hofzeit je Kind (Eltern-Ansicht, seit 2026-10-27): 3 bis 10 Minuten im Minutenschritt, dann 15, 20, 25, 30. Wirkt sofort.
+// Wird sie kürzer als die schon verbrauchte Hofzeit, bleiben noch 10 Sekunden für den Countdown (keine Sperre ohne Vorwarnung).
+const hofOptionen=k=>HOFM.map(m=>`<option value="${m}"${hofM(k)==m?' selected':''}>${m} Minuten</option>`).join('');
+function hofzeit(id,m){let k=S.kids.find(x=>x.id==id);m=+m;if(!k||!HOFM.includes(m))return;k.hm=m;
+ if(!k.hl&&(k.hz||0)>hofS(k)-10)k.hz=Math.max(0,hofS(k)-10);save();ui()}
 function rst(id){if(!confirm('Fortschritt wirklich zurücksetzen? Das Pferd beginnt wieder als Fohlen.'))return;let k=S.kids.find(x=>x.id==id);delete k.ld;delete k.hl;delete k.hu;delete k.mt;Object.assign(k,{kn:0,xp:0,st:0,sd:0,hz:0,ap:0,s:0,best:0,total:0,r:0,perfect:0,b:[],t:{},mist:[]});delete k.gl;if(k.h){k.h.coats=[k.h.coat];k.h.own={};k.h.bl=0;k.h.so=0;k.h.tr={};k.h.tl={};delete k.h.tz;k.h.au={};delete k.h.hs;delete k.h.ge;k.h.it={};k.h.lp=[];k.h.ko={n:1,u:[0,0,0],z:{}}}delete k.h2;save();ui()}
 function del(id){if(!confirm('Kind samt Fortschritt löschen?'))return;S.kids=S.kids.filter(x=>x.id!=id);save();ui()}
 function exp(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='rechenhof-sicherung.json';a.click()}

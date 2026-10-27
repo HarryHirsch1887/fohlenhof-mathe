@@ -103,7 +103,7 @@ function mInfo(k,ohneZeit){const nx=GS[stg(k)+1],rest=Math.max(1,Math.ceil((limS
 const mBalken=k=>{const st=stg(k),nx=GS[st+1];return`<div class="bar" style="margin:6px 0"><b style="width:${nx?serie(k)/TAGE[st]*100:100}%"></b></div>`};
 const m3D=k=>stg(k)<D3AB?'':`${d3Fenster('')}<p class="small" style="margin-top:0">Wische über das Bild, um ${esc(k.h.name)} von allen Seiten zu sehen.</p>`;
 // Hof gesperrt: dieselbe Karte wie klassisch (id sperrinfo), nur der Weg zu den Themen ist anders beschrieben
-const mSperre=(k,wo)=>k.hl?SPERRINFO.replace('Such dir unten ein beliebiges Thema aus.',wo):'';
+const mSperre=(k,wo)=>k.hl?sperrInfo(k).replace('Such dir unten ein beliebiges Thema aus.',wo):'';
 function kindMenue(k){if(KT)return kindTeil(k);return mAn()=='c'?kindC(k):kindB(k)}
 function kindB(k){const H=hh(k),st=stg(k),zu=k.hl,nx=GS[st+1],rest=Math.max(1,Math.ceil((limS(k)-zeit(k))/60)),[pk,pw]=pflegeKurz(k),frei=zu?'erst rechnen':'';
  return`<div class="row sp"><button class="alt" onclick="v='home';ui()">Zurück</button>${mTon()}</div>`+
@@ -128,7 +128,7 @@ function kindC(k){const H=hh(k),st=stg(k),zu=k.hl,nx=GS[st+1],mini=(ic,t,js,o={}
   (zu?`<p class="small">Wunschbaum, Training, Rundflug und Freundin einladen gehen wieder, wenn du eine Runde mit mindestens ${FREI} von 10 richtig geschafft hast.</p>`:'')+mInfo(k)+m3D(k)}
 // Eigene Seiten hinter Kacheln bzw. Leiste: Themen, Training, Pflege, Abzeichen
 function kindTeil(k){const c=mAn()=='c',kopf=`<div class="row sp">${c?'<span></span>':`<button class="alt" onclick="mGeh('')">Zurück</button>`}${mApfel(k)}</div>`;
- if(KT=='themen')return kopf+`<h1>${c?'Thema wählen':'Was rechnest du?'}</h1>`+(k.hl?SPERRINFO.replace('Such dir unten ein beliebiges Thema aus.','Such dir hier ein beliebiges Thema aus.'):'')+themen(k);
+ if(KT=='themen')return kopf+`<h1>${c?'Thema wählen':'Was rechnest du?'}</h1>`+(k.hl?sperrInfo(k).replace('Such dir unten ein beliebiges Thema aus.','Such dir hier ein beliebiges Thema aus.'):'')+themen(k);
  if(KT=='training')return kopf+`<h1>Training</h1>`+(k.hl?`<p class="small">Das Training geht wieder, wenn du eine Runde mit mindestens ${FREI} von 10 richtig geschafft hast.</p>`:trTeil(k));
  if(KT=='pflege')return kopf+`<h1>Gesundheit und Pflege</h1>`+gpTeil(k);
  if(KT=='abz')return kopf+`<h1>Abzeichen</h1><p class="small">${k.b.length} von ${BD.length} Abzeichen gesammelt.</p>`+BD.map(b=>`<span class="badge ${k.b.includes(b[0])?'':'off'}">${b[1]}</span>`).join('');
