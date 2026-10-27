@@ -117,8 +117,16 @@ button:disabled{opacity:.55;cursor:not-allowed}.pick.gesperrt svg{filter:graysca
 .umriss{stroke:#2a1d14;stroke-width:3.8;stroke-linejoin:round;opacity:.6;--ohneUm:none}.fuell{stroke:none}/* Deckkraft am ganzen Umriss statt je Teil (seit 2026-10-25): überlappende Striche werden nicht mehr dunkler (Kehle, Brust, Beinansätze) */
 .ha1,.ha2,.glanz,.maul,.aal,.beh,.det,.fleck,.blesse,.gummi2d{display:var(--ohneUm,inline)}
 .hinten .umriss,.ohneUmriss .umriss{display:none}
-/* Copyright-Vermerk als Fußzeile unten auf jeder Seite (seit 2026-10-25) */
-.copyright{text-align:center;margin:28px 0 0;opacity:.8}
+/* Copyright-Vermerk als Fußzeile unten auf jeder Seite (seit 2026-10-25).
+   Seit 2026-10-27 am unteren Rand (Brain Dump): main ist eine Flex-Spalte und mindestens so hoch wie der freie Bildschirm, der Inhaltsblock .in
+   wächst mit, die Zeile steht danach im normalen Textfluss. Auf kurzen Seiten landet sie am Bildschirmrand, auf langen nach dem Inhalt,
+   und sie kann nichts überdecken (auch nicht bei großer Schrift). 100dvh nur, wo der Browser es kennt (sonst gilt 100vh von oben). */
+main{display:flex;flex-direction:column;padding-bottom:16px}
+#app>.in{flex:1 0 auto;width:100%}
+.copyright{text-align:center;margin:20px 0 0;opacity:.8}
+@supports (height:100dvh){main{min-height:calc(100dvh - var(--wh,0px) + 18px)}body.nohof main{min-height:100dvh}}
+/* Während des Countdowns vor der Hof-Sperre (unten in der Mitte) die Zeile ausblenden, sie läge sonst darunter (Klasse aus countdown() in app.js) */
+body.cdlauf .copyright{visibility:hidden}
 /* Umriss der Hofgegenstände (hof.js, umrGruppe): .umr ist die Kopie mit dickem Strich unter der Zeichnung, .ufuell die Zeichnung ohne Strich, .uin mit feinen Innenlinien. Im Sparmodus fällt der Umriss weg. */
 .umr{stroke:#2a1d14;stroke-width:1.7;stroke-linejoin:round;opacity:.6}.ufuell{stroke:none}.uin{stroke:#3a261466;stroke-width:.55;stroke-linejoin:round}.ohneUmriss .umr{display:none}
 /* 3D-Fenster (nur ausgewachsene Pferde); im Wunschbaum bleibt es beim Scrollen oben stehen */
@@ -212,7 +220,7 @@ button.mzeile{justify-content:space-between;margin:0;padding:12px 4px;border-rad
 .mleiste{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;justify-content:center;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 12px #0001;padding:4px 0 calc(4px + env(safe-area-inset-bottom,0px))}
 .mleiste button{flex:1;max-width:150px;display:flex;flex-direction:column;align-items:center;gap:1px;background:none;color:var(--mgrau);font-size:11.5px;font-weight:700;padding:4px 2px;border-radius:0}
 .mleiste button.on{color:var(--mon)}.mleiste button:disabled{opacity:.4}
-body.mitleiste main{padding-bottom:100px}body.mitleiste #sperre{bottom:84px}
+body.mitleiste main{padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}body.mitleiste #sperre{bottom:84px}
 /* Ansicht A "Pferdehof" (seit 2026-10-26, Standard): Holzschilder auf Startseite, Kind-Ansicht und Rundenende (body.holz, gesetzt in ui()).
    Nur Aussehen, der Aufbau der Seiten bleibt. Knöpfe sind Bretter (dunkles Holz), .alt helles Holz, .go goldenes Brett, breite Knöpfe mit zwei Nägeln. */
 /* --gr und --bar dunkler (hell) bzw. heller (dunkel), damit grüne und rote Hinweise auf dem Holzgrund gut lesbar bleiben */
