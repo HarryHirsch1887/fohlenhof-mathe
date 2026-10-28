@@ -70,6 +70,11 @@ details.wdh summary{cursor:pointer;font-weight:bold;padding:6px 0}
 /* Antwortzeile (seit 2026-10-19): Eingabefeld mit Einheit und "Prüfen" nebeneinander, gleich hoch; Tipp als Link darunter */
 .antwort{display:flex;gap:10px;align-items:stretch;max-width:440px;margin:8px 0 2px}
 .antwort .antw{flex:1;min-width:0;max-width:none}.antwort #ans{max-width:none;min-width:0;margin:0}
+/* Fokusrahmen um das ganze Antwortfeld samt Einheit (seit 2026-10-28, Brain Dump): Vorher lag er nur um das Eingabefeld darin,
+   schnitt so den Rahmen des Felds und endete vor der Einheit (z. B. €). :focus-within statt :has() und beim Feld nur :focus
+   (eine Liste mit :focus-visible würden Browser ohne :focus-visible ganz verwerfen), damit es auch ältere Browser können. */
+.antwort .antw:focus-within{outline:3px solid var(--hay);outline-offset:2px}
+.antwort .antw #ans:focus{outline:none}
 button.pruefen{padding:0 22px;font-size:18px;flex:none}
 button.tipp{background:none;color:var(--ink);border:0;padding:8px 2px;font-size:15px;opacity:.75;text-decoration:underline;text-underline-offset:3px}
 .einheit{font-size:clamp(19px,5.6vw,24px);font-weight:bold;white-space:nowrap}
@@ -270,7 +275,8 @@ p.spruch{margin:-6px 0 10px;font:italic 700 16px "Palatino Linotype",Palatino,Ge
 .qdein{font-family:"Segoe Print","Comic Sans MS","Trebuchet MS",sans-serif;font-weight:700;font-size:18px;margin:6px 0 0}.qdein.ok{color:#9fd18f}.qdein.no{color:#ffb3a4}
 .qstempel{position:absolute;right:10px;top:-14px;transform:rotate(-10deg);border:3px solid #9fd18f;color:#9fd18f;border-radius:8px;padding:0 10px;font-weight:800;font-size:19px;background:#2d4436}
 .qstempel.no{border-color:#ff9a86;color:#ff9a86}
-.qtafel .kreide{position:absolute;right:14px;bottom:-15px;width:34px;height:7px;border-radius:3px;background:#f6f3ea;box-shadow:0 1px 0 #0003}
+/* Kreide liegt auf der unteren Rahmenleiste (seit 2026-10-28, Brain Dump: hing vorher halb unter dem Rahmen) */
+.qtafel .kreide{position:absolute;right:18px;bottom:-6.5px;width:30px;height:5px;border-radius:2.5px;background:#f6f3ea;box-shadow:0 1px 0 #0004}
 /* Rahmen als Schatten nach innen: Feld und "Prüfen" sind so genau gleich hoch */
 .qa .antwort{max-width:none}.qa .antw{background:#fffaf0;border:0;box-shadow:inset 0 0 0 2px #8a5a32;border-radius:8px;padding:0 10px;align-items:stretch}
 .qa #ans{border:0;background:transparent;font-weight:700;color:#3b2414;margin:0;padding:10px 0}.qa .einheit{color:#6b4423;align-self:center}
